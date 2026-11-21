@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -22,7 +23,7 @@ export function BottomBar() {
   const labels = useFormatterLabels();
   const [shown, setShown] = useState(false);
   const hide = useCallback(() => setShown(false), []);
-  const home = useQuery({ queryKey: ["home"], queryFn: getHome });
+  const home = useQuery({ queryKey: ["home"], queryFn: () => getHome() });
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -53,7 +54,9 @@ export function BottomBar() {
   }, [health, labels, router, t]);
 
   if (!shown) return null;
-  return (
+  // Portalled to the body: inside the sidebar's <main> the fixed overlay is confined to that box, so it dimmed
+  // only part of the screen and left the sidebar's buttons half covered instead of properly behind it.
+  return createPortal(
     <>
     {/* Spotlight-style: the page dims and blurs behind the bar, so the search stands apart from busy content. */}
     <div aria-hidden onClick={hide} className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] dark:bg-black/50" />
@@ -63,6 +66,7 @@ export function BottomBar() {
         <CommandPalette placeholder={t("askBar")} onClose={hide} />
       </div>
     </div>
-    </>
+    </>,
+    document.body,
   );
 }

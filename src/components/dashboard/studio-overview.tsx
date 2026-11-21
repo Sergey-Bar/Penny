@@ -7,12 +7,12 @@ import { InfoTip } from "@/components/ui/info-tip";
 import { shekels } from "@/lib/money";
 import { budgetMetrics, type StudioPreferences } from "@/lib/budget-studio";
 import type { DashboardSummary } from "@/lib/types";
-import { studioCopy } from "./studio-copy";
+import { useStudioCopy } from "./studio-copy";
 import { MonthNav, MonthStrip, monthKey } from "@/components/ui/month-nav";
 
 export function StudioOverview({ data, selectedDate, preferences, onMonthChange }: { data: DashboardSummary; selectedDate: Date; preferences: StudioPreferences; onMonthChange: (month: string) => void }) {
   const locale = useLocale();
-  const c = studioCopy(locale);
+  const c = useStudioCopy();
   const hasBudget = data.totalBudget > 0;
   const spent = hasBudget ? data.budgetedSpent : data.periodTotal;
   const m = budgetMetrics(data.totalBudget, spent, selectedDate);
@@ -28,7 +28,7 @@ export function StudioOverview({ data, selectedDate, preferences, onMonthChange 
     <div className="studio-overview-body">
       <div className="studio-balance"><p>{label}</p><div className="studio-amount figure"><bdi>{money(main)}</bdi></div>
         <p className="studio-budget-context">{hasBudget ? <>{c.monthlyBudget} <bdi data-money>{money(data.totalBudget)}</bdi></> : c.noBudget}</p>
-        {hasBudget ? <span className={`studio-status ${m.remaining < 0 || forecastOver ? "is-over" : ""}`}>{m.remaining < 0 || forecastOver ? <CircleAlert size={14} aria-hidden="true" /> : <CircleCheck size={14} aria-hidden="true" />}{m.remaining < 0 ? c.overTrack : forecastOver ? c.overPace : c.onTrack}</span> : <Link className="studio-inline-link" href="/settings/general#section-monthly-target">{c.setBudget}<ArrowUpLeft size={15} /></Link>}
+        {hasBudget ? <span className={`studio-status ${m.remaining < 0 || forecastOver ? "is-over" : ""}`}>{m.remaining < 0 || forecastOver ? <CircleAlert size={14} aria-hidden="true" /> : <CircleCheck size={14} aria-hidden="true" />}{m.remaining < 0 ? c.overTrack : forecastOver ? c.overPace : c.onTrack}</span> : <Link className="studio-inline-link" href="/settings/general#section-monthly-target">{c.setBudget}<ArrowUpLeft size={15} aria-hidden="true" className="ltr:-scale-x-100" /></Link>}
       </div>
       {hasBudget && <div className="studio-orbit" role="img" aria-label={`${Math.round(m.used)}% ${c.used}`}>
         <svg viewBox="0 0 200 200" aria-hidden="true"><defs><linearGradient id="studio-ring" x1="0" y1="0" x2="1" y2="1"><stop stopColor="var(--studio-ring-start)" /><stop offset="1" stopColor="var(--studio-ring-end)" /></linearGradient></defs><circle className="studio-ring-track" cx="100" cy="100" r="83" /><circle className="studio-ring-value" cx="100" cy="100" r="83" strokeDasharray={`${used * 5.215} 521.5`} transform="rotate(-90 100 100)" /></svg>
