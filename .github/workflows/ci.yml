@@ -28,7 +28,7 @@ jobs:
       - run: npm run format:check
       # Same suites plus the coverage floor; CI fails if logic or server coverage drops.
       - run: npm run test:coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage-lcov
