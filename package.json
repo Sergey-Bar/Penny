@@ -37,7 +37,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "1.12.0",
     "@base-ui/react": "^1.9.0",
-    "@sergienko4/israeli-bank-scrapers": "9.0.0",
+    "@sergienko4/israeli-bank-scrapers": "10.0.1",
     "@tanstack/react-query": "^5.105.3",
     "better-sqlite3": "13.2.0",
     "boopface": "0.8.0",
