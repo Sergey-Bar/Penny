@@ -28,7 +28,7 @@ if (boxes.length) {
       for (const box of boxes) {
         for (const el of box.querySelectorAll("[data-gh]")) {
           const v = s[el.dataset.gh];
-          if (v == null) el.closest("li")?.remove();
+          if (v == null) el.closest("li, .fact")?.remove();
           else el.textContent = typeof v === "number" ? fmt.format(v) : v;
         }
         box.hidden = false;

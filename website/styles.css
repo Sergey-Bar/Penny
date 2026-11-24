@@ -85,12 +85,24 @@ bdi, code, pre { unicode-bidi: isolate; }
 .nav-links { display: flex; align-items: center; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .nav-links a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 999px; color: var(--ink-2); text-decoration: none; font-size: 0.95rem; font-weight: 500; }
 .nav-end { display: flex; align-items: center; gap: 6px; margin-inline-start: auto; }
-.pill { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink); text-decoration: none; font-size: 0.92rem; font-weight: 500; background: transparent; white-space: nowrap; }
-.pill svg { width: 17px; height: 17px; flex: none; }
-.pill .count { color: var(--ink-2); font-weight: 600; padding-inline-start: 7px; border-inline-start: 1px solid var(--line); }
-/* Room for the star count is kept while it loads, so the bar doesn't shift when it arrives. */
-.pill .count[hidden] { display: inline; visibility: hidden; }
-.pill .count b { display: inline-block; min-width: 2ch; }
+/* Language: both choices are always visible, the current one filled. Same shape as the theme control. */
+.lang-switch { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px; border: 1px solid var(--line-strong); }
+.lang-switch svg { width: 16px; height: 16px; margin-inline: 7px 3px; color: var(--ink-2); flex: none; }
+.lang-switch a { display: grid; place-items: center; min-width: 38px; height: 32px; padding: 0 9px; border-radius: 999px; font-size: 0.86rem; font-weight: 600; color: var(--ink-2); text-decoration: none; -webkit-tap-highlight-color: transparent; transition: background-color var(--t-press) ease, color var(--t-press) ease; }
+.lang-switch a[aria-current] { background: var(--accent); color: var(--accent-ink); }
+.lang-switch a[href]:active { background: color-mix(in srgb, var(--ink) 12%, transparent); }
+
+/* GitHub: the name on one side, the live star count on the other, so the number reads as a number. */
+.gh { display: inline-flex; align-items: stretch; min-height: 40px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-strong); text-decoration: none; font-size: 0.92rem; font-weight: 600; white-space: nowrap; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+.gh > span { display: inline-flex; align-items: center; gap: 7px; padding: 0 12px; }
+.gh-name { padding-inline-start: 14px !important; }
+.gh svg { width: 17px; height: 17px; flex: none; }
+.gh-stars { background: color-mix(in srgb, var(--ink) 7%, transparent); border-inline-start: 1px solid var(--line-strong); font-variant-numeric: tabular-nums; }
+.gh-stars .star { width: 15px; height: 15px; color: var(--copper); }
+/* Room for the count is kept while it loads, so the bar doesn't shift when it arrives. */
+.gh-stars[hidden] { display: inline-flex !important; visibility: hidden; }
+.gh-stars b { display: inline-block; min-width: 2ch; font-weight: 600; }
+.gh:active { background: color-mix(in srgb, var(--ink) 10%, transparent); }
 .nav .cta-btn { min-height: 44px; padding: 0 20px; }
 .menu-btn { display: none; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line-strong); background: transparent; color: var(--ink); cursor: pointer; place-items: center; }
 .menu-btn svg { width: 20px; height: 20px; }
@@ -100,7 +112,8 @@ bdi, code, pre { unicode-bidi: isolate; }
 .mobile-menu { display: none; }
 @media (hover: hover) {
   .nav-links a:hover { color: var(--ink-strong); background: color-mix(in srgb, var(--ink) 7%, transparent); }
-  .pill:hover, .menu-btn:hover { border-color: var(--ink); }
+  .gh:hover, .menu-btn:hover { border-color: var(--ink-strong); }
+  .lang-switch a[href]:hover { color: var(--ink-strong); background: color-mix(in srgb, var(--ink) 8%, transparent); }
 }
 @media (max-width: 1100px) { .nav-links, .nav .hide-md { display: none; } .menu-btn { display: grid; } }
 @media (max-width: 1100px) {
@@ -108,6 +121,8 @@ bdi, code, pre { unicode-bidi: isolate; }
   .mobile-menu ul { list-style: none; margin: 0; padding: 0; }
   .mobile-menu a:not(.btn) { display: flex; align-items: center; min-height: 48px; padding: 0 14px; border-radius: 14px; color: var(--ink); text-decoration: none; font-weight: 500; }
   .mobile-menu a:not(.btn):active { background: var(--accent-soft); }
+  .mobile-menu .lang-switch a, .mobile-menu .lang-switch a:not(.btn) { display: grid; min-width: 48px; min-height: 0; height: 42px; padding: 0 10px; border-radius: 999px; font-size: 0.95rem; font-weight: 600; color: var(--ink-2); }
+  .mobile-menu .lang-switch a[aria-current] { background: var(--accent); color: var(--accent-ink); }
   .mobile-menu .row { display: flex; gap: 8px; padding: 10px 4px 4px; flex-wrap: wrap; align-items: center; }
   .mobile-menu .row .btn { flex: 1 1 160px; }
 }
@@ -159,6 +174,17 @@ bdi, code, pre { unicode-bidi: isolate; }
 .more-links { margin: 18px 0 0; font-size: 0.93rem; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px 18px; }
 .more-links a { color: var(--ink-2); }
 @media (hover: hover) { .more-links a:hover { color: var(--ink-strong); } }
+/* One line of facts, read live from GitHub; the numbers hold their place until they arrive. */
+.gh-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); font-size: 0.93rem; color: var(--ink-2); }
+.gh-line a { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-strong); font-weight: 600; text-decoration: none; }
+.gh-line a svg { width: 18px; height: 18px; }
+.gh-line > span { display: contents; }
+.gh-line > span[hidden] { display: contents !important; visibility: hidden; }
+.gh-line > span[hidden] .fact { visibility: hidden; }
+.gh-line .fact { display: inline-flex; align-items: center; gap: 6px; }
+.gh-line .fact b { color: var(--ink-strong); font-weight: 600; font-variant-numeric: tabular-nums; min-width: 2ch; }
+.gh-line .star { width: 15px; height: 15px; color: var(--copper); }
+@media (hover: hover) { .gh-line a:hover { text-decoration: underline; } }
 
 /* The stage. --p is the reveal's progress (0 edge-on close-up, 1 at rest); the script moves it, CSS follows.
    Without the script, or with reduced motion, --p is 1 and the stage is simply the resting picture.
