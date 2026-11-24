@@ -33,19 +33,24 @@ if (only !== "screens") {
   });
   await page.goto(`${SITE}/privacy.html`);
   for (const theme of ["light", "dark"]) {
-    await page.evaluate(async (theme) => {
-      document.body.innerHTML =
-        '<canvas style="position:fixed;inset:0;width:640px;height:640px"></canvas>';
-      document.documentElement.style.background = document.body.style.background = "transparent";
-      const { createCoin } = await import("./assets/coin.js");
-      const coin = createCoin(document.querySelector("canvas"), {
-        theme,
-        reduced: true,
-        placement: () => ({ x: 0.5, y: 0.5, r: 0.25 }),
-      });
-      if (!coin) throw new Error("WebGL is not available in this browser");
-      coin.seek(1);
-    }, theme);
+    // The scene is loaded by the page from the site being captured, so its address is passed in.
+    await page.evaluate(
+      async ([theme, scene]) => {
+        const canvas = document.createElement("canvas");
+        canvas.style.cssText = "position:fixed;inset:0;width:640px;height:640px";
+        document.body.replaceChildren(canvas);
+        document.documentElement.style.background = document.body.style.background = "transparent";
+        const { createCoin } = await import(scene);
+        const coin = createCoin(canvas, {
+          theme,
+          reduced: true,
+          placement: () => ({ x: 0.5, y: 0.5, r: 0.25 }),
+        });
+        if (!coin) throw new Error("WebGL is not available in this browser");
+        coin.seek(1);
+      },
+      [theme, `${SITE}/assets/coin.js`],
+    );
     await page.waitForTimeout(300);
     const png = await page.screenshot({ omitBackground: true });
     await sharp(png)

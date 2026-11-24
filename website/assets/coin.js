@@ -118,22 +118,27 @@ const THEMES = {
   dark: { sky: [0.16, 0.16, 0.19], horizon: [0.05, 0.047, 0.055], floor: [0.06, 0.045, 0.04], key: [3.0, 2.85, 2.7], rim: [1.9, 1.8, 2.4], keySize: 0.66, flag: 0.5, exposure: 1.25, shadow: 0.75, pool: 0.06 },
 };
 
-// ---- Geometry: a lathe. Profile points are (radius, z, kind); each segment gets its own flat-ish normals so bevels stay crisp.
+// ---- Geometry: a lathe. Each segment of the profile gets its own normals, so bevels stay crisp.
 function buildCoin(seg = 160) {
   const T = 0.07; // half thickness
+  // (radius, z) around the rim, front face first.
   const prof = [
-    [0, T - 0.012, 0], [0.86, T - 0.012, 0], // face field (front)
-    [0.895, T, 3], [0.965, T, 3], // rim
-    [1.0, T - 0.03, 3], // bevel
-    [1.0, -(T - 0.03), 2], // edge wall
-    [0.965, -T, 3], [0.895, -T, 3], // rim (back)
-    [0.86, -(T - 0.012), 3], [0, -(T - 0.012), 1], // face field (back)
+    [0, T - 0.012], [0.86, T - 0.012], // face field (front)
+    [0.895, T], [0.965, T], // rim
+    [1.0, T - 0.03], // bevel
+    [1.0, -(T - 0.03)], // edge wall
+    [0.965, -T], [0.895, -T], // rim (back)
+    [0.86, -(T - 0.012)], [0, -(T - 0.012)], // face field (back)
   ];
-  // kind per segment = kind of its END point, except faces which use the start.
+  const EDGE = 4; // the segment from the bevel down the edge wall
   const pos = [], nrm = [], kind = [], idx = [];
   for (let i = 0; i < prof.length - 1; i++) {
-    const [r0, z0, k0] = prof[i], [r1, z1, k1] = prof[i + 1];
-    const k = i === 0 ? 0 : i === prof.length - 2 ? 1 : i === 4 ? 2 : Math.max(k0, k1) === 2 ? 3 : 3;
+    const [r0, z0] = prof[i], [r1, z1] = prof[i + 1];
+    // What the shader draws on this band: 0 front face, 1 back face, 2 reeded edge, 3 rim and bevels.
+    let k = 3;
+    if (i === 0) k = 0;
+    else if (i === prof.length - 2) k = 1;
+    else if (i === EDGE) k = 2;
     // Outward normal of the segment in the (r, z) plane.
     let nr = z0 - z1, nz = r1 - r0;
     const len = Math.hypot(nr, nz) || 1;
