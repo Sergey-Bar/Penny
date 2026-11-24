@@ -181,8 +181,8 @@ function BalanceTrend() {
               <AreaChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <defs>
                   <linearGradient id="bal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis
@@ -215,7 +215,7 @@ function BalanceTrend() {
                   type="monotone"
                   dataKey="balance"
                   name={t("balance")}
-                  stroke="var(--primary)"
+                  stroke="var(--chart-1)"
                   strokeWidth={2}
                   fill="url(#bal)"
                 />
@@ -507,7 +507,7 @@ function FireProgress() {
                 cy="60"
                 r={r}
                 fill="none"
-                stroke="var(--primary)"
+                stroke="var(--chart-1)"
                 strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={`${(pct / 100) * c} ${c}`}

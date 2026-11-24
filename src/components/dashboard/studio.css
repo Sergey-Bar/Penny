@@ -3,35 +3,36 @@
    so nothing else has to change. Pairs that carry text are listed with their contrast in tests/theme-contrast.test.ts.
 
    Light — daylight and precision: a soft neutral canvas, white where a surface is lifted, near-black text,
-   violet only for the primary action, the current selection and emphasis. */
+   flat black for the primary action and the current selection. Colour is kept for data: green in, red out, and
+   one copper line for the chart (the penny). */
 :is(html.app-studio, .budget-studio) {
   --canvas: #f4f4f6; --surface: #ffffff; --surface-raised: #ffffff;
   --text: #15141a; --text-strong: #0b0a0f; --text-secondary: #55535f;
   --divider: #e2e1e8; --border-interactive: #85838f;
-  --brand: #5a3fb3; --brand-hover: #4c3399; --brand-press: #40297f; --on-brand: #ffffff;
-  --focus: #5a3fb3; --selection: #ece8f8; --hover: #ebebef; --press: #dfdfe5;
+  --brand: #15141a; --brand-hover: #2e2d37; --brand-press: #44434f; --on-brand: #ffffff; --copper: #a2521d;
+  --focus: #15141a; --selection: #e4e4ea; --hover: #ebebef; --press: #dfdfe5;
   --success: #17663a; --warning: #7d4400; --error: #b3261e;
   color-scheme: light;
-  --studio-ring-start: #b9a6f0; --studio-ring-end: #7355be;
+  --studio-ring-start: #eaa77f; --studio-ring-end: #b9652f;
   --chart-2: #2572a8; --chart-3: #23804a; --chart-4: #b23a6e; --chart-5: #a85f14;
-  --studio-hero: #1c1b22; --studio-glow: #6f55c9;
+  --studio-hero: #1c1b22; --studio-glow: transparent;
   --segmented: #e9e9ee; --segmented-thumb: #fff;
   --ring-income: #6fdc8c; --ring-spending: #ff8fa3; --ring-savings: #5aa9ff;
   --card-elevation: 0 1px 2px rgb(21 20 26 / 5%), 0 10px 26px -18px rgb(40 34 70 / 22%);
 }
 /* Dark — depth and focus: a near-black neutral canvas, each layer a step lighter (a shadow would not show),
-   soft white for reading and pure white kept for the figure that matters, a lighter violet that carries dark text. */
+   soft white for reading and pure white kept for the figure that matters; the primary action flips to flat white. */
 :is(html.app-studio, .budget-studio)[data-studio-theme="midnight"] {
   --canvas: #0c0b0e; --surface: #16151a; --surface-raised: #1f1e25;
   --text: #e7e5ec; --text-strong: #ffffff; --text-secondary: #aaa7b5;
   --divider: #2a2931; --border-interactive: #777482;
-  --brand: #b3a1f4; --brand-hover: #c4b6f8; --brand-press: #a08be9; --on-brand: #15102a;
-  --focus: #c4b6f8; --selection: #231f33; --hover: #24232a; --press: #2d2c35;
+  --brand: #f2f1f5; --brand-hover: #ffffff; --brand-press: #d6d5dc; --on-brand: #0c0b0e; --copper: #e8a57c;
+  --focus: #f2f1f5; --selection: #2f2e38; --hover: #24232a; --press: #2d2c35;
   --success: #7ad9a3; --warning: #efc18c; --error: #f79a92;
   color-scheme: dark;
-  --studio-ring-start: #b3a1f4; --studio-ring-end: #8f76e6;
+  --studio-ring-start: #f0c4a4; --studio-ring-end: #d08a5c;
   --chart-2: #6fb3d1; --chart-3: #6fca9a; --chart-4: #ea8fb8; --chart-5: #f0b26b;
-  --studio-hero: #16151a; --studio-glow: #6a52c4;
+  --studio-hero: #16151a; --studio-glow: transparent;
   --segmented: #24232a; --segmented-thumb: #3a3944;
   --card-elevation: 0 0 0 transparent;
 }
@@ -46,17 +47,17 @@
   --primary: var(--brand); --primary-foreground: var(--on-brand); --action: var(--brand); --ring: var(--focus);
   --destructive: var(--error); --destructive-foreground: var(--surface);
   --status-on-track: var(--success); --status-heads-up: var(--warning); --status-over: var(--error);
-  --status-plenty-left: var(--brand); --expense: var(--error);
+  --status-plenty-left: var(--text-secondary); --expense: var(--error);
   --sidebar: var(--canvas); --sidebar-foreground: var(--text); --sidebar-primary: var(--brand);
   --sidebar-primary-foreground: var(--on-brand); --sidebar-accent: var(--selection);
   --sidebar-accent-foreground: var(--text-strong); --sidebar-border: var(--divider); --sidebar-ring: var(--focus);
-  --chart-1: var(--brand); --studio-accent-soft: var(--selection);
+  --chart-1: var(--copper); --studio-accent-soft: var(--selection);
   color: var(--text);
 }
 /* The figure that matters reads a step brighter than the text around it. */
 :is(html.app-studio, .budget-studio) :is(h1, h2, .card-figure, .figure, [data-figure]) { color: var(--text-strong); }
 :is(html.app-studio, .budget-studio) :is(.wallet, .studio-overview) :is(h1, h2, .card-figure, .figure, [data-figure]) { color: inherit; }
-::selection { background: var(--selection, #ece8f8); color: var(--text-strong, inherit); }
+::selection { background: var(--selection, #e4e4ea); color: var(--text-strong, inherit); }
 .studio-page { min-height: 100vh; background: var(--background); }
 .studio-content { max-width: 1920px; margin: auto; padding: 30px 40px 64px; display: flex; flex-direction: column; gap: 26px; }
 .studio-welcome { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 5px 0 8px; }
@@ -275,7 +276,7 @@ html.app-studio[data-studio-density="compact"] :is([data-slot="dropdown-menu-ite
   .mobile-dock a[aria-current="page"] svg { stroke-width: 2.4; }
   /* The add button: a raised circle in the middle of the dock, the one action that is always a thumb away. */
   .mobile-dock .mobile-dock-add { background: none; }
-  .mobile-dock .mobile-dock-add > span { display: grid; place-items: center; width: 48px; height: 48px; margin-top: -18px; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--primary) 70%, transparent), 0 0 0 4px var(--background); }
+  .mobile-dock .mobile-dock-add > span { display: grid; place-items: center; width: 48px; height: 48px; margin-top: -18px; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); box-shadow: 0 0 0 4px var(--popover); }
 }
 
 
