@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
-import { Inter, Geist_Mono, Rubik } from "next/font/google";
+import { Geist_Mono, Rubik } from "next/font/google";
 import { getLocale, getMessages } from "next-intl/server";
 import { cookies } from "next/headers";
 import { PersistentShell, SidebarRoot } from "@/components/layout/app-shell";
@@ -17,9 +17,11 @@ import "@/components/dashboard/studio.css";
 import "./a11y.css";
 import { A11yProvider } from "@/components/a11y/a11y-menu";
 
-const inter = Inter({
+// Rubik everywhere: one face for Latin and Hebrew, so mixed lines (a Hebrew merchant in an English screen) sit on one rhythm.
+const inter = Rubik({
   variable: "--font-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "hebrew"],
+  display: "swap",
 });
 
 // Hebrew UI font; globals.css points the font variables at it under lang="he".
@@ -46,8 +48,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f4f6" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0b0e" },
+    { media: "(prefers-color-scheme: light)", color: "#e9eef8" },
+    { media: "(prefers-color-scheme: dark)", color: "#05070d" },
   ],
   viewportFit: "cover",
 };

@@ -236,6 +236,8 @@ export interface HomeRecentTransaction {
   kind: "expense" | "income" | "transfer";
   categoryName: string | null;
   categoryColor: string | null;
+  /** The category's icon name (see ICON_MAP); absent on payloads from older servers. */
+  categoryIcon?: string | null;
   /** For expenses: need, want or saving, from the category. */
   needType?: NeedType | null;
 }

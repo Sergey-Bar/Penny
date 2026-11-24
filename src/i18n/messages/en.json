@@ -5694,6 +5694,10 @@
     "menu": "Menu"
   },
   "board": {
+    "heroAdd": "Add",
+    "heroReview": "Review",
+    "heroSync": "Sync",
+    "heroLow": "Lowest ahead: {amount} on {date}",
     "open": "Open {title}",
     "balance": "Balance ahead",
     "noBalance": "No bank balance yet. Connect a bank to see your balance trend.",

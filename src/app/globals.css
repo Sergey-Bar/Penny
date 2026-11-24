@@ -55,6 +55,10 @@
   --color-press: var(--press, var(--accent));
   --color-strong: var(--text-strong, var(--foreground));
   --color-interactive: var(--border-interactive, var(--input));
+  --color-accent-c: var(--accent-color, var(--primary));
+  --color-pane: var(--pane, var(--card));
+  --color-pane-clear: var(--pane-clear, var(--muted));
+  --color-rim: var(--rim, var(--border));
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -286,7 +290,6 @@ html[lang="he"] {
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "ss01", "cv11";
   }
   html {
     @apply font-sans;

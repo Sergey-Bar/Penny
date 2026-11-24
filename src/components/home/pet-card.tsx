@@ -108,7 +108,13 @@ function usePet() {
 type PetState = NonNullable<ReturnType<typeof usePet>>;
 
 /** Pocket Pal in Home's purple card: just the face and a "+n" badge; tapping it opens what needs care. */
-export function PetHeroAside({ extra }: { extra?: React.ReactNode } = {}) {
+export function PetHeroAside({
+  extra,
+  px: fixed,
+}: {
+  extra?: React.ReactNode;
+  /** A set face size, for places where Pip is a small companion. */ px?: number;
+} = {}) {
   const p = usePet();
   const ref = useRef<HTMLSpanElement>(null);
   const [open, setOpen] = useState(false);
@@ -126,12 +132,12 @@ export function PetHeroAside({ extra }: { extra?: React.ReactNode } = {}) {
   }, [p == null]); // eslint-disable-line react-hooks/exhaustive-deps -- re-measure once the span exists
   if (!p) return null;
   // The aside is about a quarter of the width on phones, so the face shrinks with it.
-  const px = Math.round(PET_SIZES[p.pet.size] * (view.small ? 0.6 : 0.9));
+  const px = fixed ?? Math.round(PET_SIZES[p.pet.size] * (view.small ? 0.6 : 0.9));
   return (
     <span ref={ref} className="flex min-h-px min-w-px flex-col items-center">
       {view.shown && (
         <>
-          <PetButton p={p} px={px} onOpen={() => setOpen(true)} />
+          <PetButton p={p} px={px} onOpen={() => setOpen(true)} mini={fixed ? "sm" : undefined} />
           <PetSheet p={p} open={open} onOpenChange={setOpen} />
         </>
       )}
@@ -719,7 +725,9 @@ export function PetFace({
   const [theme] = useState(() =>
     typeof document === "undefined"
       ? undefined
-      : getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() ||
+      : // The accent, not the button colour: buttons are flat black or white, and a white face hides its own eyes.
+        getComputedStyle(document.documentElement).getPropertyValue("--accent-color").trim() ||
+        getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() ||
         undefined,
   );
   useEffect(() => {

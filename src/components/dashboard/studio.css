@@ -1,40 +1,49 @@
 /* One semantic colour set, paired for light and dark. The names on the left say what a colour is for;
    the shadcn names the components already use (--background, --card, --primary…) are mapped onto them below,
-   so nothing else has to change. Pairs that carry text are listed with their contrast in tests/theme-contrast.test.ts.
+   so nothing else has to change.
 
-   Light — daylight and precision: a soft neutral canvas, white where a surface is lifted, near-black text,
-   flat black for the primary action and the current selection. Colour is kept for data: green in, red out, and
-   one copper line for the chart (the penny). */
+   The look is glass: a soft field of light sits behind the whole app (see body::before below) and every surface is
+   a tinted pane over it with a hairline rim. Actions stay flat (black on light, white on dark); one blue accent
+   marks what is current, what is a link and what a chart draws.
+
+   Light: pale daylight behind white panes, near-black text. */
 :is(html.app-studio, .budget-studio) {
-  --canvas: #f4f4f6; --surface: #ffffff; --surface-raised: #ffffff;
-  --text: #15141a; --text-strong: #0b0a0f; --text-secondary: #55535f;
-  --divider: #e2e1e8; --border-interactive: #85838f;
-  --brand: #15141a; --brand-hover: #2e2d37; --brand-press: #44434f; --on-brand: #ffffff; --copper: #a2521d;
-  --focus: #15141a; --selection: #e4e4ea; --hover: #ebebef; --press: #dfdfe5;
-  --success: #17663a; --warning: #7d4400; --error: #b3261e;
+  --canvas: #e9eef8; --surface: #ffffff; --surface-raised: #ffffff;
+  --pane: rgb(255 255 255 / 62%); --pane-strong: rgb(255 255 255 / 90%); --pane-clear: rgb(255 255 255 / 34%);
+  --rim: rgb(255 255 255 / 72%); --rim-top: rgb(255 255 255 / 96%);
+  --field-1: #7fb0ff; --field-2: #8fe1f5; --field-3: #b9c8ff;
+  --text: #0f1728; --text-strong: #06122a; --text-secondary: #56607a;
+  --divider: rgb(10 30 80 / 10%); --border-interactive: #7c869c;
+  --brand: #0b0d12; --brand-hover: #262a33; --brand-press: #3a3f4a; --on-brand: #ffffff;
+  --accent-color: #1657ff; --accent-2: #0aa5e0;
+  --focus: #1657ff; --selection: rgb(22 87 255 / 11%); --hover: rgb(10 30 80 / 6%); --press: rgb(10 30 80 / 11%);
+  --success: #0a7d4a; --warning: #8a4b00; --error: #c4282b;
   color-scheme: light;
-  --studio-ring-start: #eaa77f; --studio-ring-end: #b9652f;
-  --chart-2: #2572a8; --chart-3: #23804a; --chart-4: #b23a6e; --chart-5: #a85f14;
-  --studio-hero: #1c1b22; --studio-glow: transparent;
-  --segmented: #e9e9ee; --segmented-thumb: #fff;
+  --studio-ring-start: #1657ff; --studio-ring-end: #0aa5e0;
+  --chart-2: #0aa5e0; --chart-3: #0a8f55; --chart-4: #d6456f; --chart-5: #d98a1a;
+  --studio-hero: #0f1728; --studio-glow: transparent;
+  --segmented: rgb(10 30 80 / 7%); --segmented-thumb: #fff;
   --ring-income: #6fdc8c; --ring-spending: #ff8fa3; --ring-savings: #5aa9ff;
-  --card-elevation: 0 1px 2px rgb(21 20 26 / 5%), 0 10px 26px -18px rgb(40 34 70 / 22%);
+  --card-elevation: inset 0 1px 0 rgb(255 255 255 / 60%), 0 30px 60px -36px rgb(20 50 120 / 36%);
 }
-/* Dark — depth and focus: a near-black neutral canvas, each layer a step lighter (a shadow would not show),
-   soft white for reading and pure white kept for the figure that matters; the primary action flips to flat white. */
+/* Dark: near-black with blue light behind smoked panes, soft white text, pure white for the figure that matters. */
 :is(html.app-studio, .budget-studio)[data-studio-theme="midnight"] {
-  --canvas: #0c0b0e; --surface: #16151a; --surface-raised: #1f1e25;
-  --text: #e7e5ec; --text-strong: #ffffff; --text-secondary: #aaa7b5;
-  --divider: #2a2931; --border-interactive: #777482;
-  --brand: #f2f1f5; --brand-hover: #ffffff; --brand-press: #d6d5dc; --on-brand: #0c0b0e; --copper: #e8a57c;
-  --focus: #f2f1f5; --selection: #2f2e38; --hover: #24232a; --press: #2d2c35;
-  --success: #7ad9a3; --warning: #efc18c; --error: #f79a92;
+  --canvas: #05070d; --surface: #121622; --surface-raised: #1a1f2e;
+  --pane: rgb(22 26 38 / 48%); --pane-strong: rgb(16 19 28 / 88%); --pane-clear: rgb(255 255 255 / 9%);
+  --rim: rgb(255 255 255 / 13%); --rim-top: rgb(255 255 255 / 28%);
+  --field-1: #1b4fe0; --field-2: #0e9fd8; --field-3: #0b2f8f;
+  --text: #eef0f6; --text-strong: #ffffff; --text-secondary: #a3acbf;
+  --divider: rgb(255 255 255 / 11%); --border-interactive: #77819a;
+  --brand: #ffffff; --brand-hover: #e6e9f0; --brand-press: #cdd2dc; --on-brand: #05070d;
+  --accent-color: #5b97ff; --accent-2: #38c6f4;
+  --focus: #7fb0ff; --selection: rgb(91 151 255 / 18%); --hover: rgb(255 255 255 / 8%); --press: rgb(255 255 255 / 14%);
+  --success: #3ddc97; --warning: #f0c27b; --error: #ff7b7b;
   color-scheme: dark;
-  --studio-ring-start: #f0c4a4; --studio-ring-end: #d08a5c;
-  --chart-2: #6fb3d1; --chart-3: #6fca9a; --chart-4: #ea8fb8; --chart-5: #f0b26b;
-  --studio-hero: #16151a; --studio-glow: transparent;
-  --segmented: #24232a; --segmented-thumb: #3a3944;
-  --card-elevation: 0 0 0 transparent;
+  --studio-ring-start: #5b97ff; --studio-ring-end: #38c6f4;
+  --chart-2: #38c6f4; --chart-3: #3ddc97; --chart-4: #ff8fb1; --chart-5: #f0b26b;
+  --studio-hero: #121622; --studio-glow: transparent;
+  --segmented: rgb(255 255 255 / 9%); --segmented-thumb: rgb(255 255 255 / 18%);
+  --card-elevation: inset 0 1px 0 rgb(255 255 255 / 9%), 0 30px 60px -34px rgb(0 0 0 / 70%);
 }
 :is(html.app-studio, .budget-studio) {
   --background: var(--canvas); --foreground: var(--text);
@@ -47,17 +56,20 @@
   --primary: var(--brand); --primary-foreground: var(--on-brand); --action: var(--brand); --ring: var(--focus);
   --destructive: var(--error); --destructive-foreground: var(--surface);
   --status-on-track: var(--success); --status-heads-up: var(--warning); --status-over: var(--error);
-  --status-plenty-left: var(--text-secondary); --expense: var(--error);
+  --status-plenty-left: var(--accent-color); --expense: var(--error);
   --sidebar: var(--canvas); --sidebar-foreground: var(--text); --sidebar-primary: var(--brand);
   --sidebar-primary-foreground: var(--on-brand); --sidebar-accent: var(--selection);
   --sidebar-accent-foreground: var(--text-strong); --sidebar-border: var(--divider); --sidebar-ring: var(--focus);
-  --chart-1: var(--copper); --studio-accent-soft: var(--selection);
+  --chart-1: var(--accent-color); --studio-accent-soft: var(--selection);
   color: var(--text);
 }
 /* The figure that matters reads a step brighter than the text around it. */
 :is(html.app-studio, .budget-studio) :is(h1, h2, .card-figure, .figure, [data-figure]) { color: var(--text-strong); }
 :is(html.app-studio, .budget-studio) :is(.wallet, .studio-overview) :is(h1, h2, .card-figure, .figure, [data-figure]) { color: inherit; }
-::selection { background: var(--selection, #e4e4ea); color: var(--text-strong, inherit); }
+::selection { background: var(--selection, #dbe6ff); color: var(--text-strong, inherit); }
+/* Links and the current item take the accent; filled buttons keep the flat brand colour (bg-primary). */
+html.app-studio :is(.text-primary, .hover\:text-primary:hover, .card-action) { color: var(--accent-color); }
+html.app-studio :is(.bg-primary, [data-slot="button"]) :is(.text-primary) { color: inherit; }
 .studio-page { min-height: 100vh; background: var(--background); }
 .studio-content { max-width: 1920px; margin: auto; padding: 30px 40px 64px; display: flex; flex-direction: column; gap: 26px; }
 .studio-welcome { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 5px 0 8px; }
@@ -264,15 +276,15 @@ html.app-studio[data-studio-density="compact"] :is([data-slot="dropdown-menu-ite
   #main-content.mobile-dock-content { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   /* iOS tab bar: translucent, hairline on top, the current tab tinted (no pill). */
   /* A floating capsule instead of a glued bar: the page scrolls under it and it reads as hardware. */
-  .mobile-dock { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); position: fixed; bottom: calc(10px + env(safe-area-inset-bottom)); inset-inline: 10px; z-index: 30; background: var(--popover); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 16px 40px -20px rgb(20 18 43 / 45%), 0 2px 8px -4px rgb(20 18 43 / 20%); padding: 5px; }
-  html.dark .mobile-dock { box-shadow: none; }
+  .mobile-dock { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); position: fixed; bottom: calc(10px + env(safe-area-inset-bottom)); inset-inline: 10px; z-index: 30; background: var(--pane-strong); -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8); border: 1px solid var(--rim); border-top-color: var(--rim-top); border-radius: 24px; box-shadow: 0 20px 40px -18px rgb(0 0 0 / 45%); padding: 5px; }
   .mobile-dock :is(a, button) { position: relative; min-width: 0; transition: color var(--t-press) ease, background-color var(--t-press) ease, transform var(--t-press) ease; }
   .mobile-dock :is(a, button) > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mobile-dock :is(a, button):active { transform: scale(0.94); }
   .mobile-dock a[aria-current="page"] { border-radius: 18px; }
   .mobile-dock :is(a, button) { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--muted-foreground); font-size: 0.6875rem; font-weight: 500; line-height: 1.1; border-radius: 12px; -webkit-tap-highlight-color: transparent; }
   .mobile-dock :is(a, button):focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-  .mobile-dock a[aria-current="page"] { color: var(--primary); background: var(--selection); font-weight: 600; }
+  .mobile-dock a[aria-current="page"] { color: var(--text-strong); font-weight: 600; }
+  .mobile-dock a[aria-current="page"] svg { color: var(--accent-color); }
   .mobile-dock a[aria-current="page"] svg { stroke-width: 2.4; }
   /* The add button: a raised circle in the middle of the dock, the one action that is always a thumb away. */
   .mobile-dock .mobile-dock-add { background: none; }
@@ -280,30 +292,40 @@ html.app-studio[data-studio-density="compact"] :is([data-slot="dropdown-menu-ite
 }
 
 
-/* The canvas is flat: a page of figures reads better on paper than on a gradient. */
-html.app-studio body { background: var(--background); }
+/* The field of light every pane sits on. Fixed and already soft, so content panes only need a tint to read as glass;
+   real blur is kept for the chrome that content scrolls under (sidebar, header, dock, sheets). */
+html.app-studio body { background: var(--canvas); }
+html.app-studio body::before { content: ""; position: fixed; inset: -10%; z-index: -1; pointer-events: none; filter: blur(70px) saturate(1.2); opacity: 0.9;
+  background: radial-gradient(38% 42% at 30% 8%, var(--field-1), transparent 70%), radial-gradient(34% 40% at 78% 22%, var(--field-2), transparent 70%), radial-gradient(40% 44% at 62% 92%, var(--field-3), transparent 72%), radial-gradient(30% 34% at 6% 78%, var(--field-2), transparent 70%); }
+@media print { html.app-studio body::before { display: none; } }
+/* A pane: tint, hairline rim that is brighter along the top, a soft drop. */
+html.app-studio :is(.card-surface, .studio-panel, [data-slot="card"]) { background: var(--pane); border: 1px solid var(--rim); border-top-color: var(--rim-top); box-shadow: var(--card-elevation); }
 @supports (backdrop-filter: blur(1px)) {
   /* Chrome keeps its blur; content cards stay crisp, because a page of frosted panels reads as haze. */
   html.app-studio [data-slot="sidebar-inner"] {
-    background-color: color-mix(in srgb, var(--card) 74%, transparent);
-    -webkit-backdrop-filter: blur(22px) saturate(1.5);
-    backdrop-filter: blur(22px) saturate(1.5);
+    background-color: var(--pane);
+    -webkit-backdrop-filter: blur(34px) saturate(1.7);
+    backdrop-filter: blur(34px) saturate(1.7);
   }
   /* Floating layers sit over busy content, so they stay near-opaque to keep text readable. */
   html.app-studio .glass {
-    background-color: color-mix(in srgb, var(--card) 90%, transparent);
-    -webkit-backdrop-filter: blur(22px) saturate(1.5);
-    backdrop-filter: blur(22px) saturate(1.5);
+    background-color: var(--pane-strong);
+    -webkit-backdrop-filter: blur(30px) saturate(1.7);
+    backdrop-filter: blur(30px) saturate(1.7);
   }
   /* Sticky cells pin over scrolling content: keep them solid. */
   html.app-studio .bg-card.sticky { background-color: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
-  html.app-studio .bg-card:not(.wallet) {
-    border-color: color-mix(in srgb, var(--foreground) 8%, transparent);
+  html.app-studio .bg-card:not(.wallet):not(.sticky) {
+    background-color: var(--pane);
+    border-color: var(--rim);
+    border-top-color: var(--rim-top);
     box-shadow: var(--card-elevation);
   }
 }
+/* Reduced transparency: panes go solid, the field goes away, nothing else changes. */
 @media (prefers-reduced-transparency: reduce) {
-  html.app-studio :is(.bg-card:not(.wallet), [data-slot="sidebar-inner"], .glass) { background-color: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  html.app-studio :is(.bg-card:not(.wallet), .card-surface, .studio-panel, [data-slot="card"], [data-slot="sidebar-inner"], .glass, .mobile-dock, .home-hero) { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  html.app-studio body::before { display: none; }
 }
 
 /* Inline editor in Settings › Appearance: no sheet chrome, natural height. */
@@ -313,7 +335,7 @@ html.app-studio body { background: var(--background); }
 .studio-editor-inline button:disabled { opacity: .5; cursor: not-allowed; }
 
 /* The pinned page header: light tint and blur so it reads as part of the page, not a white strip. */
-html.app-studio .header-bar { background-color: color-mix(in srgb, var(--background) 55%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
+html.app-studio .header-bar { background-color: var(--pane); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
 .budget-studio.studio-editor.studio-editor-inline { width: 100%; max-width: none; height: auto; background: transparent; }
 /* Settings › Appearance: iOS grouped rows — white card, hairline-separated rows, no grey panels. */
 .studio-editor-inline .studio-group { border-radius: 16px; padding: 0 16px; }
@@ -397,3 +419,17 @@ html.app-studio .header-bar { background-color: color-mix(in srgb, var(--backgro
 .page-hero-compact { padding-block: 18px; }
 .page-hero-compact .studio-amount { font-size: clamp(28px, 3vw, 38px); }
 .page-hero-compact .studio-balance { padding-block: 4px; }
+
+/* ---- Home hero: the clearest pane on the page. The light behind it is its colour. ---- */
+.home-hero { position: relative; min-width: 0; overflow: hidden; border-radius: 30px; padding: 18px 20px 0; text-align: center; color: var(--text); background: linear-gradient(180deg, var(--pane-clear), transparent 46%), var(--pane); border: 1px solid var(--rim); border-top-color: var(--rim-top); box-shadow: var(--card-elevation); -webkit-backdrop-filter: blur(34px) saturate(1.7); backdrop-filter: blur(34px) saturate(1.7); padding-bottom: 20px; }
+.home-hero:has(.hero-chart) { padding-bottom: 0; }
+.hero-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; border-radius: 999px; background: var(--pane-clear); border: 1px solid var(--rim); border-top-color: var(--rim-top); color: var(--text-strong); }
+.hero-pill select { height: 34px; padding-inline-start: 14px; border-radius: 999px; }
+.hero-circle { position: relative; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--pane-clear); border: 1px solid var(--rim); border-top-color: var(--rim-top); color: var(--text-strong); transition: background-color var(--t-press) ease; }
+.hero-circle.is-primary { background: var(--brand); color: var(--on-brand); border-color: transparent; }
+@media (hover: hover) { .group:hover .hero-circle:not(.is-primary) { background: var(--press); } .group:hover .hero-circle.is-primary { background: var(--brand-hover); } }
+.group:active .hero-circle:not(.is-primary) { background: var(--press); }
+.hero-badge { position: absolute; top: -4px; inset-inline-end: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center; font-size: 11px; font-weight: 600; background: var(--error); color: var(--surface); }
+.hero-chart { display: block; margin: 22px -20px 0; padding: 0; border-top: 1px solid var(--divider); border-radius: 0 0 30px 30px; }
+.hero-chart:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+.home-hero [data-slot="month-nav"], .home-hero .month-nav { background: transparent; }
