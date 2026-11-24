@@ -46,6 +46,7 @@ import {
   Eye,
   X,
   Plus,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { signedShekels } from "@/lib/money";
@@ -157,6 +158,7 @@ export function TransactionsTable({
 }: TransactionsTableProps) {
   const catBrowser = useCategoryBrowser(categories);
   const catListId = useId();
+  const filtersId = useId();
   const tManual = useTranslations("manualTxn");
   const tTags = useTranslations("tags");
   const t = useTranslations("transactions");
@@ -392,6 +394,8 @@ export function TransactionsTable({
   );
 
   const hasActiveFilters = categoryFilter.length > 0 || accountFilter.length > 0;
+  // On a phone the filters fold behind one button, so the list starts on the first screen; open if one is already set.
+  const [filtersOpen, setFiltersOpen] = useState(hasActiveFilters);
 
   const bcp = he ? "he-IL" : "en-IL";
   const dayFmt = new Intl.DateTimeFormat(bcp, { weekday: "short", timeZone: "UTC" });
@@ -472,68 +476,88 @@ export function TransactionsTable({
                 onSearchChange(e.target.value);
                 onPageChange(0);
               }}
-              className="h-8 w-[200px] max-w-full max-sm:w-full"
+              className="h-8 w-[200px] max-w-full max-sm:h-11 max-sm:min-w-0 max-sm:flex-1"
             />
-            {showAccountFilter ? (
+            <button
+              type="button"
+              aria-expanded={filtersOpen}
+              aria-controls={filtersId}
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className={`press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:hidden ${filtersOpen || hasActiveFilters ? "border-primary bg-selection text-strong" : "border-interactive active:bg-press"}`}
+            >
+              <SlidersHorizontal className="size-4" aria-hidden />
+              {t("filters")}
+              {hasActiveFilters ? (
+                <span className="tabular-nums">
+                  {(categoryFilter.length > 0 ? 1 : 0) + (accountFilter.length > 0 ? 1 : 0)}
+                </span>
+              ) : null}
+            </button>
+            <div
+              id={filtersId}
+              className={`flex min-w-0 flex-wrap items-center gap-2 max-sm:w-full sm:contents ${filtersOpen ? "" : "max-sm:hidden"}`}
+            >
+              {showAccountFilter ? (
+                <TransactionMultiFilter
+                  label={t("filterAccount")}
+                  icon={Wallet}
+                  displayValue={accountDisplayValue}
+                  triggerClassName="w-[200px]"
+                  selectAllLabel={t("filterSelectAll")}
+                  clearLabel={t("filterClearSelection")}
+                  onSelectAll={() => onAccountFilterChange(allAccountIds)}
+                  onClear={() => onAccountFilterChange([])}
+                >
+                  {accountOptions.map(({ integration, info, primary }) => (
+                    <MultiFilterOption
+                      key={integration.id}
+                      selected={accountFilter.includes(integration.id)}
+                      onToggle={() =>
+                        onAccountFilterChange(toggleFilterId(accountFilter, integration.id))
+                      }
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        {info ? (
+                          <ProviderBadge
+                            color={info.color}
+                            name={primary}
+                            domain={info.domain}
+                            size={16}
+                            radius={5}
+                          />
+                        ) : null}
+                        <span className="truncate" title={primary}>
+                          {primary}
+                        </span>
+                      </div>
+                    </MultiFilterOption>
+                  ))}
+                </TransactionMultiFilter>
+              ) : null}
               <TransactionMultiFilter
-                label={t("filterAccount")}
-                icon={Wallet}
-                displayValue={accountDisplayValue}
-                triggerClassName="w-[200px]"
+                label={t("filterCategory")}
+                icon={Tags}
+                displayValue={categoryDisplayValue}
                 selectAllLabel={t("filterSelectAll")}
                 clearLabel={t("filterClearSelection")}
-                onSelectAll={() => onAccountFilterChange(allAccountIds)}
-                onClear={() => onAccountFilterChange([])}
+                onSelectAll={() => onCategoryFilterChange(allCategoryIds)}
+                onClear={() => onCategoryFilterChange([])}
+                header={<CategoryBrowserHeader browser={catBrowser} listId={catListId} />}
+                onOpenChange={catBrowser.onOpenChange}
+                onListKeyDown={categoryListKeyDown}
               >
-                {accountOptions.map(({ integration, info, primary }) => (
-                  <MultiFilterOption
-                    key={integration.id}
-                    selected={accountFilter.includes(integration.id)}
-                    onToggle={() =>
-                      onAccountFilterChange(toggleFilterId(accountFilter, integration.id))
-                    }
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      {info ? (
-                        <ProviderBadge
-                          color={info.color}
-                          name={primary}
-                          domain={info.domain}
-                          size={16}
-                          radius={5}
-                        />
-                      ) : null}
-                      <span className="truncate" title={primary}>
-                        {primary}
-                      </span>
-                    </div>
-                  </MultiFilterOption>
-                ))}
+                <CategorySectionList
+                  browser={catBrowser}
+                  listId={catListId}
+                  renderItem={(c, indented) => catOption(c, indented)}
+                  renderTitle={(sec) => {
+                    const parent = categories.find((c) => c.id === sec.parentId);
+                    return parent ? catOption(parent, false, true) : null;
+                  }}
+                />
               </TransactionMultiFilter>
-            ) : null}
-            <TransactionMultiFilter
-              label={t("filterCategory")}
-              icon={Tags}
-              displayValue={categoryDisplayValue}
-              selectAllLabel={t("filterSelectAll")}
-              clearLabel={t("filterClearSelection")}
-              onSelectAll={() => onCategoryFilterChange(allCategoryIds)}
-              onClear={() => onCategoryFilterChange([])}
-              header={<CategoryBrowserHeader browser={catBrowser} listId={catListId} />}
-              onOpenChange={catBrowser.onOpenChange}
-              onListKeyDown={categoryListKeyDown}
-            >
-              <CategorySectionList
-                browser={catBrowser}
-                listId={catListId}
-                renderItem={(c, indented) => catOption(c, indented)}
-                renderTitle={(sec) => {
-                  const parent = categories.find((c) => c.id === sec.parentId);
-                  return parent ? catOption(parent, false, true) : null;
-                }}
-              />
-            </TransactionMultiFilter>
-            {toolbarExtra}
+              {toolbarExtra}
+            </div>
             {onAdd ? (
               <IconButton
                 label={tManual("addTitle")}

@@ -46,8 +46,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f3fb" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0a1a" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f4f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0b0e" },
   ],
   viewportFit: "cover",
 };
@@ -73,10 +73,11 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Applies the saved studio theme before first paint, so a refresh never flashes another theme. Mirrors StudioProvider. */}
+        {/* Applies the theme before first paint, so a cold load, a direct link or a refresh never flashes another theme:
+            the saved choice if there is one, otherwise the device's (System). Mirrors StudioProvider. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var p=JSON.parse(localStorage.getItem("shekel.budget-studio.v1")||"null");if(p){var r=document.documentElement,t=p.theme==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"midnight":"pearl"):(p.theme==="midnight"?"midnight":"pearl");localStorage.setItem("theme",p.theme==="system"?"system":t==="midnight"?"dark":"light");r.classList.add("app-studio");r.classList.toggle("dark",t==="midnight");r.style.colorScheme=t==="midnight"?"dark":"light";r.dataset.studioTheme=t;r.dataset.studioAccent="violet";r.dataset.studioDensity=p.density;r.dataset.studioMotion=String(p.motion);r.dataset.studioCustom="false"}}catch(e){}`,
+            __html: `(function(){var r=document.documentElement,p={},l=null;try{p=JSON.parse(localStorage.getItem("shekel.budget-studio.v1")||"null")||{};l=localStorage.getItem("theme")}catch(e){}var c=p.theme==="midnight"||p.theme==="pearl"||p.theme==="system"?p.theme:p.theme==="glass"?"pearl":l==="dark"?"midnight":l==="light"?"pearl":"system",t=c==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"midnight":"pearl"):c;try{localStorage.setItem("theme",c==="system"?"system":t==="midnight"?"dark":"light")}catch(e){}r.classList.add("app-studio");r.classList.toggle("dark",t==="midnight");r.style.colorScheme=t==="midnight"?"dark":"light";r.dataset.studioTheme=t;r.dataset.studioAccent="violet";r.dataset.studioDensity=p.density==="compact"?"compact":"comfortable";r.dataset.studioMotion=String(p.motion!==false);r.dataset.studioCustom="false"})()`,
           }}
         />
         {/* Accessibility menu choices, before first paint (mirrors A11yProvider). */}

@@ -48,6 +48,13 @@
   --color-action: var(--action);
   --color-status-plenty-left: var(--status-plenty-left);
   --color-expense: var(--expense);
+  --color-brand-hover: var(--brand-hover, var(--primary));
+  --color-brand-press: var(--brand-press, var(--primary));
+  --color-selection: var(--selection, var(--accent));
+  --color-hover: var(--hover, var(--accent));
+  --color-press: var(--press, var(--accent));
+  --color-strong: var(--text-strong, var(--foreground));
+  --color-interactive: var(--border-interactive, var(--input));
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -252,21 +259,6 @@
     0 24px 60px -34px rgb(14 11 30 / 85%),
     0 2px 6px rgb(20 18 43 / 16%);
 }
-/* Aurora: three slow pools of light drifting behind the figure, so the card breathes instead of sitting flat. */
-.wallet::before {
-  content: "";
-  position: absolute;
-  inset: -35%;
-  background:
-    radial-gradient(38% 44% at 28% 18%, #a07bff 0%, transparent 68%),
-    radial-gradient(34% 40% at 78% 72%, #ff77c8 0%, transparent 66%),
-    radial-gradient(30% 36% at 62% 8%, #5fd4ff 0%, transparent 70%);
-  opacity: 0.55;
-  filter: blur(42px);
-  z-index: -2;
-  pointer-events: none;
-  animation: auroraDrift 26s ease-in-out infinite alternate;
-}
 /* A whisper of film grain: kills the plastic look of a pure CSS gradient. */
 .wallet::after {
   content: "";
@@ -279,16 +271,8 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
   background-size: 180px 180px;
 }
-@keyframes auroraDrift {
-  0% { transform: translate3d(-2%, -1%, 0) scale(1); }
-  50% { transform: translate3d(2%, 2%, 0) scale(1.06); }
-  100% { transform: translate3d(-1%, 3%, 0) scale(1.02); }
-}
 @media (prefers-reduced-transparency: reduce) {
-  .wallet::before, .wallet::after { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .wallet::before { animation: none; }
+  .wallet::after { display: none; }
 }
 
 /* Tesla-style figures: big, thin, tight. */
@@ -325,17 +309,6 @@ html[lang="he"] {
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "ss01", "cv11";
-    /* Two pools of colour behind the whole app: depth without a picture. */
-    background-image:
-      radial-gradient(60rem 40rem at 0% 0%, color-mix(in oklab, var(--primary) 9%, transparent), transparent 70%),
-      radial-gradient(50rem 36rem at 100% 100%, color-mix(in oklab, var(--chart-4) 7%, transparent), transparent 72%);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-  }
-  html.dark body {
-    background-image:
-      radial-gradient(60rem 40rem at 0% 0%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 70%),
-      radial-gradient(50rem 36rem at 100% 100%, color-mix(in oklab, var(--chart-4) 9%, transparent), transparent 72%);
   }
   html {
     @apply font-sans;
@@ -514,31 +487,36 @@ html[lang="he"] .text-display {
 /* ---- Motion and surface primitives (2026 pass) ------------------------------------ */
 @keyframes riseIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-/* Staggered entrance: set --i on a wrapper to offset it. */
-.rise-in { animation: riseIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both; animation-delay: calc(var(--i, 0) * 45ms); }
-.press { transition: transform 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out; }
+/* Motion vocabulary. Three things move, each for a reason:
+     press  — a control answers the finger at once (--t-press, scale only, never delays the action);
+     open   — a surface grows from where it was asked for and folds back to it (--dur-open, interruptible transitions);
+     page   — a route change is a short fade, no travel, so going back lands where you were.
+   Nothing loops, and content does not re-enter with a flourish each time a screen is opened. */
+:root { --t-press: 90ms; }
+/* Was a staggered entrance on every visit; a screen you open twenty times a day should simply be there. */
+.rise-in { animation: none; }
+.press { transition: transform var(--t-press) ease-out, background-color var(--t-press) ease-out, border-color var(--t-press) ease-out; -webkit-tap-highlight-color: transparent; }
 .press:active { transform: scale(0.97); }
-.lift { transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; }
-.lift:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -18px rgb(20 18 43 / 55%); }
-html.dark .lift:hover { box-shadow: 0 14px 30px -18px rgb(0 0 0 / 70%); }
+/* Hover used to raise the card; a card that moves under the pointer makes its targets harder to hit. */
+.lift { transition: border-color var(--t-press) ease-out, background-color var(--t-press) ease-out; }
+@media (hover: hover) { .lift:hover { border-color: var(--border-interactive, var(--input)); } }
 @media (prefers-reduced-motion: reduce) {
-  .rise-in { animation: none; }
-  .press:active, .lift:hover { transform: none; }
+  .press:active { transform: none; }
 }
 
 /* ---- Open and close: one soft curve for the whole app ----------------------------- */
-:root { --ease-soft: cubic-bezier(0.22, 1, 0.36, 1); --dur-open: 300ms; interpolate-size: allow-keywords; }
+:root { --ease-soft: cubic-bezier(0.22, 1, 0.36, 1); --dur-open: 220ms; interpolate-size: allow-keywords; }
 /* Every <details> (account groups, lists) opens and closes by height instead of jumping. */
-details::details-content { block-size: 0; overflow: clip; opacity: 0; transition: block-size var(--dur-open) var(--ease-soft), opacity 220ms ease, content-visibility var(--dur-open) allow-discrete; }
+details::details-content { block-size: 0; overflow: clip; opacity: 0; transition: block-size var(--dur-open) var(--ease-soft), opacity 160ms ease, content-visibility var(--dur-open) allow-discrete; }
 details[open]::details-content { block-size: auto; opacity: 1; }
 /* A region that expands and folds (menu groups, category groups): its row grows from 0 to its height.
    Pair with `inert` when closed so its links leave the tab order. */
-.reveal { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--dur-open) var(--ease-soft), opacity 220ms ease; }
+.reveal { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--dur-open) var(--ease-soft), opacity 160ms ease; }
 .reveal[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
 .reveal > * { min-height: 0; overflow: hidden; } /* keep padding and margins on its child, or they show when closed */
-/* Each page settles in: a short fade and lift, never a slide across. */
-@keyframes pageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.page-in { animation: pageIn 380ms var(--ease-soft) both; }
+/* A route change: a short fade, no travel. */
+@keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+.page-in { animation: pageIn 140ms ease-out both; }
 @media (prefers-reduced-motion: reduce) {
   details::details-content, .reveal { transition: none; }
   .page-in { animation: none; }
@@ -558,12 +536,10 @@ details[open]::details-content { block-size: auto; opacity: 1; }
   line-height: 1.15;
   border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
   background: color-mix(in oklab, var(--card) 92%, transparent);
-  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.55), transparent);
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--foreground);
 }
-html.dark .quick-chip { background-image: linear-gradient(180deg, rgb(255 255 255 / 0.06), transparent); }
 .quick-chip:hover { border-color: color-mix(in oklab, var(--primary) 45%, var(--border)); }
 .quick-chip svg { color: var(--primary); }
 @media (min-width: 40rem) {

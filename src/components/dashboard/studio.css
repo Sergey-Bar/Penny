@@ -1,40 +1,62 @@
-/* Neutral graphite canvas, one violet accent, cards that separate by shadow rather than tint:
-   the calm surface language a figures-first money app needs. Every text pair here clears 4.5:1. */
-/* Light: a near-white canvas, white cards that separate by a hairline and a soft shadow, one violet.
-   Every text pair clears 4.5:1 (muted text on the canvas, violet text and white-on-violet). */
+/* One semantic colour set, paired for light and dark. The names on the left say what a colour is for;
+   the shadcn names the components already use (--background, --card, --primary…) are mapped onto them below,
+   so nothing else has to change. Pairs that carry text are listed with their contrast in tests/theme-contrast.test.ts.
+
+   Light — daylight and precision: a soft neutral canvas, white where a surface is lifted, near-black text,
+   violet only for the primary action, the current selection and emphasis. */
 :is(html.app-studio, .budget-studio) {
-  --background: #fbfbfd; --foreground: #17151f; --card: #fff; --card-foreground: #17151f;
-  --popover: #fff; --popover-foreground: #17151f; --muted: #efeff2; --muted-foreground: #615e74;
-  --border: #e6e5ee; --secondary: #efeff2; --secondary-foreground: #17151f;
-  --accent: #efeff3; --accent-foreground: #17151f; --primary: #7355be; --primary-foreground: #fff;
-  --ring: #7355be; --action: #6a4bb5; --studio-ring-start: #b9a6f0; --studio-ring-end: #7355be;
-  --input: #827e93; --destructive: #c0392b;
-  --sidebar: #fbfbfd; --sidebar-foreground: var(--foreground); --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground); --sidebar-accent: #efeff3;
-  --sidebar-accent-foreground: var(--foreground); --sidebar-border: var(--border); --sidebar-ring: var(--ring);
-  --chart-1: var(--primary); --chart-2: #2d7fb8; --chart-3: #2a8d52; --chart-4: #c2457a; --chart-5: #d9822b;
-  --studio-hero: #1f1b2e; --studio-glow: #8b6fe0; --studio-accent-soft: #f0ecfb;
-  --status-on-track: #1f7a46; --status-over: #b3261e; --status-heads-up: #8a4b00;
-  --status-plenty-left: #6a4bb5; --expense: #c0392b; --segmented: #efeff2; --segmented-thumb: #fff;
+  --canvas: #f4f4f6; --surface: #ffffff; --surface-raised: #ffffff;
+  --text: #15141a; --text-strong: #0b0a0f; --text-secondary: #55535f;
+  --divider: #e2e1e8; --border-interactive: #85838f;
+  --brand: #5a3fb3; --brand-hover: #4c3399; --brand-press: #40297f; --on-brand: #ffffff;
+  --focus: #5a3fb3; --selection: #ece8f8; --hover: #ebebef; --press: #dfdfe5;
+  --success: #17663a; --warning: #7d4400; --error: #b3261e;
+  color-scheme: light;
+  --studio-ring-start: #b9a6f0; --studio-ring-end: #7355be;
+  --chart-2: #2572a8; --chart-3: #23804a; --chart-4: #b23a6e; --chart-5: #a85f14;
+  --studio-hero: #1c1b22; --studio-glow: #6f55c9;
+  --segmented: #e9e9ee; --segmented-thumb: #fff;
   --ring-income: #6fdc8c; --ring-spending: #ff8fa3; --ring-savings: #5aa9ff;
-  --card-elevation: 0 1px 2px rgb(23 21 31 / 4%), 0 8px 24px -16px rgb(40 30 80 / 14%);
-  color: var(--foreground); color-scheme: light;
+  --card-elevation: 0 1px 2px rgb(21 20 26 / 5%), 0 10px 26px -18px rgb(40 34 70 / 22%);
 }
-/* Dark: a warm, almost-black canvas (a screening room, not a grey office), cards one step up, a lighter violet
-   so links and labels stay readable on it. */
+/* Dark — depth and focus: a near-black neutral canvas, each layer a step lighter (a shadow would not show),
+   soft white for reading and pure white kept for the figure that matters, a lighter violet that carries dark text. */
 :is(html.app-studio, .budget-studio)[data-studio-theme="midnight"] {
-  --background: #0b0908; --foreground: #f5f3f0; --card: #1b1917; --card-foreground: #f5f3f0;
-  --popover: #201d1b; --popover-foreground: #f5f3f0; --muted: #282624; --muted-foreground: #a9a6a1;
-  --border: #2e2b28; --secondary: #282624; --secondary-foreground: #f5f3f0; --accent: #2a2725; --accent-foreground: #f5f3f0;
-  --primary: #a58cf0; --primary-foreground: #120e1f; --ring: #a58cf0; --action: #a58cf0; --studio-ring-start: #a58cf0;
-  --sidebar: #0b0908; --sidebar-accent: #221f1d;
-  --studio-hero: #1b1917; --studio-glow: #8264cd; --studio-accent-soft: #241f30;
-  --status-on-track: #79d9a2; --status-over: #ff9aa8; --status-heads-up: #efc18c; --expense: #f2938a;
-  --input: #7d7a75; --destructive: #f2938a; --destructive-foreground: #1b0f0d; --status-plenty-left: #a58cf0;
+  --canvas: #0c0b0e; --surface: #16151a; --surface-raised: #1f1e25;
+  --text: #e7e5ec; --text-strong: #ffffff; --text-secondary: #aaa7b5;
+  --divider: #2a2931; --border-interactive: #777482;
+  --brand: #b3a1f4; --brand-hover: #c4b6f8; --brand-press: #a08be9; --on-brand: #15102a;
+  --focus: #c4b6f8; --selection: #231f33; --hover: #24232a; --press: #2d2c35;
+  --success: #7ad9a3; --warning: #efc18c; --error: #f79a92;
+  color-scheme: dark;
+  --studio-ring-start: #b3a1f4; --studio-ring-end: #8f76e6;
   --chart-2: #6fb3d1; --chart-3: #6fca9a; --chart-4: #ea8fb8; --chart-5: #f0b26b;
-  --segmented: #282624; --segmented-thumb: #3a3633; color-scheme: dark;
-  --card-elevation: 0 1px 0 rgb(255 255 255 / 3%) inset, 0 14px 30px -22px rgb(0 0 0 / 80%);
+  --studio-hero: #16151a; --studio-glow: #6a52c4;
+  --segmented: #24232a; --segmented-thumb: #3a3944;
+  --card-elevation: 0 0 0 transparent;
 }
+:is(html.app-studio, .budget-studio) {
+  --background: var(--canvas); --foreground: var(--text);
+  --card: var(--surface); --card-foreground: var(--text);
+  --popover: var(--surface-raised); --popover-foreground: var(--text);
+  --muted: var(--hover); --muted-foreground: var(--text-secondary);
+  --secondary: var(--hover); --secondary-foreground: var(--text);
+  --accent: var(--hover); --accent-foreground: var(--text);
+  --border: var(--divider); --input: var(--border-interactive);
+  --primary: var(--brand); --primary-foreground: var(--on-brand); --action: var(--brand); --ring: var(--focus);
+  --destructive: var(--error); --destructive-foreground: var(--surface);
+  --status-on-track: var(--success); --status-heads-up: var(--warning); --status-over: var(--error);
+  --status-plenty-left: var(--brand); --expense: var(--error);
+  --sidebar: var(--canvas); --sidebar-foreground: var(--text); --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--on-brand); --sidebar-accent: var(--selection);
+  --sidebar-accent-foreground: var(--text-strong); --sidebar-border: var(--divider); --sidebar-ring: var(--focus);
+  --chart-1: var(--brand); --studio-accent-soft: var(--selection);
+  color: var(--text);
+}
+/* The figure that matters reads a step brighter than the text around it. */
+:is(html.app-studio, .budget-studio) :is(h1, h2, .card-figure, .figure, [data-figure]) { color: var(--text-strong); }
+:is(html.app-studio, .budget-studio) :is(.wallet, .studio-overview) :is(h1, h2, .card-figure, .figure, [data-figure]) { color: inherit; }
+::selection { background: var(--selection, #ece8f8); color: var(--text-strong, inherit); }
 .studio-page { min-height: 100vh; background: var(--background); }
 .studio-content { max-width: 1920px; margin: auto; padding: 30px 40px 64px; display: flex; flex-direction: column; gap: 26px; }
 .studio-welcome { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 5px 0 8px; }
@@ -241,14 +263,15 @@ html.app-studio[data-studio-density="compact"] :is([data-slot="dropdown-menu-ite
   #main-content.mobile-dock-content { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   /* iOS tab bar: translucent, hairline on top, the current tab tinted (no pill). */
   /* A floating capsule instead of a glued bar: the page scrolls under it and it reads as hardware. */
-  .mobile-dock { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); position: fixed; bottom: calc(10px + env(safe-area-inset-bottom)); inset-inline: 10px; z-index: 30; background: color-mix(in srgb, var(--card) 82%, transparent); backdrop-filter: saturate(190%) blur(26px); -webkit-backdrop-filter: saturate(190%) blur(26px); border: 1px solid color-mix(in srgb, var(--border) 90%, transparent); border-radius: 24px; box-shadow: 0 16px 40px -20px rgb(20 18 43 / 45%), 0 2px 8px -4px rgb(20 18 43 / 20%); padding: 5px; }
-  html.dark .mobile-dock { box-shadow: 0 18px 44px -18px rgb(0 0 0 / 80%), 0 1px 0 rgb(255 255 255 / 6%) inset; }
-  .mobile-dock :is(a, button) { position: relative; transition: color 160ms ease, background-color 160ms ease, transform 160ms cubic-bezier(0.22,1,0.36,1); }
+  .mobile-dock { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); position: fixed; bottom: calc(10px + env(safe-area-inset-bottom)); inset-inline: 10px; z-index: 30; background: var(--popover); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 16px 40px -20px rgb(20 18 43 / 45%), 0 2px 8px -4px rgb(20 18 43 / 20%); padding: 5px; }
+  html.dark .mobile-dock { box-shadow: none; }
+  .mobile-dock :is(a, button) { position: relative; min-width: 0; transition: color var(--t-press) ease, background-color var(--t-press) ease, transform var(--t-press) ease; }
+  .mobile-dock :is(a, button) > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mobile-dock :is(a, button):active { transform: scale(0.94); }
-  .mobile-dock a[aria-current="page"] { background: color-mix(in srgb, var(--primary) 12%, transparent); border-radius: 18px; }
+  .mobile-dock a[aria-current="page"] { border-radius: 18px; }
   .mobile-dock :is(a, button) { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--muted-foreground); font-size: 0.6875rem; font-weight: 500; line-height: 1.1; border-radius: 12px; -webkit-tap-highlight-color: transparent; }
   .mobile-dock :is(a, button):focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-  .mobile-dock a[aria-current="page"] { color: var(--primary); background: color-mix(in oklab, var(--primary) 12%, transparent); font-weight: 600; }
+  .mobile-dock a[aria-current="page"] { color: var(--primary); background: var(--selection); font-weight: 600; }
   .mobile-dock a[aria-current="page"] svg { stroke-width: 2.4; }
   /* The add button: a raised circle in the middle of the dock, the one action that is always a thumb away. */
   .mobile-dock .mobile-dock-add { background: none; }
@@ -256,15 +279,8 @@ html.app-studio[data-studio-density="compact"] :is([data-slot="dropdown-menu-ite
 }
 
 
-/* Glassmorphism in every theme: translucent, blurred surfaces over a soft tinted backdrop. */
-/* A whisper of tint behind the page, not a wash: the canvas has to read as paper. */
-html.app-studio body {
-  background:
-    radial-gradient(60rem 40rem at 0% 0%, color-mix(in srgb, var(--studio-glow, var(--primary)) 7%, transparent), transparent 70%),
-    radial-gradient(50rem 40rem at 100% 100%, color-mix(in srgb, var(--chart-2) 5%, transparent), transparent 70%),
-    var(--background);
-  background-attachment: fixed;
-}
+/* The canvas is flat: a page of figures reads better on paper than on a gradient. */
+html.app-studio body { background: var(--background); }
 @supports (backdrop-filter: blur(1px)) {
   /* Chrome keeps its blur; content cards stay crisp, because a page of frosted panels reads as haze. */
   html.app-studio [data-slot="sidebar-inner"] {

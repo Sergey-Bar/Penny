@@ -21,7 +21,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowUpLeft, ArrowUpRight, Flame, Plus, Repeat, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowUpLeft,
+  ArrowUpRight,
+  Flame,
+  Repeat,
+  SlidersHorizontal,
+  TriangleAlert,
+} from "lucide-react";
 import { getAssets, getBalanceForecast, getFi, getInsights, getOwners, getPlan } from "@/lib/api";
 import { creditUtilization, parseLimits } from "@/lib/credit-utilization";
 import { useHousehold } from "@/hooks/use-household";
@@ -133,27 +140,34 @@ function BalanceTrend() {
         <p className="py-10 text-center text-sm text-muted-foreground">{t("noBalance")}</p>
       ) : (
         <>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-3xl font-semibold tabular-nums" data-money>
+          {/* The figure the day starts with: what it is (the tile title), how much, as of when. The low point is the
+              one other number that changes a decision, so it sits beside it with its own label, not in a corner. */}
+          <dl className="flex flex-wrap items-end gap-x-8 gap-y-3">
+            <div className="min-w-0">
+              <dt className="text-sm text-muted-foreground">{t("today")}</dt>
+              <dd
+                className="text-4xl leading-tight font-semibold tracking-tight tabular-nums sm:text-5xl"
+                data-money
+                data-figure
+              >
                 <bdi>{money(first)}</bdi>
-              </p>
-              <p className="text-xs uppercase text-muted-foreground">{t("today")}</p>
+              </dd>
             </div>
             {low && (
-              <div className="text-end text-xs text-muted-foreground">
-                <p
-                  className={
-                    low.balance < 0 ? "font-semibold text-expense" : "font-semibold text-foreground"
-                  }
+              <div className="min-w-0 border-s border-border ps-4 pb-1">
+                <dt className="text-sm text-muted-foreground">
+                  {t("lowPoint", { date: day(low.date) })}
+                </dt>
+                <dd
+                  className={`flex items-center gap-1.5 text-xl font-semibold tabular-nums ${low.balance < 0 ? "text-expense" : "text-foreground"}`}
                   data-money
                 >
+                  {low.balance < 0 && <TriangleAlert className="size-4 shrink-0" aria-hidden />}
                   <bdi>{money(low.balance)}</bdi>
-                </p>
-                <p>{t("lowPoint", { date: day(low.date) })}</p>
+                </dd>
               </div>
             )}
-          </div>
+          </dl>
           <div
             className="mt-3 h-56"
             dir="ltr"
@@ -1126,13 +1140,8 @@ export function DashboardBoard({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/transactions?add=1"
-          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary md:hidden px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-ring"
-        >
-          <Plus className="size-4" aria-hidden />
-          {t("addTransaction")}
-        </Link>
+        {/* Adding a transaction lives in the dock on a phone and in the top bar on a computer: always in the same
+            place, so it is not repeated here and the first figure starts higher on the screen. */}
         {/* Month arrows: the month's figures (budget, cash flow, structure, watchlist) follow; balance, goals and FIRE stay today's. */}
         {onMonthChange ? (
           <MonthNav
@@ -1146,7 +1155,7 @@ export function DashboardBoard({
         )}
         <div className="flex flex-wrap gap-2">
           {onOwnerChange && household.members.length >= 2 && (
-            <label className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm">
+            <label className="inline-flex min-h-11 items-center gap-2 rounded-full border border-interactive px-4 text-sm">
               {tOwner("filter")}
               <select
                 value={owner}
@@ -1165,7 +1174,7 @@ export function DashboardBoard({
           )}
           <Link
             href="/transactions?review=1"
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-border px-3 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+            className="press inline-flex min-h-11 items-center gap-1.5 rounded-full border border-interactive px-4 text-sm hover:bg-hover active:bg-press focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             {t("review")}
             <ArrowUpRight className="size-4 rtl:-scale-x-100" aria-hidden />
@@ -1175,7 +1184,7 @@ export function DashboardBoard({
             aria-expanded={editing}
             aria-controls="board-customize"
             onClick={() => setEditing(!editing)}
-            className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring ${editing ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-accent"}`}
+            className={`press inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${editing ? "border-primary bg-selection text-strong" : "border-interactive hover:bg-hover active:bg-press"}`}
           >
             <SlidersHorizontal className="size-4" aria-hidden />
             {t("customize")}

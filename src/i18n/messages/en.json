@@ -443,6 +443,7 @@
     "filterAccount": "Account",
     "filterCategory": "Category",
     "filterAny": "Any",
+    "filters": "Filters",
     "filterClear": "Clear filters",
     "filterScopedToList": "Filters apply to the list below. Totals above are for all accounts.",
     "weekThis": "This week",

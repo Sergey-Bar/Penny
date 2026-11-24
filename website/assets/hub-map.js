@@ -6,7 +6,6 @@ const hub = document.querySelector("[data-hub]");
 if (hub) {
   const rtl = document.documentElement.dir === "rtl";
   const he = document.documentElement.lang.startsWith("he");
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const chips = [...hub.querySelectorAll("[data-island]")];
   const scene = hub.querySelector(".hub-scene");
 
@@ -329,14 +328,10 @@ if (hub) {
   const order = (a) => a.sort((p, q) => p.gx + p.gy - (q.gx + q.gy));
 
   const links = islands
-    .map((it, i) => {
+    .map((it) => {
       const d = `M${it.sx} ${it.sy}L0 0`;
-      const flow =
-        it.soon || reduce
-          ? ""
-          : `<circle class="flow" r="3.2"><animateMotion dur="${(3.2 + (i % 5) * 0.45).toFixed(2)}s" begin="${(i * 0.37).toFixed(2)}s" repeatCount="indefinite" path="${d}"/></circle>`;
       const [mx, my] = [r1(it.sx * 0.55), r1(it.sy * 0.55)];
-      return `<path class="link${it.soon ? " soon" : ""}" d="${d}"/><circle class="node" cx="${mx}" cy="${my}" r="3.5"/>${flow}`;
+      return `<path class="link${it.soon ? " soon" : ""}" d="${d}"/><circle class="node" cx="${mx}" cy="${my}" r="3.5"/>`;
     })
     .join("");
 
