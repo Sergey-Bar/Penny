@@ -312,7 +312,8 @@ html.app-studio body::before { content: ""; position: fixed; inset: -10%; z-inde
   background: radial-gradient(42% 38% at 28% 4%, var(--field-1), transparent 70%), radial-gradient(36% 34% at 80% 10%, var(--field-2), transparent 70%), radial-gradient(46% 30% at 60% 100%, var(--field-3), transparent 74%); }
 @media print { html.app-studio body::before { display: none; } }
 /* A pane: tint, hairline rim that is brighter along the top, a soft drop. */
-html.app-studio :is(.card-surface, .studio-panel, [data-slot="card"]) { background: var(--pane); border: 1px solid var(--rim); border-top-color: var(--rim-top); box-shadow: var(--card-elevation); }
+/* Content cards are close to solid: glass is for what floats (the hero, the header, the menu, the dock, popovers). */
+html.app-studio :is(.card-surface, .studio-panel, [data-slot="card"]) { background: var(--pane-strong); border: 1px solid var(--rim); border-top-color: var(--rim-top); box-shadow: var(--card-elevation); }
 @supports (backdrop-filter: blur(1px)) {
   /* Chrome keeps its blur; content cards stay crisp, because a page of frosted panels reads as haze. */
   html.app-studio [data-slot="sidebar-inner"] {
@@ -329,7 +330,7 @@ html.app-studio :is(.card-surface, .studio-panel, [data-slot="card"]) { backgrou
   /* Sticky cells pin over scrolling content: keep them solid. */
   html.app-studio .bg-card.sticky { background-color: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
   html.app-studio .bg-card:not(.wallet):not(.sticky) {
-    background-color: var(--pane);
+    background-color: var(--pane-strong);
     border-color: var(--rim);
     border-top-color: var(--rim-top);
     box-shadow: var(--card-elevation);

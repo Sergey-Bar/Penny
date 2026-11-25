@@ -638,7 +638,8 @@ function HeatMap({
               const sel = l.key === selected;
               const share = Math.max(0, Math.min(1, l.spent / top));
               const over = !!l.showLeft && l.expected > 0 && l.spent > l.expected;
-              const tint = over ? "var(--status-over)" : l.tone;
+              // One hue for every line: how deep it is says how much of the month went there. Red is kept for a line over its budget.
+              const tint = over ? "var(--status-over)" : "var(--accent-color)";
               return (
                 <button
                   key={l.key}

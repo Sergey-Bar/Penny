@@ -6,14 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Clock, X } from "lucide-react";
-import {
-  getCashAhead,
-  getHome,
-  getInsights,
-  getOverview,
-  getResilience,
-  getSuggestions,
-} from "@/lib/api";
+import { getCashAhead, getHome, getInsights, getOverview, getResilience } from "@/lib/api";
 import { pipGuru, pipInsights, type PipInput, type PipTone } from "@/lib/pip-coach";
 import { usePlan } from "@/hooks/use-plan";
 import { useA11y } from "@/components/a11y/a11y-menu";
@@ -73,7 +66,6 @@ function usePet() {
   const res = useQuery({ queryKey: ["resilience"], queryFn: getResilience, enabled: on });
   const cash = useQuery({ queryKey: ["cash-ahead"], queryFn: getCashAhead, enabled: on });
   // Pip speaks for every alert: its own care list plus what the checks noticed, one number on every screen.
-  const sug = useQuery({ queryKey: ["suggestions"], queryFn: getSuggestions, enabled: on });
   const lines = useMemo(() => {
     if (!home.data || !res.data) return null;
     const m = home.data.thisMonth,
@@ -101,7 +93,8 @@ function usePet() {
     mood: petMood(lines.filter((l) => l.ok || todo.includes(l))),
     todo,
     today,
-    count: todo.length + (sug.data?.suggestions.length ?? 0),
+    // The badge counts only what needs doing. Suggestions wait inside the panel: a badge that is always lit says nothing.
+    count: todo.length,
   };
 }
 type PetState = NonNullable<ReturnType<typeof usePet>>;
@@ -159,9 +152,9 @@ function PetButton({
         <span
           aria-hidden
           dir="ltr"
-          className={`absolute -end-1 -top-1 grid place-items-center rounded-full bg-destructive font-semibold text-destructive-foreground tabular-nums shadow ${mini ? "min-w-5 px-1 text-caption" : "min-w-7 px-1.5 py-0.5 text-footnote"}`}
+          className={`absolute -end-1 -top-1 grid place-items-center rounded-full bg-primary font-semibold text-primary-foreground tabular-nums shadow ${mini ? "min-w-5 px-1 text-caption" : "min-w-7 px-1.5 py-0.5 text-footnote"}`}
         >
-          +{n}
+          {n > 9 ? "9+" : n}
         </span>
       )}
     </button>
