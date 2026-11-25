@@ -510,7 +510,7 @@ export function SimpleHome({
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           aria-label={t("filterLabel")}
-                          className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+                          className="tap-target grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
                         >
                           <SlidersHorizontal className="size-4" aria-hidden />
                         </DropdownMenuTrigger>
@@ -699,7 +699,7 @@ function TrackPicker({
         aria-label={t("trackCategory")}
         className={
           compact
-            ? "relative grid size-9 place-items-center rounded-full text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+            ? "tap-target relative grid size-9 place-items-center rounded-full text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
             : "flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card/40 px-4 text-sm font-medium text-primary hover:bg-accent disabled:opacity-50 max-lg:min-h-14"
         }
         disabled={options.length === 0}

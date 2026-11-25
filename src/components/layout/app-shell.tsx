@@ -102,7 +102,10 @@ export function PageHeader({
   meta,
   actions,
   largeTitle = true,
+  titleSlot,
 }: {
+  /** Sits in the title's place on a phone where the title is hidden: Home's Focus/Detailed switch. */
+  titleSlot?: ReactNode;
   title: string;
   meta?: string;
   actions?: ReactNode;
@@ -185,6 +188,7 @@ export function PageHeader({
         </div>
         {/* self-start: the title sits on the same line on every page, with or without a meta line under it. */}
         <div className="col-start-2 row-start-1 flex min-w-0 flex-col items-start text-start">
+          {hideTitle && titleSlot ? <div className="w-full md:hidden">{titleSlot}</div> : null}
           {eyebrow && <p className="mb-0.5 text-xs text-muted-foreground">{eyebrow}</p>}
           <div className="relative min-w-0 max-w-full">
             <h1

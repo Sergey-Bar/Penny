@@ -763,8 +763,8 @@ export function TransactionsTable({
               <Table className="lg:[&_td:first-child]:ps-4 lg:[&_th:first-child]:ps-4 lg:[&_td:last-child]:pe-4 lg:[&_th:last-child]:pe-4">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-9 lg:w-[52px]">
-                      <label className="tap-target inline-grid size-9 cursor-pointer place-items-center">
+                    <TableHead className="w-[36px] max-lg:px-0.5 lg:w-[52px]">
+                      <label className="tap-target inline-grid size-[36px] cursor-pointer place-items-center">
                         <input
                           className="size-4"
                           type="checkbox"
@@ -928,9 +928,9 @@ export function TransactionsTable({
                                 : undefined
                             }
                           >
-                            <TableCell className="max-lg:pt-3.5 max-lg:align-top">
+                            <TableCell className="max-lg:px-0.5 max-lg:pt-3.5 max-lg:align-top">
                               {/* A 36px tap area around the 16px box. */}
-                              <label className="tap-target inline-grid size-9 cursor-pointer place-items-center lg:size-7">
+                              <label className="tap-target inline-grid size-[36px] cursor-pointer place-items-center lg:size-7">
                                 <input
                                   className="size-4"
                                   type="checkbox"
@@ -947,9 +947,9 @@ export function TransactionsTable({
                                 />
                               </label>
                             </TableCell>
-                            <TableCell className="min-w-[11rem] whitespace-normal [overflow-wrap:anywhere]">
+                            <TableCell className="whitespace-normal [overflow-wrap:anywhere] max-lg:w-full max-lg:px-0.5 lg:min-w-[11rem]">
                               {/* Below lg the amount rides on the name line (iOS list style) instead of its own column, so nothing clips at 320px. */}
-                              <div className="flex items-start justify-between gap-3">
+                              <div className="flex flex-wrap items-start justify-between gap-x-3">
                                 <div className="flex min-w-0 items-center gap-2.5">
                                   <MerchantMark name={txn.description} size={36} />
                                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
@@ -1013,13 +1013,13 @@ export function TransactionsTable({
                                 </div>
                                 <span
                                   className={cn(
-                                    "shrink-0 whitespace-nowrap font-medium leading-[2.75rem] tabular-nums lg:hidden",
+                                    "flex flex-wrap items-baseline justify-end font-medium leading-[2.75rem] tabular-nums lg:hidden",
                                     amountTone,
                                   )}
                                 >
-                                  {amount}
+                                  <span className="whitespace-nowrap">{amount}</span>
                                   {foreign && (
-                                    <bdi className="ms-1 text-xs font-normal text-muted-foreground">
+                                    <bdi className="ms-1 whitespace-nowrap text-xs font-normal leading-5 text-muted-foreground">
                                       ({foreign})
                                     </bdi>
                                   )}
@@ -1096,10 +1096,10 @@ export function TransactionsTable({
                                 </bdi>
                               )}
                             </TableCell>
-                            <TableCell className="text-end max-lg:align-top">
+                            <TableCell className="text-end max-lg:px-0 max-lg:align-top">
                               <DropdownMenu>
                                 <DropdownMenuTrigger
-                                  className="tap-target inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                                  className="tap-target inline-flex size-[28px] items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground lg:size-7"
                                   disabled={updatingId === txn.id || editing || isFetching}
                                   aria-label={t("rowActions")}
                                 >

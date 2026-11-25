@@ -6,7 +6,7 @@ import { Focus, LayoutDashboard } from "lucide-react";
 import { rememberHomeView, type HomeView } from "@/lib/home-view";
 
 /**
- * Focus or Detailed, at the top of Home on a phone (wide screens have the same switch at the top of the sidebar).
+ * Focus or Detailed, in Home's header row on a phone, where no message can cover it (wide screens have the same switch at the top of the sidebar).
  * The choice is remembered, so Home opens on it next time.
  */
 export function HomeViewSwitch({ current }: { current: HomeView }) {
@@ -19,7 +19,7 @@ export function HomeViewSwitch({ current }: { current: HomeView }) {
     <div
       role="group"
       aria-label={t("groups.dashboard")}
-      className="mx-auto mb-3 grid w-full max-w-xs grid-cols-2 gap-1 rounded-full bg-[var(--segmented)] p-1 md:hidden"
+      className="ms-auto grid w-full max-w-60 grid-cols-2 gap-1 rounded-full bg-[var(--segmented)] p-1 md:hidden"
     >
       {views.map(({ view, href, label, Icon }) => (
         <Link

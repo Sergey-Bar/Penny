@@ -89,7 +89,11 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
   if (!loaded) {
     return (
       <>
-        <PageHeader title={simple ? t("focusTitle") : t("pageTitle")} largeTitle={false} />
+        <PageHeader
+          title={simple ? t("focusTitle") : t("pageTitle")}
+          largeTitle={false}
+          titleSlot={<HomeViewSwitch current={simple ? "focus" : "detailed"} />}
+        />
         <div className="mx-auto w-full max-w-[1920px] px-4 pb-8 pt-3 md:px-6 lg:px-8">
           <SyncFailureBanner items={data?.bankHealth ?? null} className="mb-4 md:mb-5 lg:mb-6" />
           <Greeting name={settings?.displayName} />
@@ -105,9 +109,12 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
   if (!simple) {
     return (
       <>
-        <PageHeader title={simple ? t("focusTitle") : t("pageTitle")} largeTitle={false} />
+        <PageHeader
+          title={simple ? t("focusTitle") : t("pageTitle")}
+          largeTitle={false}
+          titleSlot={<HomeViewSwitch current={simple ? "focus" : "detailed"} />}
+        />
         <div className="mx-auto w-full max-w-[1920px] space-y-5 px-4 py-6 md:px-8">
-          <HomeViewSwitch current="detailed" />
           <SyncFailureBanner items={data?.bankHealth ?? null} />
           {/* The board, with Quick start beside it on wide screens and above it on narrow ones. */}
           <div className="flex flex-col gap-4 xl:flex-row-reverse xl:items-start">
@@ -133,7 +140,11 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
   if (companion && !detail) {
     return (
       <>
-        <PageHeader title={simple ? t("focusTitle") : t("pageTitle")} largeTitle={false} />
+        <PageHeader
+          title={simple ? t("focusTitle") : t("pageTitle")}
+          largeTitle={false}
+          titleSlot={<HomeViewSwitch current={simple ? "focus" : "detailed"} />}
+        />
         <div className="mx-auto w-full max-w-[1920px] px-4 pb-8 pt-3 md:px-6 lg:px-8">
           <SyncFailureBanner items={data?.bankHealth ?? null} className="mb-4 md:mb-5 lg:mb-6" />
           {/* Simple mode keeps the page quiet: adding and importing live in the card's own menu row. */}
@@ -165,7 +176,11 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
   return (
     <>
       {/* The view is chosen in the sidebar menu, not by a toggle on the page. */}
-      <PageHeader title={simple ? t("focusTitle") : t("pageTitle")} largeTitle={false} />
+      <PageHeader
+        title={simple ? t("focusTitle") : t("pageTitle")}
+        largeTitle={false}
+        titleSlot={<HomeViewSwitch current={simple ? "focus" : "detailed"} />}
+      />
       {/* The detail view of the Companion style always offers the way back. */}
       {companion && (
         <div className="mx-auto w-full max-w-[1920px] px-4 pt-3 md:px-6 lg:px-8">
@@ -184,7 +199,6 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
       )}
       {simple ? (
         <div className="px-4 pb-8 pt-3">
-          <HomeViewSwitch current="focus" />
           <SimpleHome name={settings?.displayName} extra={nextStep} />
         </div>
       ) : (

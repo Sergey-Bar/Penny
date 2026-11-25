@@ -31,7 +31,7 @@ import { ProfileAvatar } from "./profile-avatar";
 const tile =
   "press group flex min-h-11 w-28 flex-col items-center gap-3 rounded-3xl p-3 outline-none hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:w-36";
 const square =
-  "size-20 sm:size-24 ring-0 ring-offset-4 ring-offset-transparent motion-safe:transition motion-safe:duration-150 group-hover:ring-2 group-hover:ring-[var(--accent-color)] group-focus-visible:ring-2 group-focus-visible:ring-[var(--accent-color)]";
+  "size-20 sm:size-24 outline-0 outline-offset-4 outline-foreground outline-solid motion-safe:transition-[scale,outline-width] motion-safe:duration-150 group-hover:scale-[1.04] group-hover:outline-[3px] group-focus-visible:outline-[3px]";
 
 type Draft = { id: number | null; name: string; avatar: AvatarDraft };
 
@@ -144,7 +144,7 @@ export function ProfilesPage() {
               <span
                 className={cn(
                   square,
-                  "flex items-center justify-center rounded-full border border-dashed border-interactive text-muted-foreground group-hover:text-foreground",
+                  "flex items-center justify-center rounded-[26%] border border-dashed border-interactive text-muted-foreground group-hover:text-foreground",
                 )}
               >
                 <Plus className="size-7" />
