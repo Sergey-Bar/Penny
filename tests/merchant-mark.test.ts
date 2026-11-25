@@ -18,8 +18,8 @@ describe("merchantMark", () => {
     }
   });
   it("keeps the coloured initial when no logo is bundled", () => {
-    expect(LOCAL_MERCHANT_LOGOS.has("victoryonline.co.il")).toBe(false);
-    expect(merchantMark("ויקטורי")).toEqual({ letter: "ו", color: "#e30613" });
+    expect(LOCAL_MERCHANT_LOGOS.has("yochananof.co.il")).toBe(false);
+    expect(merchantMark("יוחננוף")).toEqual({ letter: "י", color: "#00843d" });
     expect(merchantMark("מאפיית הכיכר").logo).toBeUndefined();
   });
   it("gives any other merchant a steady colour and its first letter", () => {

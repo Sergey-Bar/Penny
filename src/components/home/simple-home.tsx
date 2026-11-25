@@ -165,7 +165,7 @@ export function SimpleHome({
         <div className="mb-1 flex items-center justify-end md:hidden">
           <Link
             href="/transactions?add=1"
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 text-footnote font-medium text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+            className="tap-target inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 text-footnote font-medium text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
           >
             <Plus className="size-4" aria-hidden />
             {tManual("addTitle")}
