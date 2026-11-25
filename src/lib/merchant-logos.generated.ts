@@ -25,7 +25,6 @@ export const LOCAL_MERCHANT_LOGOS: ReadonlySet<string> = new Set([
   "cellcom.co.il",
   "cellopark.co.il",
   "cinema-city.co.il",
-  "dan.co.il",
   "decathlon.co.il",
   "delek.co.il",
   "disneyplus.com",

@@ -75,7 +75,6 @@ export const BRANDS: [RegExp, string, string, string][] = [
   [/כביש\s*6|kvish\s*6/i, "6", "#00539f", "kvish6.co.il"],
   [/רכבת\s*ישראל|israel\s*rail/i, "ר", "#003a70", "rail.co.il"],
   [/אגד|egged/i, "א", "#00843d", "egged.co.il"],
-  [/(^|[\s-])דן([\s-]|$)/, "ד", "#e30613", "dan.co.il"],
   [/אל[\s-]*על|\bel\s*al\b/i, "E", "#0033a0", "elal.com"],
   [/ישראייר|israir/i, "I", "#e30613", "israir.co.il"],
   [/ארקיע|arkia/i, "A", "#e30613", "arkia.co.il"],
