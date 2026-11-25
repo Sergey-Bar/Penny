@@ -32,7 +32,7 @@ import { ProfileAvatar } from "./profile-avatar";
 const tile =
   "group flex min-h-11 flex-col items-center gap-3 rounded-3xl p-2 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 const square =
-  "size-24 text-5xl md:size-36 md:text-6xl ring-white/0 ring-offset-4 ring-offset-[#0c0b14] motion-safe:transition motion-safe:duration-200 group-hover:ring-4 group-hover:ring-white group-focus-visible:ring-4 group-focus-visible:ring-white motion-safe:group-hover:scale-105 motion-safe:group-focus-visible:scale-105 motion-safe:group-active:scale-95";
+  "size-24 text-5xl md:size-36 md:text-6xl ring-white/0 ring-offset-4 ring-offset-[#05070d] motion-safe:transition motion-safe:duration-200 group-hover:ring-4 group-hover:ring-white group-focus-visible:ring-4 group-focus-visible:ring-white motion-safe:group-hover:scale-105 motion-safe:group-focus-visible:scale-105 motion-safe:group-active:scale-95";
 
 type Draft = { id: number | null; name: string; avatar: AvatarDraft };
 
@@ -90,7 +90,7 @@ export function ProfilesPage() {
   };
 
   return (
-    <main className="fixed inset-0 z-40 flex flex-col items-center justify-center overflow-y-auto bg-[#0c0b14] bg-[radial-gradient(ellipse_at_top,#2a2160_0%,transparent_60%)] px-4 py-12 text-white">
+    <main className="fixed inset-0 z-40 flex flex-col items-center justify-center overflow-y-auto bg-[#05070d] bg-[radial-gradient(ellipse_at_top,#12307a_0%,transparent_60%)] px-4 py-12 text-white">
       {/* The brand lives here only; inside the app the sidebar stays free of it. */}
       <p
         className="absolute top-6 text-lg font-semibold tracking-tight text-white/80"

@@ -94,7 +94,7 @@ export function ScenarioCard() {
           strokeDasharray="5 5"
           strokeWidth="2"
         />
-        <polyline points={line(points)} fill="none" stroke="var(--primary)" strokeWidth="3" />
+        <polyline points={line(points)} fill="none" stroke="var(--chart-1)" strokeWidth="3" />
       </svg>
       <p className="text-xs text-muted-foreground">{t("dashedBaselineSolidYour")}</p>
       <div className="mt-2 flex justify-between text-xs text-muted-foreground" dir="ltr">

@@ -98,10 +98,10 @@ export function MoreHub() {
         <div className="grid content-start gap-4">
           <Link
             href="/control"
-            className="flex items-center gap-4 rounded-2xl bg-primary p-5 text-primary-foreground transition-opacity duration-150 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="press flex items-center gap-4 rounded-2xl border border-rim bg-pane p-5 hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <span
-              className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary-foreground/15"
+              className="grid size-11 shrink-0 place-items-center rounded-2xl bg-selection text-accent-c"
               aria-hidden
             >
               <LayoutDashboard className="size-5" />

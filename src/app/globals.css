@@ -526,3 +526,9 @@ details[open]::details-content { block-size: auto; opacity: 1; }
 @media (min-width: 40rem) {
   .quick-chip { flex-direction: row; gap: 0.5rem; min-height: 2.75rem; padding: 0 0.875rem; border-radius: 999px; text-align: start; font-size: var(--text-footnote); }
 }
+
+/* A toast never grows past the screen: a long message with an action button wraps instead of pushing the page wide
+   (which, in a right-to-left layout, scrolled the whole app sideways on a phone). */
+.cn-toast { max-width: calc(100vw - 1.5rem); flex-wrap: wrap; row-gap: 0.5rem; }
+.cn-toast [data-content] { min-width: 0; flex: 1 1 12rem; }
+.cn-toast [data-title], .cn-toast [data-description] { overflow-wrap: anywhere; }

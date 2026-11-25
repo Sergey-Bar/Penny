@@ -845,7 +845,7 @@ export function TransactionsTable({
                                   </span>
                                 )}
                                 {weekOut !== 0 && (
-                                  <span className="text-expense">
+                                  <span className="text-foreground">
                                     {signedShekels(-weekOut, locale)}
                                   </span>
                                 )}
@@ -856,13 +856,14 @@ export function TransactionsTable({
                       )}
                       {week.items.map((txn) => {
                         const isIncome = txn.chargedAmount > 0;
-                        // Income green with "+", expense a calm rose with "−" (same as the week totals), transfers muted.
+                        // Income green with "+"; spending is plain text with "−" (a month of spending should not read as
+                        // a page of errors; red is kept for things that are wrong); transfers muted.
                         const amountTone =
                           txn.kind === "income"
                             ? "text-status-on-track"
                             : txn.kind === "transfer"
                               ? "text-muted-foreground"
-                              : "text-expense";
+                              : "text-foreground";
                         const amount = signedShekels(txn.chargedAmount, locale, 2);
                         // A foreign charge also shows what it was in its own currency.
                         const foreign = foreignAmount(

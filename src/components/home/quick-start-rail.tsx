@@ -92,7 +92,7 @@ export function QuickStartRail() {
         cy="18"
         r="15.9"
         fill="none"
-        stroke="var(--primary)"
+        stroke="var(--chart-1)"
         strokeWidth="3"
         strokeLinecap="round"
         strokeDasharray={`${pct} 100`}

@@ -2,6 +2,13 @@
 
 import { israelToday, monthDate, utcDay } from "@/lib/dates";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { loadPreference, storePreference } from "@/lib/preference-sync";
@@ -23,12 +30,15 @@ import {
 import {
   ArrowUpLeft,
   Check,
+  FileUp,
   Flame,
+  Landmark,
   Plus,
   RefreshCw,
   Repeat,
   SlidersHorizontal,
   TriangleAlert,
+  WalletCards,
 } from "lucide-react";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { MerchantMark } from "@/components/transactions/merchant-mark";
@@ -201,6 +211,9 @@ function HomeHero({
 }) {
   const t = useTranslations("board");
   const tOwner = useTranslations("ownerFilter");
+  const tShell = useTranslations("shell");
+  const tTop = useTranslations("topBar");
+  const router = useRouter();
   const money = useMoney();
   const locale = useLocale();
   const { household } = useHousehold();
@@ -305,12 +318,33 @@ function HomeHero({
         ))}
 
       <div className="mt-7 flex justify-center gap-3 sm:gap-6">
-        <HeroAction
-          primary
-          label={t("heroAdd")}
-          href="/transactions?add=1"
-          icon={<Plus className="size-[22px]" strokeWidth={2.4} aria-hidden />}
-        />
+        {/* Add opens the same choices as the + in the top bar: a transaction, a file, a bank, an account. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="press group grid w-16 justify-items-center gap-2 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+            <span className="hero-circle is-primary">
+              <Plus className="size-[22px]" strokeWidth={2.4} aria-hidden />
+            </span>
+            <span className="text-[13px] font-medium">{t("heroAdd")}</span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="min-w-56 bg-popover">
+            <DropdownMenuItem onClick={() => router.push("/transactions?add=1")}>
+              <Plus className="size-4" aria-hidden />
+              {tShell("addTransaction")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/settings/data")}>
+              <FileUp className="size-4" aria-hidden />
+              {tTop("importFile")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/settings/bank")}>
+              <Landmark className="size-4" aria-hidden />
+              {tTop("connectBank")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/investments")}>
+              <WalletCards className="size-4" aria-hidden />
+              {tTop("addAccount")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <HeroAction
           label={t("heroReview")}
           href="/transactions?review=1"

@@ -72,6 +72,10 @@
 /* Links and the current item take the accent; filled buttons keep the flat brand colour (bg-primary). */
 html.app-studio :is(.text-primary, .hover\:text-primary:hover, .card-action) { color: var(--accent-color); }
 html.app-studio :is(.bg-primary, [data-slot="button"]) :is(.text-primary) { color: inherit; }
+/* Meters and progress fills are data, not buttons: they take the accent, while filled buttons stay flat. */
+html.app-studio :is(.h-1, .h-1\.5, .h-2, .h-2\.5, .h-3)[class~="bg-primary"],
+html.app-studio [role="progressbar"] > .bg-primary,
+html.app-studio :is(.h-1, .h-1\.5, .h-2, .h-2\.5, .h-3) > .bg-primary { background-color: var(--accent-color); }
 .studio-page { min-height: 100vh; background: var(--background); }
 .studio-content { max-width: 1920px; margin: auto; padding: 30px 40px 64px; display: flex; flex-direction: column; gap: 26px; }
 .studio-welcome { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 5px 0 8px; }

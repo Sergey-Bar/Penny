@@ -63,9 +63,10 @@ export default async function RootLayout({
   const locale = isLocale(rawLocale) ? rawLocale : defaultLocale;
   const messages = await getMessages();
   const dir = dirFor(locale);
-  // Set by the sidebar's collapse button; collapsed (icons only) until someone opens it.
+  // Set by the sidebar's collapse button. Open, with its labels, until someone collapses it: icons alone
+  // leave a new user guessing; a saved choice either way is kept.
   const jar = await cookies();
-  const sidebarOpen = jar.get("sidebar_state")?.value === "true";
+  const sidebarOpen = jar.get("sidebar_state")?.value !== "false";
   return (
     <html
       lang={locale}

@@ -406,7 +406,7 @@ function FlowChart({ monthly }: { monthly: OverviewPayload["monthly"] }) {
               dataKey="net"
               name={t("netTrend")}
               type="monotone"
-              stroke="var(--primary)"
+              stroke="var(--chart-1)"
               strokeWidth={2}
               dot={{ r: 2.5 }}
               isAnimationActive={!motionReduced()}
@@ -540,7 +540,7 @@ function YearTable({ data }: { data: OverviewPayload }) {
   return (
     <CardShell label={t("tableTitle")} className="p-0 md:p-0">
       <div
-        className="overflow-x-auto px-5 pb-5 md:px-6 md:pb-6"
+        className="relative overflow-x-auto px-5 pb-5 md:px-6 md:pb-6"
         tabIndex={0}
         role="region"
         aria-label={t("tableCaption")}

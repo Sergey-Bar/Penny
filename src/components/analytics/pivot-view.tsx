@@ -117,7 +117,7 @@ export function PivotView() {
       {rows.length === 0 ? (
         <DataState period />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+        <div className="relative overflow-x-auto rounded-2xl border border-border bg-card">
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead>
               <tr className="text-xs text-muted-foreground">

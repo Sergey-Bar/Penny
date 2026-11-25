@@ -82,7 +82,7 @@ export function GroupsTable() {
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{t("emptyHint")}</p>
         </div>
       ) : (
-        <section className="overflow-hidden rounded-2xl border border-border bg-card">
+        <section className="w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-card">
           <div className="border-b border-border p-3">
             <label className="flex h-10 items-center gap-2 rounded-lg border border-border bg-background px-3 focus-within:outline-2 focus-within:outline-ring">
               <Search className="size-4 text-muted-foreground" aria-hidden />
@@ -96,7 +96,9 @@ export function GroupsTable() {
               />
             </label>
           </div>
-          <div className="overflow-x-auto">
+          {/* relative: screen-reader-only labels inside the table are absolutely positioned; without a positioned
+              scroll box they escape it and widen the whole page on a phone. */}
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[560px] text-sm">
               <thead>
                 <tr className="text-start">

@@ -74,7 +74,7 @@ export function BalanceForecastCard() {
         <polyline
           points={values.map((v, i) => `${x(i)},${y(v)}`).join(" ")}
           fill="none"
-          stroke="var(--primary)"
+          stroke="var(--chart-1)"
           strokeWidth="2"
           strokeDasharray="5 4"
           strokeLinejoin="round"

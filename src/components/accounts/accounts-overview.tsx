@@ -77,8 +77,9 @@ export function AccountsOverview() {
 
       {/* Layout: one list of collapsible groups, each account nested and opening its own page.
           On wide screens the bank connections sit beside it, so a row never spans the whole screen. */}
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section aria-labelledby="account-groups">
+      {/* One column on a phone still needs a zero minimum, or a long account name widens the whole page. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section aria-labelledby="account-groups" className="min-w-0">
           <h2 id="account-groups" className={`mb-2 ${label}`}>
             {t("manualAccounts")} · {groups.reduce((n, g) => n + g.items.length, 0)}
           </h2>
@@ -164,7 +165,7 @@ export function AccountsOverview() {
           </div>
         </section>
 
-        <section aria-labelledby="bank-connections">
+        <section aria-labelledby="bank-connections" className="min-w-0">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h2 id="bank-connections" className={label}>
               {t("connections")}

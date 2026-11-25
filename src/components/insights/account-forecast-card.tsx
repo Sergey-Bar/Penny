@@ -243,7 +243,7 @@ function BandChart({ points }: { points: AccountPoint[] }) {
       {belowZero && (
         <rect x="0" y={y(0)} width={W} height={H - y(0)} fill="var(--status-over)" opacity="0.08" />
       )}
-      <polygon points={`${upper} ${lower}`} fill="var(--primary)" opacity="0.12" />
+      <polygon points={`${upper} ${lower}`} fill="var(--chart-1)" opacity="0.12" />
       <line
         x1="0"
         x2={W}
@@ -256,7 +256,7 @@ function BandChart({ points }: { points: AccountPoint[] }) {
       <polyline
         points={line}
         fill="none"
-        stroke="var(--primary)"
+        stroke="var(--chart-1)"
         strokeWidth="2"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"

@@ -84,7 +84,7 @@ export function NetWorthDriversCard({ data }: { data: OverviewPayload }) {
             <Bar
               dataKey="market"
               stackId="d"
-              fill="var(--primary)"
+              fill="var(--chart-1)"
               radius={[3, 3, 0, 0]}
               isAnimationActive={!motionReduced()}
             />
