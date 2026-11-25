@@ -100,6 +100,43 @@
     </div>
   </div>
 
+  <section id="map">
+    <div class="wrap">
+      <div class="head">
+        <h2>כל מה שיש בה, על לוח אחד.</h2>
+        <p>כל משבצת בלוח היא חלק מ-Penny. בוחרים אחת, כאן או על הלוח, כדי לראות מה יש בה. משבצות במתאר מקווקו נמצאות בתוכנית העבודה.</p>
+      </div>
+      <div class="map-stage">
+      <div class="hub" data-hub>
+        <div class="hub-stage">
+          <div class="hub-scene" aria-hidden="true"></div>
+          <div class="hub-cards" aria-live="polite">
+            <article class="hub-card" id="hc-banks"><div class="hub-card-head"><h3>סנכרון בנקים וכרטיסים</h3></div><p>החשבונות והכרטיסים ברשימה אחת, מתעדכנת כל יום.</p><ul class="ticks"><li>18 בנקים וחברות אשראי בישראל</li><li>סנכרון יומי לפי לוח זמנים, או מתי שמבקשים</li><li>קוד חד-פעמי מהבנק מוקלד באפליקציה</li><li>בנקאות פתוחה (XS2A) עם אסימון גישה במקום סיסמה</li><li>סיסמאות הבנק מוצפנות במחשב שלכם ב‑AES‑256‑GCM</li></ul></article>
+            <article class="hub-card" id="hc-import" hidden><div class="hub-card-head"><h3>קבצים וייבוא</h3></div><p>כל מה שבנק או אפליקציה קודמת מייצאים, נכנס.</p><ul class="ticks"><li>דפי חשבון ב-CSV, ‏XLSX ו-XLS</li><li>תיקייה במחשב שמייבאת כל קובץ שנזרק אליה</li><li>גיליון חכם: מדביקים טבלה, מתקנים כל תא, ואפשר לבטל את כל הייבוא</li><li>דף חשבון ב-PDF או צילום שלו, שה-AI שלכם קורא</li><li>כפילויות מזוהות לכל חשבון, כך ששום דבר לא נספר פעמיים</li></ul></article>
+            <article class="hub-card" id="hc-transactions" hidden><div class="hub-card-head"><h3>תנועות וכללים</h3></div><p>כל שקל ברשימה אחת, מסווג כמו שלימדתם.</p><ul class="ticks"><li>מקובצות לפי שבוע, עם חיפוש, סינון ועריכה מרובה</li><li>פיצול, תגיות ובעלים לכל תנועה</li><li>כללים קובעים קטגוריה, תגיות ובעלים בכל סנכרון</li><li>זיכרון בתי עסק ומילון מובנה של בתי עסק ישראליים</li><li>קבלות מצורפות, הוספת מזומן בשניות, ייצוא CSV ו-OFX</li></ul></article>
+            <article class="hub-card" id="hc-ai" hidden><div class="hub-card-head"><h3>AI ו-MCP</h3></div><p>עזרה לבחירתכם, שרצה איפה שאתם מחליטים.</p><ul class="ticks"><li>מקומי עם Ollama, כולל הורדת מודלים מתוך האפליקציה</li><li>Claude, או סוכן CLI שכבר מותקן אצלכם, כמו Claude Code, ‏Codex או Gemini CLI</li><li>מסווג את מה שהכללים והמילון לא מכירים</li><li>שואלים את הכסף שאלות בשפה רגילה</li><li>שרת MCP לקריאה בלבד לסוכני AI</li></ul></article>
+            <article class="hub-card" id="hc-telegram" hidden><div class="hub-card-head"><h3>בוט טלגרם</h3></div><p>בוט פרטי שעונה רק לצ&#x27;אט שלכם.</p><ul class="ticks"><li>סיכום בימי ראשון, שלישי וחמישי בבוקר</li><li>הוצאות חדשות אחרי כל סנכרון, ומה נשאר בתקציב שלהן</li><li>תזכורת לפני חיובים, והתראה כשבנק מפסיק להסתנכרן</li><li>סיווג תנועות ושמירה של הודעת SMS על חיוב בכרטיס</li><li>תמונת מצב או סנכרון לפי בקשה; אפשר להסתיר סכומים</li></ul></article>
+            <article class="hub-card" id="hc-budgets" hidden><div class="hub-card-head"><h3>תקציב ומעקבים</h3></div><p>תקציב שמראה את הקצב, לא רק את הסכום.</p><ul class="ticks"><li>תקציב לכל קטגוריה, שנבנה מהממוצע שלכם בלחיצה</li><li>קצב לאורך החודש, כדי לראות בעיה מוקדם</li><li>מעטפות ותצוגת 50/30/20</li><li>מעקב לתקופה, למשל אוכל בחוץ עד סוף החודש</li><li>סיכומים לחודש, רבעון, חצי שנה ושנה</li></ul></article>
+            <article class="hub-card" id="hc-forecasts" hidden><div class="hub-card-head"><h3>תחזיות ותובנות</h3></div><p>כמה יישאר, ומה עוד בדרך.</p><ul class="ticks"><li>תחזית יתרה לכל חשבון בנק, עם טווח</li><li>חיובים קבועים ומנויים, שנמצאים לבד</li><li>תשלומים שנותרו והתחייבויות קרובות</li><li>הוצאות מתוכננות שמתאימות את עצמן לחיוב האמיתי</li><li>חריגות בהוצאות, ולמה ההוצאות השתנו לפי בית עסק</li></ul></article>
+            <article class="hub-card" id="hc-table" hidden><div class="hub-card-head"><h3>כסף על השולחן</h3></div><p>סכום שנתי אחד לכל מה שאפשר לחסוך.</p><ul class="ticks"><li>עמלות בנק, ריבית על מינוס ועמלת המרה</li><li>דמי ניהול מעל השוק, וביטוחים חופפים</li><li>כסף שיושב בלי תשואה, וזיכוי על תרומות</li><li>צעד הבא לכל אחד; מה שסימנתם כבוצע נספר כחיסכון</li><li>ציון בריאות פיננסית ורשימה אחת של מה שצריך טיפול</li></ul></article>
+            <article class="hub-card" id="hc-pension" hidden><div class="hub-card-head"><h3>פנסיה וחיסכון</h3></div><p>פנסיה, השתלמות וגמל, ליד הכסף של היום-יום.</p><ul class="ticks"><li>יתרות מכלל, הראל, מיטב, מנורה ומגדל</li><li>חדש: אלטשולר שחם והפניקס</li><li>ייבוא דוח הסוכן (JSON): מוצרים, דמי ניהול, הפקדות וביטוחים</li><li>דמי הניהול שלכם מול השוק</li></ul></article>
+            <article class="hub-card" id="hc-investments" hidden><div class="hub-card-head"><h3>השקעות ושווקים</h3></div><p>אחזקות ליד הכסף של היום-יום, בכל מטבע.</p><ul class="ticks"><li>אחזקות עם קניות ומכירות</li><li>חדש: יתרה מאקסלנס טרייד</li><li>פיזור לפי סוג ומטבע, בהשוואה ל-S&amp;P 500 ולת&quot;א-125</li><li>מדדים, מטבעות, סחורות ומחירי קרנות</li><li>השקעות פרטיות: כמה הושקע, כמה פתוח וכמה מומש</li></ul></article>
+            <article class="hub-card" id="hc-networth" hidden><div class="hub-card-head"><h3>שווי נקי ויעדים</h3></div><p>איפה הבית עומד, ולאן הוא הולך.</p><ul class="ticks"><li>שווי נקי לאורך זמן, מנכסים והתחייבויות</li><li>הלוואות עם ההתקדמות שלהן, ודירוג האשראי לאורך זמן</li><li>יעדי חיסכון, עם בדיקה שכולם מסתדרים</li><li>עצמאות כלכלית: מתי ההשקעות יכסו את ההוצאות</li><li>מודל כסף לכל החיים, עד גיל 90</li></ul></article>
+            <article class="hub-card" id="hc-insurance" hidden><div class="hub-card-head"><h3>ביטוחים ומסמך למשפחה</h3></div><p>כל הפוליסות, והמסמך שמישהו יצטרך יום אחד.</p><ul class="ticks"><li>פוליסות עם כיסוי, השתתפות עצמית, תאריך חידוש וסוכן</li><li>כמה באמת שילמתם על כל אחת בשנה האחרונה</li><li>תשלומים מהבנק שמותאמים לפוליסה שלהם</li><li>בדיקת ביטוח כפול</li><li>מסמך למשפחה, ליום שמישהו אחר יצטרך למצוא הכול</li></ul></article>
+            <article class="hub-card" id="hc-tools" hidden><div class="hub-card-head"><h3>כלים לכסף בישראל</h3></div><p>יותר מ-25 מחשבונים, כל אחד עם השנה שהנתונים שלו תקפים לה.</p><ul class="ticks"><li>החזר מס ונקודות זיכוי, עם רשימת מסמכים לטופס 135</li><li>משכנתא לפי כללי בנק ישראל, לשכור או לקנות, עלות רכב</li><li>פיצויים, קצבה או היוון, בחירת מסלול פנסיה</li><li>בדיקת זכויות, כסף שנשכח ועמלות בנק מול המסלול הבסיסי</li><li>מרכז ידע, טיפ יומי ורשימות לפי שלב בחיים</li></ul></article>
+            <article class="hub-card" id="hc-household" hidden><div class="hub-card-head"><h3>משק הבית והפרופילים</h3></div><p>משק בית אחד, ולכל אחד המסך שלו.</p><ul class="ticks"><li>פרופילים במסך &quot;מי משתמש?&quot;, לכל אחד הסידור שלו</li><li>התחשבנות עם אנשים, ו&quot;החזיר הכול&quot; בלחיצה</li><li>חלק עסקי לכל תנועה, ודוח עסקי</li><li>סיכום חודשי, סקירות מודרכות, המסע שלכם ובדיקת רווחה כלכלית</li><li>פיפ, המאמן של הבית: התראות, תובנות ועצות לפי סדר חשיבות</li><li>תפריט נגישות (Alt+A), שנשמר לכל פרופיל</li></ul></article>
+            <article class="hub-card" id="hc-privacy" hidden><div class="hub-card-head"><h3>פרטיות ואבטחה</h3></div><p>הנתונים נשארים בקובץ אחד על המחשב שלכם.</p><ul class="ticks"><li>מאזינה רק ל-127.0.0.1 וחוסמת בקשות מאתרים אחרים</li><li>סיסמאות הבנק מוצפנות ב‑AES‑256‑GCM</li><li>נעילה עם סיסמה, קוד PIN או מפתח גישה (passkey)</li><li>מצב פרטיות מסתיר כל סכום (Ctrl/⌘+Shift+P)</li><li>גיבוי אוטומטי מוצפן, שחזור, ייצוא מלא ומחיקה</li></ul></article>
+            <article class="hub-card" id="hc-anywhere" hidden><div class="hub-card-head"><h3>מחשב, Docker וטלפון</h3></div><p>על המחשב, על השרת הביתי, ובטלפון כשאתם בבית.</p><ul class="ticks"><li>אפליקציה ל-Windows ול-Mac, שמתעדכנת לבד ב-Windows</li><li>שירות ברקע שעולה עם המחשב</li><li>Docker, עם גיבוי קודם וחזרה לאחור בעדכון שנכשל</li><li>הטלפון ברשת הביתית, עם התקנה למסך הבית</li><li>סביבות עבודה עם כניסה, והרשאות צפייה או עריכה</li></ul></article>
+            <article class="hub-card" id="hc-clearing" hidden><div class="hub-card-head"><h3>דוח המסלקה הפנסיונית</h3><span class="badge soon">בקרוב</span></div><p>קריאה אוטומטית של דוח המסלקה הפנסיונית נמצאת בתוכנית העבודה.</p><ul class="ticks"><li>היום: ייבוא דוח הסוכן כ-JSON</li><li>היום: מדריך לקריאת דוח המסלקה</li></ul></article>
+            <article class="hub-card" id="hc-phone" hidden><div class="hub-card-head"><h3>אפליקציה לטלפון</h3><span class="badge soon">בקרוב</span></div><p>אפליקציה ייעודית לטלפון נמצאת בתוכנית העבודה.</p><ul class="ticks"><li>היום: האפליקציה ברשת הביתית, במסך הבית של הטלפון</li><li>היום: בוט הטלגרם, מכל מקום</li></ul></article>
+          </div>
+        </div>
+        <div class="hub-chips" role="group" aria-label="החלקים של Penny"><button type="button" class="chip" data-island="banks" data-cell="-2,2" data-icon="bank" data-c="--k-blue" data-short="בנקים ואשראי" aria-pressed="true" aria-controls="hc-banks">סנכרון בנקים וכרטיסים</button><button type="button" class="chip" data-island="import" data-cell="-2,1" data-icon="folder" data-c="--k-orange" data-short="ייבוא" aria-pressed="false" aria-controls="hc-import" tabindex="-1">קבצים וייבוא</button><button type="button" class="chip" data-island="transactions" data-cell="-2,0" data-icon="list" data-c="--k-purple" data-short="תנועות" aria-pressed="false" aria-controls="hc-transactions" tabindex="-1">תנועות וכללים</button><button type="button" class="chip" data-island="ai" data-cell="-2,-1" data-icon="chip" data-c="--k-purple" data-short="AI ו-MCP" aria-pressed="false" aria-controls="hc-ai" tabindex="-1">AI ו-MCP</button><button type="button" class="chip" data-island="telegram" data-cell="-2,-2" data-icon="chat" data-c="--k-blue" data-short="טלגרם" aria-pressed="false" aria-controls="hc-telegram" tabindex="-1">בוט טלגרם</button><button type="button" class="chip" data-island="budgets" data-cell="-1,-2" data-icon="jars" data-c="--k-green" data-short="תקציב" aria-pressed="false" aria-controls="hc-budgets" tabindex="-1">תקציב ומעקבים</button><button type="button" class="chip" data-island="forecasts" data-cell="0,-2" data-icon="calendar" data-c="--k-blue" data-short="תחזיות" aria-pressed="false" aria-controls="hc-forecasts" tabindex="-1">תחזיות ותובנות</button><button type="button" class="chip" data-island="table" data-cell="1,-2" data-icon="table" data-c="--k-orange" data-short="כסף על השולחן" aria-pressed="false" aria-controls="hc-table" tabindex="-1">כסף על השולחן</button><button type="button" class="chip" data-island="pension" data-cell="2,-2" data-icon="coins" data-c="--k-orange" data-short="פנסיה" aria-pressed="false" aria-controls="hc-pension" tabindex="-1">פנסיה וחיסכון</button><button type="button" class="chip" data-island="investments" data-cell="2,-1" data-icon="bars" data-c="--k-purple" data-short="השקעות" aria-pressed="false" aria-controls="hc-investments" tabindex="-1">השקעות ושווקים</button><button type="button" class="chip" data-island="networth" data-cell="2,0" data-icon="peak" data-c="--k-green" data-short="שווי נקי" aria-pressed="false" aria-controls="hc-networth" tabindex="-1">שווי נקי ויעדים</button><button type="button" class="chip" data-island="insurance" data-cell="2,1" data-icon="safe" data-c="--k-pink" data-short="ביטוחים" aria-pressed="false" aria-controls="hc-insurance" tabindex="-1">ביטוחים ומסמך למשפחה</button><button type="button" class="chip" data-island="tools" data-cell="2,2" data-icon="calc" data-c="--k-blue" data-short="מחשבונים" aria-pressed="false" aria-controls="hc-tools" tabindex="-1">כלים לכסף בישראל</button><button type="button" class="chip" data-island="household" data-cell="1,2" data-icon="house" data-c="--k-green" data-short="משק הבית" aria-pressed="false" aria-controls="hc-household" tabindex="-1">משק הבית והפרופילים</button><button type="button" class="chip" data-island="privacy" data-cell="0,2" data-icon="lock" data-c="--k-green" data-short="פרטיות" aria-pressed="false" aria-controls="hc-privacy" tabindex="-1">פרטיות ואבטחה</button><button type="button" class="chip" data-island="anywhere" data-cell="-1,2" data-icon="desk" data-c="--k-purple" data-short="איפה זה רץ" aria-pressed="false" aria-controls="hc-anywhere" tabindex="-1">מחשב, Docker וטלפון</button><button type="button" class="chip soon" data-island="clearing" data-cell="3,0" data-icon="doc" data-c="--k-blue" data-short="דוח המסלקה" aria-pressed="false" aria-controls="hc-clearing" tabindex="-1">דוח המסלקה הפנסיונית <small>בקרוב</small></button><button type="button" class="chip soon" data-island="phone" data-cell="0,3" data-icon="phone" data-c="--k-purple" data-short="אפליקציה לטלפון" aria-pressed="false" aria-controls="hc-phone" tabindex="-1">אפליקציה לטלפון <small>בקרוב</small></button></div>
+      </div>
+      </div>
+    </div>
+  </section>
+
   <section id="daily" class="tint">
     <div class="wrap">
       <div class="head">
@@ -146,44 +183,7 @@
     </div>
   </section>
 
-  <section id="map">
-    <div class="wrap">
-      <div class="head">
-        <h2>כל מה שיש בה, במפה אחת.</h2>
-        <p>כל אי הוא חלק מ-Penny. בוחרים אחד, כאן או במפה, כדי לראות מה יש בו. איים במתאר מקווקו נמצאים בתוכנית העבודה.</p>
-      </div>
-      <div class="map-stage">
-      <div class="hub" data-hub>
-        <div class="hub-stage">
-          <div class="hub-scene" aria-hidden="true"></div>
-          <div class="hub-cards" aria-live="polite">
-            <article class="hub-card" id="hc-banks"><div class="hub-card-head"><h3>סנכרון בנקים וכרטיסים</h3></div><p>החשבונות והכרטיסים ברשימה אחת, מתעדכנת כל יום.</p><ul class="ticks"><li>18 בנקים וחברות אשראי בישראל</li><li>סנכרון יומי לפי לוח זמנים, או מתי שמבקשים</li><li>קוד חד-פעמי מהבנק מוקלד באפליקציה</li><li>בנקאות פתוחה (XS2A) עם אסימון גישה במקום סיסמה</li><li>סיסמאות הבנק מוצפנות במחשב שלכם ב‑AES‑256‑GCM</li></ul></article>
-            <article class="hub-card" id="hc-import" hidden><div class="hub-card-head"><h3>קבצים וייבוא</h3></div><p>כל מה שבנק או אפליקציה קודמת מייצאים, נכנס.</p><ul class="ticks"><li>דפי חשבון ב-CSV, ‏XLSX ו-XLS</li><li>תיקייה במחשב שמייבאת כל קובץ שנזרק אליה</li><li>גיליון חכם: מדביקים טבלה, מתקנים כל תא, ואפשר לבטל את כל הייבוא</li><li>דף חשבון ב-PDF או צילום שלו, שה-AI שלכם קורא</li><li>כפילויות מזוהות לכל חשבון, כך ששום דבר לא נספר פעמיים</li></ul></article>
-            <article class="hub-card" id="hc-transactions" hidden><div class="hub-card-head"><h3>תנועות וכללים</h3></div><p>כל שקל ברשימה אחת, מסווג כמו שלימדתם.</p><ul class="ticks"><li>מקובצות לפי שבוע, עם חיפוש, סינון ועריכה מרובה</li><li>פיצול, תגיות ובעלים לכל תנועה</li><li>כללים קובעים קטגוריה, תגיות ובעלים בכל סנכרון</li><li>זיכרון בתי עסק ומילון מובנה של בתי עסק ישראליים</li><li>קבלות מצורפות, הוספת מזומן בשניות, ייצוא CSV ו-OFX</li></ul></article>
-            <article class="hub-card" id="hc-ai" hidden><div class="hub-card-head"><h3>AI ו-MCP</h3></div><p>עזרה לבחירתכם, שרצה איפה שאתם מחליטים.</p><ul class="ticks"><li>מקומי עם Ollama, כולל הורדת מודלים מתוך האפליקציה</li><li>Claude, או סוכן CLI שכבר מותקן אצלכם, כמו Claude Code, ‏Codex או Gemini CLI</li><li>מסווג את מה שהכללים והמילון לא מכירים</li><li>שואלים את הכסף שאלות בשפה רגילה</li><li>שרת MCP לקריאה בלבד לסוכני AI</li></ul></article>
-            <article class="hub-card" id="hc-telegram" hidden><div class="hub-card-head"><h3>בוט טלגרם</h3></div><p>בוט פרטי שעונה רק לצ&#x27;אט שלכם.</p><ul class="ticks"><li>סיכום בימי ראשון, שלישי וחמישי בבוקר</li><li>הוצאות חדשות אחרי כל סנכרון, ומה נשאר בתקציב שלהן</li><li>תזכורת לפני חיובים, והתראה כשבנק מפסיק להסתנכרן</li><li>סיווג תנועות ושמירה של הודעת SMS על חיוב בכרטיס</li><li>תמונת מצב או סנכרון לפי בקשה; אפשר להסתיר סכומים</li></ul></article>
-            <article class="hub-card" id="hc-budgets" hidden><div class="hub-card-head"><h3>תקציב ומעקבים</h3></div><p>תקציב שמראה את הקצב, לא רק את הסכום.</p><ul class="ticks"><li>תקציב לכל קטגוריה, שנבנה מהממוצע שלכם בלחיצה</li><li>קצב לאורך החודש, כדי לראות בעיה מוקדם</li><li>מעטפות ותצוגת 50/30/20</li><li>מעקב לתקופה, למשל אוכל בחוץ עד סוף החודש</li><li>סיכומים לחודש, רבעון, חצי שנה ושנה</li></ul></article>
-            <article class="hub-card" id="hc-forecasts" hidden><div class="hub-card-head"><h3>תחזיות ותובנות</h3></div><p>כמה יישאר, ומה עוד בדרך.</p><ul class="ticks"><li>תחזית יתרה לכל חשבון בנק, עם טווח</li><li>חיובים קבועים ומנויים, שנמצאים לבד</li><li>תשלומים שנותרו והתחייבויות קרובות</li><li>הוצאות מתוכננות שמתאימות את עצמן לחיוב האמיתי</li><li>חריגות בהוצאות, ולמה ההוצאות השתנו לפי בית עסק</li></ul></article>
-            <article class="hub-card" id="hc-table" hidden><div class="hub-card-head"><h3>כסף על השולחן</h3></div><p>סכום שנתי אחד לכל מה שאפשר לחסוך.</p><ul class="ticks"><li>עמלות בנק, ריבית על מינוס ועמלת המרה</li><li>דמי ניהול מעל השוק, וביטוחים חופפים</li><li>כסף שיושב בלי תשואה, וזיכוי על תרומות</li><li>צעד הבא לכל אחד; מה שסימנתם כבוצע נספר כחיסכון</li><li>ציון בריאות פיננסית ורשימה אחת של מה שצריך טיפול</li></ul></article>
-            <article class="hub-card" id="hc-pension" hidden><div class="hub-card-head"><h3>פנסיה וחיסכון</h3></div><p>פנסיה, השתלמות וגמל, ליד הכסף של היום-יום.</p><ul class="ticks"><li>יתרות מכלל, הראל, מיטב, מנורה ומגדל</li><li>חדש: אלטשולר שחם והפניקס</li><li>ייבוא דוח הסוכן (JSON): מוצרים, דמי ניהול, הפקדות וביטוחים</li><li>דמי הניהול שלכם מול השוק</li></ul></article>
-            <article class="hub-card" id="hc-investments" hidden><div class="hub-card-head"><h3>השקעות ושווקים</h3></div><p>אחזקות ליד הכסף של היום-יום, בכל מטבע.</p><ul class="ticks"><li>אחזקות עם קניות ומכירות</li><li>חדש: יתרה מאקסלנס טרייד</li><li>פיזור לפי סוג ומטבע, בהשוואה ל-S&amp;P 500 ולת&quot;א-125</li><li>מדדים, מטבעות, סחורות ומחירי קרנות</li><li>השקעות פרטיות: כמה הושקע, כמה פתוח וכמה מומש</li></ul></article>
-            <article class="hub-card" id="hc-networth" hidden><div class="hub-card-head"><h3>שווי נקי ויעדים</h3></div><p>איפה הבית עומד, ולאן הוא הולך.</p><ul class="ticks"><li>שווי נקי לאורך זמן, מנכסים והתחייבויות</li><li>הלוואות עם ההתקדמות שלהן, ודירוג האשראי לאורך זמן</li><li>יעדי חיסכון, עם בדיקה שכולם מסתדרים</li><li>עצמאות כלכלית: מתי ההשקעות יכסו את ההוצאות</li><li>מודל כסף לכל החיים, עד גיל 90</li></ul></article>
-            <article class="hub-card" id="hc-insurance" hidden><div class="hub-card-head"><h3>ביטוחים ומסמך למשפחה</h3></div><p>כל הפוליסות, והמסמך שמישהו יצטרך יום אחד.</p><ul class="ticks"><li>פוליסות עם כיסוי, השתתפות עצמית, תאריך חידוש וסוכן</li><li>כמה באמת שילמתם על כל אחת בשנה האחרונה</li><li>תשלומים מהבנק שמותאמים לפוליסה שלהם</li><li>בדיקת ביטוח כפול</li><li>מסמך למשפחה, ליום שמישהו אחר יצטרך למצוא הכול</li></ul></article>
-            <article class="hub-card" id="hc-tools" hidden><div class="hub-card-head"><h3>כלים לכסף בישראל</h3></div><p>יותר מ-25 מחשבונים, כל אחד עם השנה שהנתונים שלו תקפים לה.</p><ul class="ticks"><li>החזר מס ונקודות זיכוי, עם רשימת מסמכים לטופס 135</li><li>משכנתא לפי כללי בנק ישראל, לשכור או לקנות, עלות רכב</li><li>פיצויים, קצבה או היוון, בחירת מסלול פנסיה</li><li>בדיקת זכויות, כסף שנשכח ועמלות בנק מול המסלול הבסיסי</li><li>מרכז ידע, טיפ יומי ורשימות לפי שלב בחיים</li></ul></article>
-            <article class="hub-card" id="hc-household" hidden><div class="hub-card-head"><h3>משק הבית והפרופילים</h3></div><p>משק בית אחד, ולכל אחד המסך שלו.</p><ul class="ticks"><li>פרופילים במסך &quot;מי משתמש?&quot;, לכל אחד הסידור שלו</li><li>התחשבנות עם אנשים, ו&quot;החזיר הכול&quot; בלחיצה</li><li>חלק עסקי לכל תנועה, ודוח עסקי</li><li>סיכום חודשי, סקירות מודרכות, המסע שלכם ובדיקת רווחה כלכלית</li><li>פיפ, המאמן של הבית: התראות, תובנות ועצות לפי סדר חשיבות</li><li>תפריט נגישות (Alt+A), שנשמר לכל פרופיל</li></ul></article>
-            <article class="hub-card" id="hc-privacy" hidden><div class="hub-card-head"><h3>פרטיות ואבטחה</h3></div><p>הנתונים נשארים בקובץ אחד על המחשב שלכם.</p><ul class="ticks"><li>מאזינה רק ל-127.0.0.1 וחוסמת בקשות מאתרים אחרים</li><li>סיסמאות הבנק מוצפנות ב‑AES‑256‑GCM</li><li>נעילה עם סיסמה, קוד PIN או מפתח גישה (passkey)</li><li>מצב פרטיות מסתיר כל סכום (Ctrl/⌘+Shift+P)</li><li>גיבוי אוטומטי מוצפן, שחזור, ייצוא מלא ומחיקה</li></ul></article>
-            <article class="hub-card" id="hc-anywhere" hidden><div class="hub-card-head"><h3>מחשב, Docker וטלפון</h3></div><p>על המחשב, על השרת הביתי, ובטלפון כשאתם בבית.</p><ul class="ticks"><li>אפליקציה ל-Windows ול-Mac, שמתעדכנת לבד ב-Windows</li><li>שירות ברקע שעולה עם המחשב</li><li>Docker, עם גיבוי קודם וחזרה לאחור בעדכון שנכשל</li><li>הטלפון ברשת הביתית, עם התקנה למסך הבית</li><li>סביבות עבודה עם כניסה, והרשאות צפייה או עריכה</li></ul></article>
-            <article class="hub-card" id="hc-clearing" hidden><div class="hub-card-head"><h3>דוח המסלקה הפנסיונית</h3><span class="badge soon">בקרוב</span></div><p>קריאה אוטומטית של דוח המסלקה הפנסיונית נמצאת בתוכנית העבודה.</p><ul class="ticks"><li>היום: ייבוא דוח הסוכן כ-JSON</li><li>היום: מדריך לקריאת דוח המסלקה</li></ul></article>
-            <article class="hub-card" id="hc-phone" hidden><div class="hub-card-head"><h3>אפליקציה לטלפון</h3><span class="badge soon">בקרוב</span></div><p>אפליקציה ייעודית לטלפון נמצאת בתוכנית העבודה.</p><ul class="ticks"><li>היום: האפליקציה ברשת הביתית, במסך הבית של הטלפון</li><li>היום: בוט הטלגרם, מכל מקום</li></ul></article>
-          </div>
-        </div>
-        <div class="hub-chips" role="group" aria-label="החלקים של Penny"><button type="button" class="chip" data-island="banks" data-cell="-2,2" data-icon="bank" data-c="--k-blue" data-short="בנקים ואשראי" aria-pressed="true" aria-controls="hc-banks">סנכרון בנקים וכרטיסים</button><button type="button" class="chip" data-island="import" data-cell="-2,1" data-icon="folder" data-c="--k-orange" data-short="ייבוא" aria-pressed="false" aria-controls="hc-import" tabindex="-1">קבצים וייבוא</button><button type="button" class="chip" data-island="transactions" data-cell="-2,0" data-icon="list" data-c="--k-purple" data-short="תנועות" aria-pressed="false" aria-controls="hc-transactions" tabindex="-1">תנועות וכללים</button><button type="button" class="chip" data-island="ai" data-cell="-2,-1" data-icon="chip" data-c="--k-purple" data-short="AI ו-MCP" aria-pressed="false" aria-controls="hc-ai" tabindex="-1">AI ו-MCP</button><button type="button" class="chip" data-island="telegram" data-cell="-2,-2" data-icon="chat" data-c="--k-blue" data-short="טלגרם" aria-pressed="false" aria-controls="hc-telegram" tabindex="-1">בוט טלגרם</button><button type="button" class="chip" data-island="budgets" data-cell="-1,-2" data-icon="jars" data-c="--k-green" data-short="תקציב" aria-pressed="false" aria-controls="hc-budgets" tabindex="-1">תקציב ומעקבים</button><button type="button" class="chip" data-island="forecasts" data-cell="0,-2" data-icon="calendar" data-c="--k-blue" data-short="תחזיות" aria-pressed="false" aria-controls="hc-forecasts" tabindex="-1">תחזיות ותובנות</button><button type="button" class="chip" data-island="table" data-cell="1,-2" data-icon="table" data-c="--k-orange" data-short="כסף על השולחן" aria-pressed="false" aria-controls="hc-table" tabindex="-1">כסף על השולחן</button><button type="button" class="chip" data-island="pension" data-cell="2,-2" data-icon="coins" data-c="--k-orange" data-short="פנסיה" aria-pressed="false" aria-controls="hc-pension" tabindex="-1">פנסיה וחיסכון</button><button type="button" class="chip" data-island="investments" data-cell="2,-1" data-icon="bars" data-c="--k-purple" data-short="השקעות" aria-pressed="false" aria-controls="hc-investments" tabindex="-1">השקעות ושווקים</button><button type="button" class="chip" data-island="networth" data-cell="2,0" data-icon="peak" data-c="--k-green" data-short="שווי נקי" aria-pressed="false" aria-controls="hc-networth" tabindex="-1">שווי נקי ויעדים</button><button type="button" class="chip" data-island="insurance" data-cell="2,1" data-icon="safe" data-c="--k-pink" data-short="ביטוחים" aria-pressed="false" aria-controls="hc-insurance" tabindex="-1">ביטוחים ומסמך למשפחה</button><button type="button" class="chip" data-island="tools" data-cell="2,2" data-icon="calc" data-c="--k-blue" data-short="מחשבונים" aria-pressed="false" aria-controls="hc-tools" tabindex="-1">כלים לכסף בישראל</button><button type="button" class="chip" data-island="household" data-cell="1,2" data-icon="house" data-c="--k-green" data-short="משק הבית" aria-pressed="false" aria-controls="hc-household" tabindex="-1">משק הבית והפרופילים</button><button type="button" class="chip" data-island="privacy" data-cell="0,2" data-icon="lock" data-c="--k-green" data-short="פרטיות" aria-pressed="false" aria-controls="hc-privacy" tabindex="-1">פרטיות ואבטחה</button><button type="button" class="chip" data-island="anywhere" data-cell="-1,2" data-icon="desk" data-c="--k-purple" data-short="איפה זה רץ" aria-pressed="false" aria-controls="hc-anywhere" tabindex="-1">מחשב, Docker וטלפון</button><button type="button" class="chip soon" data-island="clearing" data-cell="3,0" data-icon="doc" data-c="--k-blue" data-short="דוח המסלקה" aria-pressed="false" aria-controls="hc-clearing" tabindex="-1">דוח המסלקה הפנסיונית <small>בקרוב</small></button><button type="button" class="chip soon" data-island="phone" data-cell="0,3" data-icon="phone" data-c="--k-purple" data-short="אפליקציה לטלפון" aria-pressed="false" aria-controls="hc-phone" tabindex="-1">אפליקציה לטלפון <small>בקרוב</small></button></div>
-      </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="sync" class="tint">
+  <section id="sync">
     <div class="wrap">
       <div class="head">
         <h2>כל החשבונות, בשלוש דרכים.</h2>
@@ -210,7 +210,7 @@
     </div>
   </section>
 
-  <section id="wealth">
+  <section id="wealth" class="tint">
     <div class="wrap spread">
       <div class="copy">
         <h2>פנסיה והשקעות, ליד הכסף של היום-יום.</h2>
@@ -222,7 +222,7 @@
     </div>
   </section>
 
-  <section id="ai" class="tint">
+  <section id="ai">
     <div class="wrap spread flip">
       <div class="copy">
         <h2>AI אם רוצים, בתנאים שלכם.</h2>
@@ -237,7 +237,7 @@
     </div>
   </section>
 
-  <section id="telegram">
+  <section id="telegram" class="tint">
     <div class="wrap spread">
       <div class="copy">
         <h2>הכסף שלכם, בצ'אט בטלגרם.</h2>
@@ -273,7 +273,7 @@
     </div>
   </section>
 
-  <section id="privacy" class="tint">
+  <section id="privacy">
     <div class="wrap spread">
       <div class="copy">
         <h2>הנתונים שלכם לא יוצאים מהבית.</h2>
@@ -298,7 +298,7 @@
     </div>
   </section>
 
-  <section id="anywhere">
+  <section id="anywhere" class="tint">
     <div class="wrap">
       <div class="head">
         <h2>רצה איפה שנוח לכם.</h2>
@@ -315,7 +315,7 @@
     </div>
   </section>
 
-  <section id="compare" class="tint">
+  <section id="compare">
     <div class="wrap">
       <div class="head">
         <h2>Penny מול מה שיש בישראל.</h2>
@@ -327,7 +327,7 @@
     </div>
   </section>
 
-  <section id="limits">
+  <section id="limits" class="tint">
     <div class="wrap">
       <div class="head">
         <h2>מה עוד לא מספיק טוב.</h2>
@@ -342,7 +342,7 @@
     </div>
   </section>
 
-  <section id="install" class="tint">
+  <section id="install">
     <div class="wrap">
       <div class="head">
         <h2>מתקינים עוד הערב.</h2>
@@ -389,7 +389,7 @@ npm run setup</pre><button class="copy-btn" type="button" data-copy>העתקה</
     </div>
   </section>
 
-  <section id="faq">
+  <section id="faq" class="tint">
     <div class="wrap">
       <div class="head">
         <h2>מה כולם שואלים לפני שמתקינים.</h2>

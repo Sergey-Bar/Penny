@@ -99,6 +99,43 @@
     </div>
   </div>
 
+  <section id="map">
+    <div class="wrap">
+      <div class="head">
+        <h2>Everything in it, on one board.</h2>
+        <p>Every lot on the board is a part of Penny. Pick one, here or on the board, to see what's in it. Outlined lots are on the roadmap.</p>
+      </div>
+      <div class="map-stage">
+      <div class="hub" data-hub>
+        <div class="hub-stage">
+          <div class="hub-scene" aria-hidden="true"></div>
+          <div class="hub-cards" aria-live="polite">
+            <article class="hub-card" id="hc-banks"><div class="hub-card-head"><h3>Bank and card sync</h3></div><p>Your accounts and cards in one list, updated every day.</p><ul class="ticks"><li>18 Israeli banks and card companies</li><li>A daily sync on a schedule, or whenever you ask</li><li>One-time codes from the bank, typed in the app</li><li>Open banking (XS2A) with an access token instead of a password</li><li>Bank passwords encrypted on your computer with AES‑256‑GCM</li></ul></article>
+            <article class="hub-card" id="hc-import" hidden><div class="hub-card-head"><h3>Files and import</h3></div><p>Anything a bank or your old app can export comes in.</p><ul class="ticks"><li>CSV, XLSX and XLS statements</li><li>A watched folder that imports whatever you drop into it</li><li>Smart sheet: paste a table, fix any cell, undo the whole import</li><li>A PDF statement or a photo of one, read by your AI</li><li>Duplicates caught per account, so nothing counts twice</li></ul></article>
+            <article class="hub-card" id="hc-transactions" hidden><div class="hub-card-head"><h3>Transactions and rules</h3></div><p>Every shekel in one list, sorted the way you taught it.</p><ul class="ticks"><li>Grouped by week, with search, filters and bulk edit</li><li>Splits, tags and an owner for each transaction</li><li>Rules set category, tags and owner on every sync</li><li>Merchant memory and a built-in dictionary of Israeli merchants</li><li>Receipts attached, cash added in seconds, CSV and OFX export</li></ul></article>
+            <article class="hub-card" id="hc-ai" hidden><div class="hub-card-head"><h3>AI and MCP</h3></div><p>Optional help, running where you choose.</p><ul class="ticks"><li>Local with Ollama, with model downloads inside the app</li><li>Claude, or a CLI agent you already have, such as Claude Code, Codex or Gemini CLI</li><li>Sorts what your rules and the dictionary don&#x27;t know</li><li>Ask your money questions in plain words</li><li>A read-only MCP server for AI assistants</li></ul></article>
+            <article class="hub-card" id="hc-telegram" hidden><div class="hub-card-head"><h3>Telegram bot</h3></div><p>A private bot that answers only your own chat.</p><ul class="ticks"><li>A summary on Sunday, Tuesday and Thursday mornings</li><li>New expenses after each sync, with what&#x27;s left in their budget</li><li>Reminders before charges, and alerts when a bank stops syncing</li><li>Sort transactions and save a forwarded card-charge SMS</li><li>A snapshot or a sync on request; amounts can be hidden</li></ul></article>
+            <article class="hub-card" id="hc-budgets" hidden><div class="hub-card-head"><h3>Budgets and trackers</h3></div><p>Budgets that show the pace, not just the total.</p><ul class="ticks"><li>A budget per category, built from your average in one click</li><li>Pace through the month, so trouble shows early</li><li>Envelopes and a 50/30/20 view</li><li>Trackers for a period, like eating out until month end</li><li>Summaries by month, quarter, half-year and year</li></ul></article>
+            <article class="hub-card" id="hc-forecasts" hidden><div class="hub-card-head"><h3>Forecasts and insights</h3></div><p>What will be left, and what is on its way.</p><ul class="ticks"><li>A balance forecast for each bank account, with a range</li><li>Recurring charges and subscriptions, found automatically</li><li>Remaining installments and upcoming obligations</li><li>Planned expenses that match themselves to the real charge</li><li>Spending anomalies, and why spending changed per merchant</li></ul></article>
+            <article class="hub-card" id="hc-table" hidden><div class="hub-card-head"><h3>Money on the table</h3></div><p>One yearly figure for everything you could save.</p><ul class="ticks"><li>Bank fees, overdraft interest and FX markup</li><li>Fund fees above the market, and overlapping insurance</li><li>Idle cash and the donation tax credit</li><li>A next step for each; what you mark done counts as saved</li><li>A financial health score with one list of what needs care</li></ul></article>
+            <article class="hub-card" id="hc-pension" hidden><div class="hub-card-head"><h3>Pension and savings</h3></div><p>Pension, study funds and provident funds, next to everyday money.</p><ul class="ticks"><li>Balances from Clal, Harel, Meitav, Menora and Migdal</li><li>New: Altshuler Shaham and Phoenix</li><li>Import your agent&#x27;s report (JSON): products, fees, deposits and insurance</li><li>Your management fees against the market</li></ul></article>
+            <article class="hub-card" id="hc-investments" hidden><div class="hub-card-head"><h3>Investments and markets</h3></div><p>Holdings next to everyday money, in any currency.</p><ul class="ticks"><li>Holdings with buys and sells</li><li>New: Excellence Trade brokerage balance</li><li>Allocation by type and currency, against the S&amp;P 500 and TA-125</li><li>Indices, currencies, commodities and fund prices</li><li>Private ventures with invested, outstanding and realized gain</li></ul></article>
+            <article class="hub-card" id="hc-networth" hidden><div class="hub-card-head"><h3>Net worth and goals</h3></div><p>Where the household stands, and where it&#x27;s heading.</p><ul class="ticks"><li>Net worth over time, from assets and liabilities</li><li>Loans with their progress, and your credit score over time</li><li>Savings goals, with a check that they all fit</li><li>Financial independence: when investments can cover spending</li><li>A lifetime money model to age 90</li></ul></article>
+            <article class="hub-card" id="hc-insurance" hidden><div class="hub-card-head"><h3>Insurance and family document</h3></div><p>Every policy, and the document someone will need one day.</p><ul class="ticks"><li>Policies with coverage, excess, renewal date and agent</li><li>What you actually paid for each one in the last year</li><li>Payments from the bank matched to their policy</li><li>A double-insurance check</li><li>A family document for the day someone else needs to find everything</li></ul></article>
+            <article class="hub-card" id="hc-tools" hidden><div class="hub-card-head"><h3>Israeli money tools</h3></div><p>25+ calculators, each with the year its figures are valid for.</p><ul class="ticks"><li>Tax refund and credit points, with a Form 135 checklist</li><li>Mortgage under Bank of Israel rules, rent or buy, car cost</li><li>Severance, annuity or lump sum, pension track choice</li><li>Benefits check, forgotten money, bank fees against the basic track</li><li>A knowledge center, daily tips and life-stage checklists</li></ul></article>
+            <article class="hub-card" id="hc-household" hidden><div class="hub-card-head"><h3>Household and profiles</h3></div><p>One household, and everyone gets their own screen.</p><ul class="ticks"><li>Profiles in a &quot;who&#x27;s using?&quot; screen, each with its own layout</li><li>Splitting with people, with &quot;paid it all back&quot; in one tap</li><li>A business share per transaction, and a business report</li><li>Monthly recap, guided reviews, your journey and a well-being check</li><li>Pip, the household coach: alerts, insights and ranked advice</li><li>An accessibility menu (Alt+A), saved per profile</li></ul></article>
+            <article class="hub-card" id="hc-privacy" hidden><div class="hub-card-head"><h3>Privacy and security</h3></div><p>Your data stays in one file on your computer.</p><ul class="ticks"><li>Listens only on 127.0.0.1 and blocks requests from other sites</li><li>Bank passwords encrypted with AES‑256‑GCM</li><li>App lock with a passphrase, PIN or passkey</li><li>Privacy mode hides every amount (Ctrl/⌘+Shift+P)</li><li>Encrypted automatic backup, restore, full export and wipe</li></ul></article>
+            <article class="hub-card" id="hc-anywhere" hidden><div class="hub-card-head"><h3>Desktop, Docker and phone</h3></div><p>On your computer, your home server, and your phone at home.</p><ul class="ticks"><li>A Windows and Mac app that updates itself on Windows</li><li>A background service that starts with the computer</li><li>Docker, with a backup first and rollback on a bad update</li><li>Your phone on the home Wi-Fi, installable to the home screen</li><li>Workspaces with sign-in, and viewer or editor permissions</li></ul></article>
+            <article class="hub-card" id="hc-clearing" hidden><div class="hub-card-head"><h3>Clearing-house report</h3><span class="badge soon">Soon</span></div><p>Reading the pension clearing-house report automatically is on the roadmap.</p><ul class="ticks"><li>Today: import your agent&#x27;s report as JSON</li><li>Today: a guide to reading the clearing-house report</li></ul></article>
+            <article class="hub-card" id="hc-phone" hidden><div class="hub-card-head"><h3>Phone app</h3><span class="badge soon">Soon</span></div><p>A native companion app for the phone is on the roadmap.</p><ul class="ticks"><li>Today: the web app on your home Wi-Fi, on the home screen</li><li>Today: the Telegram bot, wherever you are</li></ul></article>
+          </div>
+        </div>
+        <div class="hub-chips" role="group" aria-label="Parts of Penny"><button type="button" class="chip" data-island="banks" data-cell="-2,2" data-icon="bank" data-c="--k-blue" data-short="Banks &amp; cards" aria-pressed="true" aria-controls="hc-banks">Bank and card sync</button><button type="button" class="chip" data-island="import" data-cell="-2,1" data-icon="folder" data-c="--k-orange" data-short="Import" aria-pressed="false" aria-controls="hc-import" tabindex="-1">Files and import</button><button type="button" class="chip" data-island="transactions" data-cell="-2,0" data-icon="list" data-c="--k-purple" data-short="Transactions" aria-pressed="false" aria-controls="hc-transactions" tabindex="-1">Transactions and rules</button><button type="button" class="chip" data-island="ai" data-cell="-2,-1" data-icon="chip" data-c="--k-purple" data-short="AI &amp; MCP" aria-pressed="false" aria-controls="hc-ai" tabindex="-1">AI and MCP</button><button type="button" class="chip" data-island="telegram" data-cell="-2,-2" data-icon="chat" data-c="--k-blue" data-short="Telegram" aria-pressed="false" aria-controls="hc-telegram" tabindex="-1">Telegram bot</button><button type="button" class="chip" data-island="budgets" data-cell="-1,-2" data-icon="jars" data-c="--k-green" data-short="Budgets" aria-pressed="false" aria-controls="hc-budgets" tabindex="-1">Budgets and trackers</button><button type="button" class="chip" data-island="forecasts" data-cell="0,-2" data-icon="calendar" data-c="--k-blue" data-short="Forecasts" aria-pressed="false" aria-controls="hc-forecasts" tabindex="-1">Forecasts and insights</button><button type="button" class="chip" data-island="table" data-cell="1,-2" data-icon="table" data-c="--k-orange" data-short="On the table" aria-pressed="false" aria-controls="hc-table" tabindex="-1">Money on the table</button><button type="button" class="chip" data-island="pension" data-cell="2,-2" data-icon="coins" data-c="--k-orange" data-short="Pension" aria-pressed="false" aria-controls="hc-pension" tabindex="-1">Pension and savings</button><button type="button" class="chip" data-island="investments" data-cell="2,-1" data-icon="bars" data-c="--k-purple" data-short="Investments" aria-pressed="false" aria-controls="hc-investments" tabindex="-1">Investments and markets</button><button type="button" class="chip" data-island="networth" data-cell="2,0" data-icon="peak" data-c="--k-green" data-short="Net worth" aria-pressed="false" aria-controls="hc-networth" tabindex="-1">Net worth and goals</button><button type="button" class="chip" data-island="insurance" data-cell="2,1" data-icon="safe" data-c="--k-pink" data-short="Insurance" aria-pressed="false" aria-controls="hc-insurance" tabindex="-1">Insurance and family document</button><button type="button" class="chip" data-island="tools" data-cell="2,2" data-icon="calc" data-c="--k-blue" data-short="Calculators" aria-pressed="false" aria-controls="hc-tools" tabindex="-1">Israeli money tools</button><button type="button" class="chip" data-island="household" data-cell="1,2" data-icon="house" data-c="--k-green" data-short="Household" aria-pressed="false" aria-controls="hc-household" tabindex="-1">Household and profiles</button><button type="button" class="chip" data-island="privacy" data-cell="0,2" data-icon="lock" data-c="--k-green" data-short="Privacy" aria-pressed="false" aria-controls="hc-privacy" tabindex="-1">Privacy and security</button><button type="button" class="chip" data-island="anywhere" data-cell="-1,2" data-icon="desk" data-c="--k-purple" data-short="Runs anywhere" aria-pressed="false" aria-controls="hc-anywhere" tabindex="-1">Desktop, Docker and phone</button><button type="button" class="chip soon" data-island="clearing" data-cell="3,0" data-icon="doc" data-c="--k-blue" data-short="Clearing house" aria-pressed="false" aria-controls="hc-clearing" tabindex="-1">Clearing-house report <small>Soon</small></button><button type="button" class="chip soon" data-island="phone" data-cell="0,3" data-icon="phone" data-c="--k-purple" data-short="Phone app" aria-pressed="false" aria-controls="hc-phone" tabindex="-1">Phone app <small>Soon</small></button></div>
+      </div>
+      </div>
+    </div>
+  </section>
+
   <section id="daily" class="tint">
     <div class="wrap">
       <div class="head">
@@ -145,44 +182,7 @@
     </div>
   </section>
 
-  <section id="map">
-    <div class="wrap">
-      <div class="head">
-        <h2>Everything in it, on one map.</h2>
-        <p>Every island is a part of Penny. Pick one, here or on the map, to see what's in it. Outlined islands are on the roadmap.</p>
-      </div>
-      <div class="map-stage">
-      <div class="hub" data-hub>
-        <div class="hub-stage">
-          <div class="hub-scene" aria-hidden="true"></div>
-          <div class="hub-cards" aria-live="polite">
-            <article class="hub-card" id="hc-banks"><div class="hub-card-head"><h3>Bank and card sync</h3></div><p>Your accounts and cards in one list, updated every day.</p><ul class="ticks"><li>18 Israeli banks and card companies</li><li>A daily sync on a schedule, or whenever you ask</li><li>One-time codes from the bank, typed in the app</li><li>Open banking (XS2A) with an access token instead of a password</li><li>Bank passwords encrypted on your computer with AES‑256‑GCM</li></ul></article>
-            <article class="hub-card" id="hc-import" hidden><div class="hub-card-head"><h3>Files and import</h3></div><p>Anything a bank or your old app can export comes in.</p><ul class="ticks"><li>CSV, XLSX and XLS statements</li><li>A watched folder that imports whatever you drop into it</li><li>Smart sheet: paste a table, fix any cell, undo the whole import</li><li>A PDF statement or a photo of one, read by your AI</li><li>Duplicates caught per account, so nothing counts twice</li></ul></article>
-            <article class="hub-card" id="hc-transactions" hidden><div class="hub-card-head"><h3>Transactions and rules</h3></div><p>Every shekel in one list, sorted the way you taught it.</p><ul class="ticks"><li>Grouped by week, with search, filters and bulk edit</li><li>Splits, tags and an owner for each transaction</li><li>Rules set category, tags and owner on every sync</li><li>Merchant memory and a built-in dictionary of Israeli merchants</li><li>Receipts attached, cash added in seconds, CSV and OFX export</li></ul></article>
-            <article class="hub-card" id="hc-ai" hidden><div class="hub-card-head"><h3>AI and MCP</h3></div><p>Optional help, running where you choose.</p><ul class="ticks"><li>Local with Ollama, with model downloads inside the app</li><li>Claude, or a CLI agent you already have, such as Claude Code, Codex or Gemini CLI</li><li>Sorts what your rules and the dictionary don&#x27;t know</li><li>Ask your money questions in plain words</li><li>A read-only MCP server for AI assistants</li></ul></article>
-            <article class="hub-card" id="hc-telegram" hidden><div class="hub-card-head"><h3>Telegram bot</h3></div><p>A private bot that answers only your own chat.</p><ul class="ticks"><li>A summary on Sunday, Tuesday and Thursday mornings</li><li>New expenses after each sync, with what&#x27;s left in their budget</li><li>Reminders before charges, and alerts when a bank stops syncing</li><li>Sort transactions and save a forwarded card-charge SMS</li><li>A snapshot or a sync on request; amounts can be hidden</li></ul></article>
-            <article class="hub-card" id="hc-budgets" hidden><div class="hub-card-head"><h3>Budgets and trackers</h3></div><p>Budgets that show the pace, not just the total.</p><ul class="ticks"><li>A budget per category, built from your average in one click</li><li>Pace through the month, so trouble shows early</li><li>Envelopes and a 50/30/20 view</li><li>Trackers for a period, like eating out until month end</li><li>Summaries by month, quarter, half-year and year</li></ul></article>
-            <article class="hub-card" id="hc-forecasts" hidden><div class="hub-card-head"><h3>Forecasts and insights</h3></div><p>What will be left, and what is on its way.</p><ul class="ticks"><li>A balance forecast for each bank account, with a range</li><li>Recurring charges and subscriptions, found automatically</li><li>Remaining installments and upcoming obligations</li><li>Planned expenses that match themselves to the real charge</li><li>Spending anomalies, and why spending changed per merchant</li></ul></article>
-            <article class="hub-card" id="hc-table" hidden><div class="hub-card-head"><h3>Money on the table</h3></div><p>One yearly figure for everything you could save.</p><ul class="ticks"><li>Bank fees, overdraft interest and FX markup</li><li>Fund fees above the market, and overlapping insurance</li><li>Idle cash and the donation tax credit</li><li>A next step for each; what you mark done counts as saved</li><li>A financial health score with one list of what needs care</li></ul></article>
-            <article class="hub-card" id="hc-pension" hidden><div class="hub-card-head"><h3>Pension and savings</h3></div><p>Pension, study funds and provident funds, next to everyday money.</p><ul class="ticks"><li>Balances from Clal, Harel, Meitav, Menora and Migdal</li><li>New: Altshuler Shaham and Phoenix</li><li>Import your agent&#x27;s report (JSON): products, fees, deposits and insurance</li><li>Your management fees against the market</li></ul></article>
-            <article class="hub-card" id="hc-investments" hidden><div class="hub-card-head"><h3>Investments and markets</h3></div><p>Holdings next to everyday money, in any currency.</p><ul class="ticks"><li>Holdings with buys and sells</li><li>New: Excellence Trade brokerage balance</li><li>Allocation by type and currency, against the S&amp;P 500 and TA-125</li><li>Indices, currencies, commodities and fund prices</li><li>Private ventures with invested, outstanding and realized gain</li></ul></article>
-            <article class="hub-card" id="hc-networth" hidden><div class="hub-card-head"><h3>Net worth and goals</h3></div><p>Where the household stands, and where it&#x27;s heading.</p><ul class="ticks"><li>Net worth over time, from assets and liabilities</li><li>Loans with their progress, and your credit score over time</li><li>Savings goals, with a check that they all fit</li><li>Financial independence: when investments can cover spending</li><li>A lifetime money model to age 90</li></ul></article>
-            <article class="hub-card" id="hc-insurance" hidden><div class="hub-card-head"><h3>Insurance and family document</h3></div><p>Every policy, and the document someone will need one day.</p><ul class="ticks"><li>Policies with coverage, excess, renewal date and agent</li><li>What you actually paid for each one in the last year</li><li>Payments from the bank matched to their policy</li><li>A double-insurance check</li><li>A family document for the day someone else needs to find everything</li></ul></article>
-            <article class="hub-card" id="hc-tools" hidden><div class="hub-card-head"><h3>Israeli money tools</h3></div><p>25+ calculators, each with the year its figures are valid for.</p><ul class="ticks"><li>Tax refund and credit points, with a Form 135 checklist</li><li>Mortgage under Bank of Israel rules, rent or buy, car cost</li><li>Severance, annuity or lump sum, pension track choice</li><li>Benefits check, forgotten money, bank fees against the basic track</li><li>A knowledge center, daily tips and life-stage checklists</li></ul></article>
-            <article class="hub-card" id="hc-household" hidden><div class="hub-card-head"><h3>Household and profiles</h3></div><p>One household, and everyone gets their own screen.</p><ul class="ticks"><li>Profiles in a &quot;who&#x27;s using?&quot; screen, each with its own layout</li><li>Splitting with people, with &quot;paid it all back&quot; in one tap</li><li>A business share per transaction, and a business report</li><li>Monthly recap, guided reviews, your journey and a well-being check</li><li>Pip, the household coach: alerts, insights and ranked advice</li><li>An accessibility menu (Alt+A), saved per profile</li></ul></article>
-            <article class="hub-card" id="hc-privacy" hidden><div class="hub-card-head"><h3>Privacy and security</h3></div><p>Your data stays in one file on your computer.</p><ul class="ticks"><li>Listens only on 127.0.0.1 and blocks requests from other sites</li><li>Bank passwords encrypted with AES‑256‑GCM</li><li>App lock with a passphrase, PIN or passkey</li><li>Privacy mode hides every amount (Ctrl/⌘+Shift+P)</li><li>Encrypted automatic backup, restore, full export and wipe</li></ul></article>
-            <article class="hub-card" id="hc-anywhere" hidden><div class="hub-card-head"><h3>Desktop, Docker and phone</h3></div><p>On your computer, your home server, and your phone at home.</p><ul class="ticks"><li>A Windows and Mac app that updates itself on Windows</li><li>A background service that starts with the computer</li><li>Docker, with a backup first and rollback on a bad update</li><li>Your phone on the home Wi-Fi, installable to the home screen</li><li>Workspaces with sign-in, and viewer or editor permissions</li></ul></article>
-            <article class="hub-card" id="hc-clearing" hidden><div class="hub-card-head"><h3>Clearing-house report</h3><span class="badge soon">Soon</span></div><p>Reading the pension clearing-house report automatically is on the roadmap.</p><ul class="ticks"><li>Today: import your agent&#x27;s report as JSON</li><li>Today: a guide to reading the clearing-house report</li></ul></article>
-            <article class="hub-card" id="hc-phone" hidden><div class="hub-card-head"><h3>Phone app</h3><span class="badge soon">Soon</span></div><p>A native companion app for the phone is on the roadmap.</p><ul class="ticks"><li>Today: the web app on your home Wi-Fi, on the home screen</li><li>Today: the Telegram bot, wherever you are</li></ul></article>
-          </div>
-        </div>
-        <div class="hub-chips" role="group" aria-label="Parts of Penny"><button type="button" class="chip" data-island="banks" data-cell="-2,2" data-icon="bank" data-c="--k-blue" data-short="Banks &amp; cards" aria-pressed="true" aria-controls="hc-banks">Bank and card sync</button><button type="button" class="chip" data-island="import" data-cell="-2,1" data-icon="folder" data-c="--k-orange" data-short="Import" aria-pressed="false" aria-controls="hc-import" tabindex="-1">Files and import</button><button type="button" class="chip" data-island="transactions" data-cell="-2,0" data-icon="list" data-c="--k-purple" data-short="Transactions" aria-pressed="false" aria-controls="hc-transactions" tabindex="-1">Transactions and rules</button><button type="button" class="chip" data-island="ai" data-cell="-2,-1" data-icon="chip" data-c="--k-purple" data-short="AI &amp; MCP" aria-pressed="false" aria-controls="hc-ai" tabindex="-1">AI and MCP</button><button type="button" class="chip" data-island="telegram" data-cell="-2,-2" data-icon="chat" data-c="--k-blue" data-short="Telegram" aria-pressed="false" aria-controls="hc-telegram" tabindex="-1">Telegram bot</button><button type="button" class="chip" data-island="budgets" data-cell="-1,-2" data-icon="jars" data-c="--k-green" data-short="Budgets" aria-pressed="false" aria-controls="hc-budgets" tabindex="-1">Budgets and trackers</button><button type="button" class="chip" data-island="forecasts" data-cell="0,-2" data-icon="calendar" data-c="--k-blue" data-short="Forecasts" aria-pressed="false" aria-controls="hc-forecasts" tabindex="-1">Forecasts and insights</button><button type="button" class="chip" data-island="table" data-cell="1,-2" data-icon="table" data-c="--k-orange" data-short="On the table" aria-pressed="false" aria-controls="hc-table" tabindex="-1">Money on the table</button><button type="button" class="chip" data-island="pension" data-cell="2,-2" data-icon="coins" data-c="--k-orange" data-short="Pension" aria-pressed="false" aria-controls="hc-pension" tabindex="-1">Pension and savings</button><button type="button" class="chip" data-island="investments" data-cell="2,-1" data-icon="bars" data-c="--k-purple" data-short="Investments" aria-pressed="false" aria-controls="hc-investments" tabindex="-1">Investments and markets</button><button type="button" class="chip" data-island="networth" data-cell="2,0" data-icon="peak" data-c="--k-green" data-short="Net worth" aria-pressed="false" aria-controls="hc-networth" tabindex="-1">Net worth and goals</button><button type="button" class="chip" data-island="insurance" data-cell="2,1" data-icon="safe" data-c="--k-pink" data-short="Insurance" aria-pressed="false" aria-controls="hc-insurance" tabindex="-1">Insurance and family document</button><button type="button" class="chip" data-island="tools" data-cell="2,2" data-icon="calc" data-c="--k-blue" data-short="Calculators" aria-pressed="false" aria-controls="hc-tools" tabindex="-1">Israeli money tools</button><button type="button" class="chip" data-island="household" data-cell="1,2" data-icon="house" data-c="--k-green" data-short="Household" aria-pressed="false" aria-controls="hc-household" tabindex="-1">Household and profiles</button><button type="button" class="chip" data-island="privacy" data-cell="0,2" data-icon="lock" data-c="--k-green" data-short="Privacy" aria-pressed="false" aria-controls="hc-privacy" tabindex="-1">Privacy and security</button><button type="button" class="chip" data-island="anywhere" data-cell="-1,2" data-icon="desk" data-c="--k-purple" data-short="Runs anywhere" aria-pressed="false" aria-controls="hc-anywhere" tabindex="-1">Desktop, Docker and phone</button><button type="button" class="chip soon" data-island="clearing" data-cell="3,0" data-icon="doc" data-c="--k-blue" data-short="Clearing house" aria-pressed="false" aria-controls="hc-clearing" tabindex="-1">Clearing-house report <small>Soon</small></button><button type="button" class="chip soon" data-island="phone" data-cell="0,3" data-icon="phone" data-c="--k-purple" data-short="Phone app" aria-pressed="false" aria-controls="hc-phone" tabindex="-1">Phone app <small>Soon</small></button></div>
-      </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="sync" class="tint">
+  <section id="sync">
     <div class="wrap">
       <div class="head">
         <h2>Every account, three ways in.</h2>
@@ -209,7 +209,7 @@
     </div>
   </section>
 
-  <section id="wealth">
+  <section id="wealth" class="tint">
     <div class="wrap spread">
       <div class="copy">
         <h2>Pension and investments, next to everyday money.</h2>
@@ -221,7 +221,7 @@
     </div>
   </section>
 
-  <section id="ai" class="tint">
+  <section id="ai">
     <div class="wrap spread flip">
       <div class="copy">
         <h2>AI if you want it, on your terms.</h2>
@@ -236,7 +236,7 @@
     </div>
   </section>
 
-  <section id="telegram">
+  <section id="telegram" class="tint">
     <div class="wrap spread">
       <div class="copy">
         <h2>Your money, in a Telegram chat.</h2>
@@ -273,7 +273,7 @@ Aroma
     <div class="wrap"><p class="note">The bot writes in Hebrew; the chat above is translated.</p></div>
   </section>
 
-  <section id="privacy" class="tint">
+  <section id="privacy">
     <div class="wrap spread">
       <div class="copy">
         <h2>Your data doesn't leave home.</h2>
@@ -298,7 +298,7 @@ Aroma
     </div>
   </section>
 
-  <section id="anywhere">
+  <section id="anywhere" class="tint">
     <div class="wrap">
       <div class="head">
         <h2>Runs where you want it.</h2>
@@ -315,7 +315,7 @@ Aroma
     </div>
   </section>
 
-  <section id="compare" class="tint">
+  <section id="compare">
     <div class="wrap">
       <div class="head">
         <h2>Penny against what's available in Israel.</h2>
@@ -327,7 +327,7 @@ Aroma
     </div>
   </section>
 
-  <section id="limits">
+  <section id="limits" class="tint">
     <div class="wrap">
       <div class="head">
         <h2>What isn't good enough yet.</h2>
@@ -342,7 +342,7 @@ Aroma
     </div>
   </section>
 
-  <section id="install" class="tint">
+  <section id="install">
     <div class="wrap">
       <div class="head">
         <h2>Install it tonight.</h2>
@@ -389,7 +389,7 @@ npm run setup</pre><button class="copy-btn" type="button" data-copy>Copy</button
     </div>
   </section>
 
-  <section id="faq">
+  <section id="faq" class="tint">
     <div class="wrap">
       <div class="head">
         <h2>What everyone asks before installing.</h2>

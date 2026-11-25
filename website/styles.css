@@ -231,7 +231,11 @@ bdi, code, pre { unicode-bidi: isolate; }
   gap: 0 24px;
 }
 .hub-stage { display: contents; }
-.hub-scene { grid-area: scene; aspect-ratio: 1380 / 920; position: relative; }
+.hub-scene { grid-area: scene; aspect-ratio: 1520 / 960; position: relative; }
+.hub .board-t { fill: #15141a; stroke: rgb(255 255 255 / 10%); stroke-width: 1.5; stroke-linejoin: round; }
+.hub .board-l { fill: #0f0e13; }
+.hub .board-r { fill: #0a090d; }
+.hub .strip { opacity: 0.95; }
 .hub-scene svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .hub-cards { grid-area: card; align-self: center; }
 .hub-chips { grid-area: chips; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }

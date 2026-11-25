@@ -5694,6 +5694,10 @@
     "menu": "תפריט"
   },
   "board": {
+    "mapTile": "הלוח של הבית",
+    "mapAdd": "הוספה",
+    "heroAhead": "שלושת החודשים הבאים",
+    "heroEnd": "{amount} ב-{date}",
     "heroAdd": "הוספה",
     "heroReview": "לבדיקה",
     "heroSync": "סנכרון",

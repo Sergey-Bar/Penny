@@ -9,7 +9,7 @@
    Light: pale daylight behind white panes, near-black text. */
 :is(html.app-studio, .budget-studio) {
   --canvas: #e9eef8; --surface: #ffffff; --surface-raised: #ffffff;
-  --pane: rgb(255 255 255 / 62%); --pane-strong: rgb(255 255 255 / 90%); --pane-clear: rgb(255 255 255 / 34%);
+  --pane: rgb(255 255 255 / 80%); --pane-strong: rgb(255 255 255 / 94%); --pane-clear: rgb(255 255 255 / 46%); --field-opacity: 0.6;
   --rim: rgb(255 255 255 / 72%); --rim-top: rgb(255 255 255 / 96%);
   --field-1: #7fb0ff; --field-2: #8fe1f5; --field-3: #b9c8ff;
   --text: #0f1728; --text-strong: #06122a; --text-secondary: #56607a;
@@ -25,13 +25,14 @@
   --segmented: rgb(10 30 80 / 7%); --segmented-thumb: #fff;
   --ring-income: #6fdc8c; --ring-spending: #ff8fa3; --ring-savings: #5aa9ff;
   --card-elevation: inset 0 1px 0 rgb(255 255 255 / 60%), 0 30px 60px -36px rgb(20 50 120 / 36%);
+  --board-lot: #f7f9fd; --board-base: #c9d4ea; --board-shadow: rgb(20 50 120 / 14%);
 }
 /* Dark: near-black with blue light behind smoked panes, soft white text, pure white for the figure that matters. */
 :is(html.app-studio, .budget-studio)[data-studio-theme="midnight"] {
   --canvas: #05070d; --surface: #121622; --surface-raised: #1a1f2e;
-  --pane: rgb(22 26 38 / 48%); --pane-strong: rgb(16 19 28 / 88%); --pane-clear: rgb(255 255 255 / 9%);
+  --pane: rgb(17 20 30 / 78%); --pane-strong: rgb(14 17 25 / 92%); --pane-clear: rgb(255 255 255 / 7%); --field-opacity: 0.38;
   --rim: rgb(255 255 255 / 13%); --rim-top: rgb(255 255 255 / 28%);
-  --field-1: #1b4fe0; --field-2: #0e9fd8; --field-3: #0b2f8f;
+  --field-1: #173fae; --field-2: #0c6f9c; --field-3: #0a2466;
   --text: #eef0f6; --text-strong: #ffffff; --text-secondary: #a3acbf;
   --divider: rgb(255 255 255 / 11%); --border-interactive: #77819a;
   --brand: #ffffff; --brand-hover: #e6e9f0; --brand-press: #cdd2dc; --on-brand: #05070d;
@@ -44,6 +45,7 @@
   --studio-hero: #121622; --studio-glow: transparent;
   --segmented: rgb(255 255 255 / 9%); --segmented-thumb: rgb(255 255 255 / 18%);
   --card-elevation: inset 0 1px 0 rgb(255 255 255 / 9%), 0 30px 60px -34px rgb(0 0 0 / 70%);
+  --board-lot: #2a3145; --board-base: #161b29; --board-shadow: rgb(0 0 0 / 45%);
 }
 :is(html.app-studio, .budget-studio) {
   --background: var(--canvas); --foreground: var(--text);
@@ -292,11 +294,12 @@ html.app-studio[data-studio-density="compact"] :is([data-slot="dropdown-menu-ite
 }
 
 
-/* The field of light every pane sits on. Fixed and already soft, so content panes only need a tint to read as glass;
+/* The field of light every pane sits on. Kept low and mostly behind the top of the page: it is there to give the
+   glass something to sit on, never to compete with a row of figures. Fixed and already soft, so content panes only need a tint to read as glass;
    real blur is kept for the chrome that content scrolls under (sidebar, header, dock, sheets). */
 html.app-studio body { background: var(--canvas); }
-html.app-studio body::before { content: ""; position: fixed; inset: -10%; z-index: -1; pointer-events: none; filter: blur(70px) saturate(1.2); opacity: 0.9;
-  background: radial-gradient(38% 42% at 30% 8%, var(--field-1), transparent 70%), radial-gradient(34% 40% at 78% 22%, var(--field-2), transparent 70%), radial-gradient(40% 44% at 62% 92%, var(--field-3), transparent 72%), radial-gradient(30% 34% at 6% 78%, var(--field-2), transparent 70%); }
+html.app-studio body::before { content: ""; position: fixed; inset: -10%; z-index: -1; pointer-events: none; filter: blur(90px); opacity: var(--field-opacity, 0.5);
+  background: radial-gradient(42% 38% at 28% 4%, var(--field-1), transparent 70%), radial-gradient(36% 34% at 80% 10%, var(--field-2), transparent 70%), radial-gradient(46% 30% at 60% 100%, var(--field-3), transparent 74%); }
 @media print { html.app-studio body::before { display: none; } }
 /* A pane: tint, hairline rim that is brighter along the top, a soft drop. */
 html.app-studio :is(.card-surface, .studio-panel, [data-slot="card"]) { background: var(--pane); border: 1px solid var(--rim); border-top-color: var(--rim-top); box-shadow: var(--card-elevation); }
@@ -430,6 +433,6 @@ html.app-studio .header-bar { background-color: var(--pane); -webkit-backdrop-fi
 @media (hover: hover) { .group:hover .hero-circle:not(.is-primary) { background: var(--press); } .group:hover .hero-circle.is-primary { background: var(--brand-hover); } }
 .group:active .hero-circle:not(.is-primary) { background: var(--press); }
 .hero-badge { position: absolute; top: -4px; inset-inline-end: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center; font-size: 11px; font-weight: 600; background: var(--error); color: var(--surface); }
-.hero-chart { display: block; margin: 22px -20px 0; padding: 0; border-top: 1px solid var(--divider); border-radius: 0 0 30px 30px; }
+.hero-chart { display: block; margin: 18px -20px 0; padding: 0; border-radius: 0 0 30px 30px; text-align: start; }
 .hero-chart:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
 .home-hero [data-slot="month-nav"], .home-hero .month-nav { background: transparent; }

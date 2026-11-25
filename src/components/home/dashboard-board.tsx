@@ -14,6 +14,7 @@ import {
   ComposedChart,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -30,8 +31,11 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { CategoryIcon } from "@/components/ui/category-icon";
+import { MerchantMark } from "@/components/transactions/merchant-mark";
+import { merchantMark } from "@/lib/merchant-mark";
 import { usePlan } from "@/hooks/use-plan";
 import { PetHeroAside } from "./pet-card";
+import { MoneyBoard } from "./money-board";
 import { getAssets, getBalanceForecast, getFi, getInsights, getOwners, getPlan } from "@/lib/api";
 import { creditUtilization, parseLimits } from "@/lib/credit-utilization";
 import { useHousehold } from "@/hooks/use-household";
@@ -218,6 +222,19 @@ function HomeHero({
       ),
     [points, low?.date],
   );
+  // Room above and below the line, so it never touches the edge of the pane.
+  const pad = useMemo(() => {
+    const values = points.map((p) => p.balance);
+    return values.length ? (Math.max(...values) - Math.min(...values)) * 0.18 || 1 : 1;
+  }, [points]);
+  // One tick per month, on the first sampled day of that month.
+  const monthTicks = useMemo(
+    () =>
+      line
+        .filter((p, i) => i > 0 && p.date.slice(0, 7) !== line[i - 1].date.slice(0, 7))
+        .map((p) => p.date),
+    [line],
+  );
   const day = (d: string) =>
     new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(new Date(d));
   return (
@@ -319,10 +336,19 @@ function HomeHero({
           aria-label={t("open", { title: t("balance") })}
           className="hero-chart"
         >
-          {/* One line, no axis and no markers: the figure and the low-point line above say what matters;
-              the exact day-by-day values are a hover or a tap away. */}
+          {/* The forecast as one line. A dotted rule marks today's balance, so "above or below where I am now" reads
+              at a glance; months run along the bottom; where it ends is said in words above the line. */}
+          <p className="flex items-baseline justify-between gap-3 px-5 pt-4 text-[13px] text-muted-foreground">
+            <span>{t("heroAhead")}</span>
+            <span data-money>
+              {t("heroEnd", {
+                amount: money(points.at(-1)!.balance),
+                date: day(points.at(-1)!.date),
+              })}
+            </span>
+          </p>
           <div
-            className="h-36 sm:h-44"
+            className="h-40 sm:h-48"
             dir="ltr"
             role="img"
             aria-label={t("balanceChart", {
@@ -331,26 +357,44 @@ function HomeHero({
             })}
           >
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={line} margin={{ top: 10, right: 0, bottom: 0, left: 0 }}>
+              <AreaChart data={line} margin={{ top: 12, right: 0, bottom: 4, left: 0 }}>
                 <defs>
                   <linearGradient id="bal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--accent-color)" stopOpacity={0.28} />
+                    <stop offset="0%" stopColor="var(--accent-color)" stopOpacity={0.34} />
+                    <stop offset="70%" stopColor="var(--accent-color)" stopOpacity={0.04} />
                     <stop offset="100%" stopColor="var(--accent-color)" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="bal-line" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="var(--accent-color)" />
-                    <stop offset="100%" stopColor="var(--accent-2)" />
-                  </linearGradient>
                 </defs>
-                <YAxis hide domain={["dataMin", "dataMax"]} />
+                <XAxis
+                  dataKey="date"
+                  ticks={monthTicks}
+                  tickFormatter={(d: string) =>
+                    new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(d))
+                  }
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  axisLine={false}
+                  tickLine={false}
+                  height={26}
+                  padding={{ left: 20, right: 20 }}
+                />
+                <YAxis hide domain={[(min: number) => min - pad, (max: number) => max + pad]} />
+                <ReferenceLine
+                  y={first}
+                  stroke="var(--muted-foreground)"
+                  strokeOpacity={0.45}
+                  strokeDasharray="2 6"
+                  strokeLinecap="round"
+                />
                 <Tooltip
                   formatter={(v) => money(Number(v))}
-                  labelFormatter={(_, p) => (p[0] ? day(String(p[0].payload.date)) : "")}
+                  labelFormatter={(l) => day(String(l))}
+                  cursor={{ stroke: "var(--muted-foreground)", strokeOpacity: 0.35 }}
                   contentStyle={{
                     background: "var(--popover)",
                     border: "1px solid var(--border)",
-                    borderRadius: 12,
+                    borderRadius: 14,
                     color: "var(--foreground)",
+                    boxShadow: "0 12px 30px -16px rgb(0 0 0 / 50%)",
                   }}
                 />
                 <Area
@@ -358,12 +402,17 @@ function HomeHero({
                   type="monotone"
                   dataKey="balance"
                   name={t("balance")}
-                  stroke="url(#bal-line)"
-                  strokeWidth={3}
+                  stroke="var(--accent-color)"
+                  strokeWidth={2.5}
                   strokeLinecap="round"
                   fill="url(#bal)"
                   dot={false}
-                  activeDot={{ r: 5, strokeWidth: 0, fill: "var(--accent-color)" }}
+                  activeDot={{
+                    r: 5,
+                    strokeWidth: 3,
+                    stroke: "var(--surface)",
+                    fill: "var(--accent-color)",
+                  }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -397,11 +446,16 @@ function LatestTransactions({ data }: { data: HomePayload }) {
                 href={`/transactions?search=${encodeURIComponent(r.description)}&month=${r.date.slice(0, 7)}`}
                 className="flex min-h-14 items-center gap-3.5 rounded-2xl px-2 py-2 hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring"
               >
-                <CategoryIcon
-                  icon={r.categoryIcon}
-                  color={r.categoryColor ?? "var(--muted-foreground)"}
-                  size="lg"
-                />
+                {/* A known merchant shows its real logo (bundled, never fetched); anything else its category's icon. */}
+                {merchantMark(r.description).logo ? (
+                  <MerchantMark name={r.description} size={44} />
+                ) : (
+                  <CategoryIcon
+                    icon={r.categoryIcon}
+                    color={r.categoryColor ?? "var(--muted-foreground)"}
+                    size="lg"
+                  />
+                )}
                 <span className="min-w-0 flex-1">
                   <span className="flex min-w-0 items-center gap-1.5">
                     <span className="truncate text-[15px] font-medium" title={r.description}>
@@ -1178,6 +1232,7 @@ function GoalsTile() {
 
 const TILES = [
   "balance",
+  "map",
   "savings",
   "budget",
   "latest",
@@ -1245,6 +1300,7 @@ export function DashboardBoard({
   const tiles: Record<TileId, { label: string; node: React.ReactNode }> = {
     // Drawn by the hero at the top of the board; listed here so it can still be hidden from "Customize".
     balance: { label: t("balance"), node: null },
+    map: { label: t("mapTile"), node: <MoneyBoard /> },
     savings: { label: tMot("title"), node: <MoneyOnTableTile /> },
     budget: {
       label: t("budgetTile"),
