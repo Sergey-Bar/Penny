@@ -188,7 +188,7 @@ export function SimpleHome({
       ) : !cf ? (
         <div className="wallet h-64 rounded-3xl px-5 pt-[22px] min-[600px]:rounded-[28px] min-[600px]:px-[30px] min-[600px]:pt-7">
           <div className="flex justify-end">{monthNav}</div>
-          <div role="status" className="mt-6 h-24 animate-pulse rounded-2xl bg-white/10">
+          <div role="status" className="mt-6 h-24 animate-pulse rounded-2xl bg-[var(--hover)]">
             <span className="sr-only">{t("loading")}</span>
           </div>
         </div>
@@ -415,7 +415,7 @@ export function SimpleHome({
                         </span>
                       </div>
                       <div
-                        className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/15"
+                        className="mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--hover)]"
                         role="progressbar"
                         aria-valuenow={Math.round(spentPct)}
                         aria-valuemin={0}
@@ -439,7 +439,7 @@ export function SimpleHome({
                 </div>
                 {/* Simple mode keeps the purple card to the numbers alone; Advanced borrows it with its next step. */}
                 {cardOnly && extra && (
-                  <div className="mt-5 lg:mt-1 lg:border-s lg:border-white/15 lg:ps-8">{extra}</div>
+                  <div className="mt-5 lg:mt-1 lg:border-s lg:border-border lg:ps-8">{extra}</div>
                 )}
               </div>
               {/* Full width under both columns: twelve months need the room. */}
@@ -788,7 +788,7 @@ function BalancePill({
   const formatCurrency = useMoney();
   return (
     <Popover>
-      <PopoverTrigger className="-ms-2 inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-footnote text-muted-foreground hover:bg-white/10 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
+      <PopoverTrigger className="-ms-2 inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-footnote text-muted-foreground hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
         {t("bankBalance")}
         <span className="font-medium tabular-nums">{bank != null ? <Signed n={bank} /> : "—"}</span>
         <ChevronDown className="size-4" aria-hidden />

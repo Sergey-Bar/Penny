@@ -102,6 +102,9 @@ export function Dashboard() {
   return (
     <div
       className="studio-page"
+      // The server cannot know the device's light or dark setting, so this attribute may differ on first render;
+      // the theme itself is set on <html> before paint, and nothing styles this copy.
+      suppressHydrationWarning
       data-studio-theme={resolvedStudioTheme}
       data-studio-accent={preferences.accent}
       data-studio-density={preferences.density}
@@ -125,7 +128,8 @@ export function Dashboard() {
         ) : (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
             <div className="flex min-w-0 flex-col gap-[26px]">
-              {/* One slim line: the month, then the budget in four numbers. The table follows at once. */}
+              {/* The month's budget in one pane: what is left is the figure people come for, so it leads, with a ring
+                  for how much is used; spent, the budget and any overspending sit beside it under their own labels. */}
               {summary &&
                 (() => {
                   const lines = summary.categoriesWithData.filter((c) => !c.isParent);
@@ -135,60 +139,99 @@ export function Dashboard() {
                   );
                   const spent = lines.reduce((sum, c) => sum + c.spent, 0);
                   const left = summary.totalBudget - spent;
+                  const used = summary.totalBudget > 0 ? spent / summary.totalBudget : null;
                   const stat = (key: string, value: number, tone = "") => (
                     <div className="min-w-0">
-                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {t(key)}
-                      </dt>
+                      <dt className="text-[13px] text-muted-foreground">{t(key)}</dt>
                       <dd className={`text-lg font-semibold tabular-nums ${tone}`}>
                         <bdi data-money>{shekels(Math.round(value), locale)}</bdi>
                       </dd>
                     </div>
                   );
                   return (
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-border bg-card px-4 py-3">
-                      <MonthNav
-                        value={month}
-                        max={monthKey(
-                          new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+                    <section className="home-hero shrink-0 text-start">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {household.members.length >= 2 && (
+                          <label className="hero-pill">
+                            <span className="sr-only">{tOwner("filter")}</span>
+                            <select
+                              value={owner}
+                              onChange={(e) => setOwner(e.target.value)}
+                              className="max-w-36 border-0! bg-transparent! py-0 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"
+                            >
+                              <option value="">{tOwner("everyone")}</option>
+                              {household.members.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name}
+                                </option>
+                              ))}
+                              <option value="shared">{tOwner("shared")}</option>
+                            </select>
+                          </label>
                         )}
-                        onChange={(m) => setSelectedDate(new Date(`${m}-01T12:00:00`))}
-                      />
-                      <dl className="flex flex-1 flex-wrap items-center justify-end gap-x-8 gap-y-2">
-                        {stat("stripBudget", summary.totalBudget)}
-                        {stat("stripSpent", -spent)}
-                        {stat(
-                          "stripLeft",
-                          left,
-                          left < 0 ? "text-expense" : "text-status-on-track",
-                        )}
-                        {over > 0 && stat("stripOver", -over, "text-expense")}
-                      </dl>
-                    </div>
+                        <MonthNav
+                          value={month}
+                          max={monthKey(
+                            new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+                          )}
+                          onChange={(m) => setSelectedDate(new Date(`${m}-01T12:00:00`))}
+                        />
+                      </div>
+                      <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-5">
+                        <div className="flex min-w-0 items-center gap-5">
+                          {used != null && (
+                            <div className="relative size-24 shrink-0" aria-hidden>
+                              <svg viewBox="0 0 100 100" className="size-full -rotate-90">
+                                <circle
+                                  cx="50"
+                                  cy="50"
+                                  r="42"
+                                  fill="none"
+                                  stroke="var(--hover)"
+                                  strokeWidth="10"
+                                />
+                                <circle
+                                  cx="50"
+                                  cy="50"
+                                  r="42"
+                                  fill="none"
+                                  stroke={used > 1 ? "var(--expense)" : "var(--accent-color)"}
+                                  strokeWidth="10"
+                                  strokeLinecap="round"
+                                  strokeDasharray={`${Math.min(1, used) * 263.9} 263.9`}
+                                />
+                              </svg>
+                              <span className="absolute inset-0 grid place-items-center text-xl font-semibold tabular-nums">
+                                {Math.round(used * 100)}%
+                              </span>
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-[15px] font-medium text-muted-foreground">
+                              {t("stripLeft")}
+                            </p>
+                            <p
+                              className={`text-5xl leading-none font-semibold tracking-tight tabular-nums sm:text-6xl ${left < 0 ? "text-expense" : ""}`}
+                              data-money
+                              data-figure
+                            >
+                              <bdi>{shekels(Math.round(left), locale)}</bdi>
+                            </p>
+                          </div>
+                        </div>
+                        <dl className="ms-auto flex flex-wrap items-end gap-x-8 gap-y-2 max-sm:ms-0 max-sm:w-full">
+                          {stat("stripBudget", summary.totalBudget)}
+                          {stat("stripSpent", -spent)}
+                          {over > 0 && stat("stripOver", -over, "text-expense")}
+                        </dl>
+                      </div>
+                    </section>
                   );
                 })()}
               {period.data?.total === 0 ? (
                 <DataState period={banks.data?.some((bank) => bank.lastSyncAt)} />
               ) : (
                 <>
-                  {household.members.length >= 2 && (
-                    <label className="flex w-fit items-center gap-2 text-sm">
-                      {tOwner("filter")}
-                      <select
-                        value={owner}
-                        onChange={(e) => setOwner(e.target.value)}
-                        className="h-9 rounded-lg border border-border/60 bg-background px-2 text-sm focus-visible:outline-2 focus-visible:outline-ring"
-                      >
-                        <option value="">{tOwner("everyone")}</option>
-                        {household.members.map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}
-                          </option>
-                        ))}
-                        <option value="shared">{tOwner("shared")}</option>
-                      </select>
-                    </label>
-                  )}
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <BudgetFromAverage
                       modes={

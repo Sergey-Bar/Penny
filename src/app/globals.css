@@ -532,3 +532,11 @@ details[open]::details-content { block-size: auto; opacity: 1; }
 .cn-toast { max-width: calc(100vw - 1.5rem); flex-wrap: wrap; row-gap: 0.5rem; }
 .cn-toast [data-content] { min-width: 0; flex: 1 1 12rem; }
 .cn-toast [data-title], .cn-toast [data-description] { overflow-wrap: anywhere; }
+
+/* Tap targets (Apple asks for 44pt). On touch screens a small control keeps its look but answers a finger across at
+   least 44px: an invisible pad centred on it. Selects cannot carry a pad, so they simply grow. */
+@media (pointer: coarse) {
+  .tap-target { position: relative; }
+  .tap-target::after { content: ""; position: absolute; inset: 50% auto auto 50%; width: max(100%, 44px); height: max(100%, 44px); translate: -50% -50%; }
+  select:not([multiple]) { min-height: 44px; }
+}

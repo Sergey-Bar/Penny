@@ -98,7 +98,7 @@ function Tile({
           <Link
             href={href}
             aria-label={t("open", { title })}
-            className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            className="tap-target grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
           >
             <ArrowUpLeft className="size-4 ltr:-scale-x-100" aria-hidden />
           </Link>

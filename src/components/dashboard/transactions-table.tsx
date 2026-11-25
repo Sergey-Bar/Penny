@@ -764,7 +764,7 @@ export function TransactionsTable({
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-9 lg:w-[52px]">
-                      <label className="inline-grid size-9 cursor-pointer place-items-center">
+                      <label className="tap-target inline-grid size-9 cursor-pointer place-items-center">
                         <input
                           className="size-4"
                           type="checkbox"
@@ -930,7 +930,7 @@ export function TransactionsTable({
                           >
                             <TableCell className="max-lg:pt-3.5 max-lg:align-top">
                               {/* A 36px tap area around the 16px box. */}
-                              <label className="inline-grid size-9 cursor-pointer place-items-center lg:size-7">
+                              <label className="tap-target inline-grid size-9 cursor-pointer place-items-center lg:size-7">
                                 <input
                                   className="size-4"
                                   type="checkbox"
@@ -1099,7 +1099,7 @@ export function TransactionsTable({
                             <TableCell className="text-end max-lg:align-top">
                               <DropdownMenu>
                                 <DropdownMenuTrigger
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                                  className="tap-target inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
                                   disabled={updatingId === txn.id || editing || isFetching}
                                   aria-label={t("rowActions")}
                                 >

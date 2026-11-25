@@ -17,10 +17,10 @@
   --brand: #0b0d12; --brand-hover: #262a33; --brand-press: #3a3f4a; --on-brand: #ffffff;
   --accent-color: #1657ff; --accent-2: #0aa5e0;
   --focus: #1657ff; --selection: rgb(22 87 255 / 11%); --hover: rgb(10 30 80 / 6%); --press: rgb(10 30 80 / 11%);
-  --success: #0a7d4a; --warning: #8a4b00; --error: #c4282b;
+  --success: #08733f; --warning: #8a4b00; --error: #c4282b;
   color-scheme: light;
   --studio-ring-start: #1657ff; --studio-ring-end: #0aa5e0;
-  --chart-2: #0aa5e0; --chart-3: #0a8f55; --chart-4: #d6456f; --chart-5: #d98a1a;
+  --chart-2: #0aa5e0; --chart-3: #08733f; --chart-4: #d6456f; --chart-5: #d98a1a;
   --studio-hero: #0f1728; --studio-glow: transparent;
   --segmented: rgb(10 30 80 / 7%); --segmented-thumb: #fff;
   --ring-income: #6fdc8c; --ring-spending: #ff8fa3; --ring-savings: #5aa9ff;
@@ -394,7 +394,7 @@ html.app-studio .header-bar { background-color: var(--pane); -webkit-backdrop-fi
 .month-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 4px; min-width: 0; }
 .month-nav-arrow { position: relative; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 999px; color: inherit; background: #ffffff14; }
 .month-nav-arrow::after { content: ""; position: absolute; inset: -4px; }
-.month-nav-arrow:hover:not(:disabled) { background: #ffffff29; }
+.month-nav-arrow:hover:not(:disabled) { background: var(--hover); }
 .month-nav-arrow:disabled { opacity: .3; cursor: default; }
 .month-nav-label { min-width: 7.5em; padding-inline: 6px; text-align: center; font-size: 15px; font-weight: 600; white-space: nowrap; }
 .month-nav-today { position: relative; display: grid; place-items: center; width: 32px; height: 32px; margin-inline-start: 2px; border-radius: 999px; background: #ffffff24; color: inherit; }
@@ -443,3 +443,16 @@ html.app-studio .header-bar { background-color: var(--pane); -webkit-backdrop-fi
 .hero-chart { display: block; margin: 18px -20px 0; padding: 0; border-radius: 0 0 30px 30px; text-align: start; }
 .hero-chart:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
 .home-hero [data-slot="month-nav"], .home-hero .month-nav { background: transparent; }
+
+/* ---- The Focus card (.wallet) follows the theme like every other pane ----
+   It used to be a fixed dark card with its own light-on-dark colours. In the light theme it now takes the page's own
+   colours and darker rings; in the dark theme it keeps its light-on-dark set on a glass pane. */
+html.app-studio .wallet { background: linear-gradient(180deg, var(--pane-clear), transparent 46%), var(--pane); border: 1px solid var(--rim); border-top-color: var(--rim-top); box-shadow: var(--card-elevation); }
+html.app-studio:not([data-studio-theme="midnight"]) .wallet {
+  --card: var(--surface); --card-foreground: var(--text); --foreground: var(--text);
+  --muted: var(--hover); --muted-foreground: var(--text-secondary); --border: var(--divider);
+  --primary: var(--brand); --primary-foreground: var(--on-brand); --chart-1: var(--accent-color); --chart-2: #0aa5e0;
+  --status-on-track: var(--success); --status-heads-up: var(--warning); --status-over: var(--error);
+  --ring-income: var(--success); --ring-spending: #c93a66; --ring-savings: var(--accent-color);
+  color: var(--text);
+}

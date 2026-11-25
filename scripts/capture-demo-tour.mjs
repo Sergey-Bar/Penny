@@ -36,7 +36,11 @@ if (!health?.ok) {
   process.exit(1);
 }
 
-const browser = await chromium.launch({ channel: process.env.CI ? undefined : "chrome" });
+// CHROME points at a specific browser binary (for machines without a Chrome install).
+const browser = await chromium.launch({
+  channel: process.env.CI || process.env.CHROME ? undefined : "chrome",
+  executablePath: process.env.CHROME || undefined,
+});
 const hotspots = {};
 for (const lang of ["he", "en"]) {
   const context = await browser.newContext({
