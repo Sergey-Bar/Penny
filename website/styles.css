@@ -21,9 +21,10 @@
   --accent-hover: light-dark(#2e2d37, #ffffff);
   --accent-press: light-dark(#44434f, #d6d5dc);
   --accent-ink: light-dark(#ffffff, #0c0b0e);     /* text on it */
+  --link: light-dark(#1657ff, #7fb0ff);           /* the app's accent: links and small marks, so the site and the app read as one product */
   --copper: light-dark(#a2521d, #e8a57c);         /* the one warm colour, from the coin: marks and emphasis, never a button */
   --accent-soft: light-dark(#e4e4ea, #2f2e38);    /* selection wash */
-  --focus: light-dark(#15141a, #f2f1f5);
+  --focus: light-dark(#1657ff, #7fb0ff);
   --ok: light-dark(#17663a, #7ad9a3);
   --warn: light-dark(#7d4400, #efc18c);
   --alert: light-dark(#a52a5c, #f09bbb);
@@ -61,7 +62,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 84px; -webkit-text-size-adju
 body { margin: 0; background: var(--paper); color: var(--ink); font: 400 17px/1.6 var(--font); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; }
 img, svg, video { max-width: 100%; display: block; }
 img { height: auto; }
-a { color: var(--accent); text-underline-offset: 3px; }
+a { color: var(--link); text-underline-offset: 3px; }
 h1, h2, h3 { text-wrap: balance; color: var(--ink-strong); }
 p, li { text-wrap: pretty; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 8px; }
@@ -345,7 +346,7 @@ section { padding: 104px 0; }
 .ticks { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 12px; }
 .ticks li { position: relative; padding-inline-start: 30px; color: var(--ink-2); }
 .ticks li b { color: var(--ink); font-weight: 600; }
-.ticks li::before { content: ""; position: absolute; inset-inline-start: 2px; top: 0.42em; width: 16px; height: 16px; border-radius: 50%; background: var(--accent-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8.2l2.3 2.3 4.7-5' fill='none' stroke='%23777482' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat; }
+.ticks li::before { content: ""; position: absolute; inset-inline-start: 2px; top: 0.42em; width: 16px; height: 16px; border-radius: 50%; background: var(--accent-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8.2l2.3 2.3 4.7-5' fill='none' stroke='%234d7dff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat; }
 .new { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); vertical-align: 0.15em; margin-inline-start: 6px; }
 .beta { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); vertical-align: 0.15em; margin-inline-start: 6px; }
 
@@ -420,7 +421,7 @@ pre, .code { background: var(--code); color: var(--code-ink); border-radius: var
 .ledger span { color: var(--ink-2); font-size: 0.92rem; grid-column: 1; }
 .ledger em { grid-row: 1 / span 2; grid-column: 2; font-style: normal; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 .ledger .stay { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
-.ledger .opt { background: var(--accent-soft); color: var(--accent); }
+.ledger .opt { background: var(--accent-soft); color: var(--ink-strong); }
 .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin: 56px 0 0; padding: 0; list-style: none; }
 .facts h3 { margin: 0 0 6px; font-size: 1.05rem; font-weight: 620; }
 .facts p { margin: 0; color: var(--ink-2); font-size: 0.96rem; }

@@ -544,3 +544,11 @@ details[open]::details-content { block-size: auto; opacity: 1; }
 /* A grid item may shrink below its content. Without this a single long word, figure or enlarged text makes its
    column, and then the whole page, wider than the screen. */
 .grid > * { min-width: 0; }
+
+/* Large text (people who raise the browser's or the system's font size): nothing may push the page sideways.
+   Tab strips scroll inside themselves, buttons and links wrap their label, and a figure column gives way. */
+[data-slot="tabs-list"] { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+[data-slot="tabs"] { min-width: 0; max-width: 100%; }
+:is(a, button)[data-slot="button"] { max-width: 100%; }
+.card-surface > a[data-slot="button"], .card-surface > a.inline-flex { height: auto; min-height: 2.75rem; padding-block: 0.5rem; white-space: normal; text-align: center; }
+.studio-panel-heading { flex-wrap: wrap; }
