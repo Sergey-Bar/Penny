@@ -443,6 +443,7 @@
     "filterAccount": "Account",
     "filterCategory": "Category",
     "filterAny": "Any",
+    "sortBy": "Sort by",
     "filters": "Filters",
     "filterClear": "Clear filters",
     "filterScopedToList": "Filters apply to the list below. Totals above are for all accounts.",

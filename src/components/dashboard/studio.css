@@ -26,6 +26,7 @@
   --ring-income: #6fdc8c; --ring-spending: #ff8fa3; --ring-savings: #5aa9ff;
   --card-elevation: inset 0 1px 0 rgb(255 255 255 / 60%), 0 30px 60px -36px rgb(20 50 120 / 36%);
   --board-lot: #f7f9fd; --board-base: #c9d4ea; --board-shadow: rgb(20 50 120 / 14%);
+  --ov-1: var(--text-strong); --ov-2: var(--text-secondary); --ov-line: rgb(10 30 80 / 11%);
 }
 /* Dark: near-black with blue light behind smoked panes, soft white text, pure white for the figure that matters. */
 :is(html.app-studio, .budget-studio)[data-studio-theme="midnight"] {
@@ -46,6 +47,7 @@
   --segmented: rgb(255 255 255 / 9%); --segmented-thumb: rgb(255 255 255 / 18%);
   --card-elevation: inset 0 1px 0 rgb(255 255 255 / 9%), 0 30px 60px -34px rgb(0 0 0 / 70%);
   --board-lot: #2a3145; --board-base: #161b29; --board-shadow: rgb(0 0 0 / 45%);
+  --ov-1: #ffffff; --ov-2: #c3cad8; --ov-line: rgb(255 255 255 / 13%);
 }
 :is(html.app-studio, .budget-studio) {
   --background: var(--canvas); --foreground: var(--text);
@@ -88,42 +90,43 @@ html.app-studio :is(.h-1, .h-1\.5, .h-2, .h-2\.5, .h-3) > .bg-primary { backgrou
 .studio-top-grid.studio-single, [data-studio-layout="stacked"] .studio-top-grid { grid-template-columns: minmax(0, 1fr); }
 /* The one deep surface on a page: graphite, a low violet bloom from the end corner, a hairline edge.
    Deliberately not a colour block: the numbers, not the background, carry the page. */
-.studio-overview { position: relative; overflow: hidden; border-radius: 28px; padding: 26px 28px 20px; background: radial-gradient(120% 150% at 100% 0%, color-mix(in srgb, var(--studio-glow) 30%, transparent), transparent 64%), var(--studio-hero); color: #fff; border: 1px solid color-mix(in srgb, #fff 9%, transparent); box-shadow: 0 1px 0 rgb(255 255 255 / 6%) inset, 0 20px 44px -32px rgb(18 14 42 / 85%); }
-.studio-overview::before { content: ""; position: absolute; width: 340px; height: 340px; border: 1px solid #ffffff07; border-radius: 50%; inset-inline-end: -170px; top: -140px; pointer-events: none; }
+.studio-overview { position: relative; overflow: hidden; border-radius: 28px; padding: 26px 28px 20px; background: linear-gradient(180deg, var(--pane-clear), transparent 46%), var(--pane); color: var(--ov-1); border: 1px solid var(--rim); border-top-color: var(--rim-top); box-shadow: var(--card-elevation); }
+.studio-overview::before { content: ""; position: absolute; width: 340px; height: 340px; border: 1px solid var(--ov-line); border-radius: 50%; inset-inline-end: -170px; top: -140px; pointer-events: none; }
 .studio-overview-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 /* Status tones inside the summary card are read on graphite, so they take the light variants. */
-.studio-overview { --status-on-track: #7ee2a8; --status-over: #ffb4ab; --status-heads-up: #ffd27a; }
-.studio-overview .studio-eyebrow { color: #c9c3dc; }
-.studio-month { font-size: 12px; color: #c9c3dc; }
+/* In the dark theme the card is deep, so its status tones take the light variants. */
+:is(html.app-studio, .budget-studio)[data-studio-theme="midnight"] .studio-overview { --status-on-track: #7ee2a8; --status-over: #ffb4ab; --status-heads-up: #ffd27a; }
+.studio-overview .studio-eyebrow { color: var(--ov-2); }
+.studio-month { font-size: 12px; color: var(--ov-2); }
 .studio-overview-body { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 28px 0 20px; }
-.studio-balance > p:first-child { font-size: 14px; color: #e1dceb; }
+.studio-balance > p:first-child { font-size: 14px; color: var(--ov-2); }
 .studio-amount { font-size: clamp(36px, 3.8vw, 56px); line-height: 1.25; font-weight: 300; letter-spacing: -.04em; margin: 6px 0 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.studio-budget-context { font-size: 12px; color: #c8c3d7; }
-.studio-status { display: inline-flex; align-items: center; gap: 6px; color: #b5e7c8; background: #adf3c310; padding: 5px 10px; border: 1px solid #b5e7c81c; border-radius: 50px; font-size: 12px; margin-top: 16px; }
-.studio-status.is-over { color: #ffbac6; background: #ffbac614; }
+.studio-budget-context { font-size: 12px; color: var(--ov-2); }
+.studio-status { display: inline-flex; align-items: center; gap: 6px; color: var(--ov-2); background: var(--ov-line); padding: 5px 10px; border: 1px solid var(--ov-line); border-radius: 50px; font-size: 12px; margin-top: 16px; }
+.studio-status.is-over { color: var(--status-over); background: var(--ov-line); }
 .studio-orbit { position: relative; flex: 0 0 165px; width: 165px; height: 165px; }
 .studio-orbit svg { width: 100%; height: 100%; overflow: visible; }
 .studio-orbit circle { fill: none; stroke-width: 8; }
-.studio-ring-track { stroke: #ffffff13; }
+.studio-ring-track { stroke: var(--ov-line); }
 .studio-ring-value { stroke: url(#studio-ring); stroke-linecap: round; transition: stroke-dasharray .6s ease; }
 .studio-orbit > div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
 .studio-orbit strong { font-size: 38px; font-weight: 300; direction: ltr; }
-.studio-orbit small { font-size: 20px; margin-inline-start: 2px; color: #c8c3d7; }
-.studio-orbit span { font-size: 12px; color: #c8c3d7; }
+.studio-orbit small { font-size: 20px; margin-inline-start: 2px; color: var(--ov-2); }
+.studio-orbit span { font-size: 12px; color: var(--ov-2); }
 .studio-pace { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
-.studio-pace > span { font-size: 12px; white-space: nowrap; color: #c8c3d7; }
-.studio-pace > div { height: 3px; background: #ffffff12; width: 100%; border-radius: 8px; overflow: hidden; }
-.studio-pace i { display: block; height: 100%; background: #b6adc9; }
+.studio-pace > span { font-size: 12px; white-space: nowrap; color: var(--ov-2); }
+.studio-pace > div { height: 3px; background: var(--ov-line); width: 100%; border-radius: 8px; overflow: hidden; }
+.studio-pace i { display: block; height: 100%; background: var(--ov-line); }
 /* Stat strip, tightened: one hairline across the card, columns divided by hairlines,
    a small spaced label over a quiet figure. No per-stat boxes, so the eye reads three numbers as one row. */
-.studio-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #ffffff1f; margin-top: 16px; padding-top: 0; gap: 0; }
+.studio-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--ov-line); margin-top: 16px; padding-top: 0; gap: 0; }
 .studio-stats > div { padding: 15px 16px 2px; min-width: 0; }
 .studio-stats > div:first-child { padding-inline-start: 0; }
-.studio-stats > div + div { border-inline-start: 1px solid #ffffff1f; }
-.studio-stats dt { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #aea8c4; }
+.studio-stats > div + div { border-inline-start: 1px solid var(--ov-line); }
+.studio-stats dt { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ov-2); }
 .studio-stats dd { font-size: 21px; font-weight: 300; letter-spacing: -.015em; margin-top: 5px; font-variant-numeric: tabular-nums; }
-.studio-explanation { margin-top: 10px; font-size: 12px; color: #c8c3d7; display: flex; align-items: center; width: fit-content; }
-.studio-inline-link { display: flex; align-items: center; gap: 8px; color: #e1d9ff; margin-top: 16px; font-size: 13px; text-decoration: underline; }
+.studio-explanation { margin-top: 10px; font-size: 12px; color: var(--ov-2); display: flex; align-items: center; width: fit-content; }
+.studio-inline-link { display: flex; align-items: center; gap: 8px; color: var(--ov-2); margin-top: 16px; font-size: 13px; text-decoration: underline; }
 .studio-panel { padding: 24px; border: 1px solid color-mix(in oklab, var(--border) 60%, transparent); border-radius: var(--radius-2xl); background: var(--card); } /* card anatomy: see globals.css */
 .studio-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .studio-panel-heading h2 { font-size: var(--text-headline); line-height: var(--text-headline--line-height); font-weight: 600; }
@@ -221,7 +224,7 @@ html.app-studio :is(.h-1, .h-1\.5, .h-2, .h-2\.5, .h-3) > .bg-primary { backgrou
 .studio-primary { background: var(--primary); color: var(--primary-foreground); border-radius: 14px; min-height: 46px; padding: 10px 20px; flex: 1; font-size: 13px; font-weight: 500; cursor: pointer; }
 .studio-quiet { padding: 10px 16px; min-height: 44px; font-size: 13px; cursor: pointer; }
 :is(html.app-studio, .budget-studio) :is(button, a, input, summary):focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
-.studio-overview :is(a, summary):focus-visible { outline-color: #d4caff; }
+.studio-overview :is(a, summary):focus-visible { outline-color: var(--focus); }
 [data-studio-density="compact"] .studio-content { gap: 18px; }
 [data-studio-density="compact"] .studio-category-card > button { padding: 14px 18px; }
 [data-studio-density="compact"] .studio-category-card > button > .mt-4 { margin-top: 10px; }
@@ -375,16 +378,16 @@ html.app-studio .header-bar { background-color: var(--pane); -webkit-backdrop-fi
 /* PageHero: the studio overview card reduced to one number + one sentence; fixed body height so loading does not jump. */
 .page-hero .page-hero-body { padding: 22px 0 6px; min-height: 132px; display: flex; flex-direction: column; justify-content: center; }
 .page-hero .studio-amount { white-space: normal; overflow-wrap: anywhere; }
-.page-hero-skel { display: block; height: 14px; border-radius: 8px; background: #ffffff18; margin-block: 6px; }
+.page-hero-skel { display: block; height: 14px; border-radius: 8px; background: var(--ov-line); margin-block: 6px; }
 .page-hero-skel.studio-amount { height: 44px; }
 .page-hero button.studio-inline-link { background: none; border: 0; padding: 0; min-height: 44px; cursor: pointer; }
-.page-hero :is(a, button):focus-visible { outline: 2px solid #d4caff; outline-offset: 2px; }
+.page-hero :is(a, button):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: no-preference) { .page-hero-skel { animation: page-hero-pulse 1.4s ease-in-out infinite; } }
 @keyframes page-hero-pulse { 50% { opacity: .5; } }
 /* "Where the money goes" on the purple hero surface: local tokens re-tint the panel parts for a dark background. */
-.studio-overview.studio-distribution { --card: var(--studio-hero); --muted: #ffffff1f; --muted-foreground: #d9d2ef; --border: #ffffff26; --primary: #fff; }
+.studio-overview.studio-distribution { --card: var(--studio-hero); --muted: var(--ov-line); --muted-foreground: var(--ov-2); --border: var(--ov-line); --primary: var(--ov-1); }
 .studio-distribution .studio-chart-switch button[aria-pressed="true"] { background: #ffffff2e; }
-.studio-distribution .studio-chart-switch button:focus-visible { outline: 2px solid #d4caff; outline-offset: 2px; }
+.studio-distribution .studio-chart-switch button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .studio-distribution :is(.studio-bar-label i, .studio-bar-track i) { box-shadow: 0 0 0 1px #ffffff40; }
 
 /* Month inside a purple hero (MonthNav + MonthStrip): light-on-dark, works on .studio-overview and .wallet alike. */
@@ -397,14 +400,14 @@ html.app-studio .header-bar { background-color: var(--pane); -webkit-backdrop-fi
 .month-nav-today { position: relative; display: grid; place-items: center; width: 32px; height: 32px; margin-inline-start: 2px; border-radius: 999px; background: #ffffff24; color: inherit; }
 .month-nav-today::after { content: ""; position: absolute; inset: -7px 0; }
 .month-nav-today:hover { background: #ffffff38; }
-.month-strip { display: flex; gap: 4px; margin-top: 16px; padding: 14px 2px 2px; border-top: 1px solid #ffffff1f; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.month-strip { display: flex; gap: 4px; margin-top: 16px; padding: 14px 2px 2px; border-top: 1px solid var(--ov-line); overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
 .month-strip::-webkit-scrollbar { display: none; }
-.month-pill { flex: 1 0 44px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px; min-height: 58px; padding: 6px 2px; border-radius: 12px; color: #ffffffa8; font-size: 11px; line-height: 1; white-space: nowrap; background: transparent; }
-.month-pill:hover { background: #ffffff12; color: #fff; }
-.month-pill[aria-checked="true"] { background: #ffffff26; color: #fff; font-weight: 700; }
+.month-pill { flex: 1 0 44px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px; min-height: 58px; padding: 6px 2px; border-radius: 12px; color: var(--ov-2); font-size: 11px; line-height: 1; white-space: nowrap; background: transparent; }
+.month-pill:hover { background: var(--ov-line); color: var(--ov-1); }
+.month-pill[aria-checked="true"] { background: var(--ov-line); color: var(--ov-1); font-weight: 700; }
 .month-pill-bar { display: flex; align-items: flex-end; width: 8px; height: 24px; border-radius: 4px; background: #ffffff14; overflow: hidden; }
 .month-pill-bar i { display: block; width: 100%; border-radius: 4px; background: #ffffff59; }
-.month-pill[aria-checked="true"] .month-pill-bar i { background: #fff; }
+.month-pill[aria-checked="true"] .month-pill-bar i { background: var(--ov-1); }
 :is(.month-nav, .month-strip) button:focus-visible { outline: 2px solid #d4caff; outline-offset: 2px; }
 @media (forced-colors: active) { .month-pill[aria-checked="true"] { outline: 2px solid Highlight; } .month-pill-bar i { background: CanvasText; } }
 .studio-overview-top:has(.month-nav) { flex-wrap: wrap; row-gap: 8px; }
@@ -415,7 +418,7 @@ html.app-studio .header-bar { background-color: var(--pane); -webkit-backdrop-fi
 .month-pill[data-status="over"][aria-checked="true"] .month-pill-bar i { background: #ffb38a; }
 .month-pill[data-status="over"]::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #ffb38a; margin-bottom: -2px; }
 .month-pill[aria-disabled="true"], .month-nav-arrow[aria-disabled="true"] { opacity: .35; cursor: not-allowed; }
-.month-pill[aria-disabled="true"]:hover { background: transparent; color: #ffffffa8; }
+.month-pill[aria-disabled="true"]:hover { background: transparent; color: var(--ov-2); }
 .month-nav-arrow[aria-disabled="true"]:hover { background: #ffffff14; }
 /* Optional slot beside a hero's figure (e.g. the pet), at the end side; shrinks on phones instead of stacking. */
 .hero-with-aside { display: flex; align-items: center; gap: 16px; }

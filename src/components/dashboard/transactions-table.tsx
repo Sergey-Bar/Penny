@@ -46,6 +46,7 @@ import {
   Eye,
   X,
   Plus,
+  ArrowUpDown,
   SlidersHorizontal,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -64,10 +65,7 @@ import {
 import { normalizeTag } from "@/lib/tags";
 import { toast } from "sonner";
 import { translateCategoryName, translateProviderName } from "@/lib/i18n-data";
-import {
-  getAccountDisplayLabel,
-  TransactionSourceCell,
-} from "@/components/transactions/transaction-source-cell";
+import { getAccountDisplayLabel } from "@/components/transactions/transaction-source-cell";
 import {
   TransactionMultiFilter,
   MultiFilterOption,
@@ -494,6 +492,23 @@ export function TransactionsTable({
                 </span>
               ) : null}
             </button>
+            {/* Sort: the list reads as rows, not columns, so the order is chosen here. Picking the same field
+                again flips the direction. */}
+            <label className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-interactive ps-3.5 text-sm max-lg:hidden">
+              <ArrowUpDown className="size-4 text-muted-foreground" aria-hidden />
+              <span className="sr-only">{t("sortBy")}</span>
+              <select
+                value={sortField}
+                onChange={(e) => onSortChange(e.target.value as typeof sortField)}
+                className="h-8 border-0! bg-transparent! py-0 ps-1 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <option value="date">{t("headerDate")}</option>
+                <option value="description">{t("headerDescription")}</option>
+                <option value="category_name">{t("headerCategory")}</option>
+                <option value="account">{t("headerAccount")}</option>
+                <option value="charged_amount">{t("headerAmount")}</option>
+              </select>
+            </label>
             <div
               id={filtersId}
               className={`flex w-full min-w-0 flex-wrap items-center gap-2 ${filtersOpen ? "" : "hidden"}`}
@@ -765,41 +780,11 @@ export function TransactionsTable({
                       </label>
                     </TableHead>
                     <SortableTableHead
-                      label={t("headerDate")}
-                      field="date"
-                      activeField={sortField}
-                      activeOrder={sortOrder}
-                      onSort={onSortChange}
-                      className="hidden w-[96px] lg:table-cell"
-                      sortAscLabel={t("sortAsc")}
-                      sortDescLabel={t("sortDesc")}
-                    />
-                    <SortableTableHead
                       label={t("headerDescription")}
                       field="description"
                       activeField={sortField}
                       activeOrder={sortOrder}
                       onSort={onSortChange}
-                      sortAscLabel={t("sortAsc")}
-                      sortDescLabel={t("sortDesc")}
-                    />
-                    <SortableTableHead
-                      label={t("headerCategory")}
-                      field="category_name"
-                      activeField={sortField}
-                      activeOrder={sortOrder}
-                      onSort={onSortChange}
-                      className="hidden w-[150px] lg:table-cell"
-                      sortAscLabel={t("sortAsc")}
-                      sortDescLabel={t("sortDesc")}
-                    />
-                    <SortableTableHead
-                      label={t("headerAccount")}
-                      field="account"
-                      activeField={sortField}
-                      activeOrder={sortOrder}
-                      onSort={onSortChange}
-                      className="hidden w-[130px] xl:table-cell"
                       sortAscLabel={t("sortAsc")}
                       sortDescLabel={t("sortDesc")}
                     />
@@ -833,7 +818,7 @@ export function TransactionsTable({
                       {week.start && (
                         <tr>
                           <th
-                            colSpan={8}
+                            colSpan={5}
                             scope="colgroup"
                             className="sticky top-[var(--app-header-h,0px)] z-10 bg-popover px-4 pb-1.5 pt-4 text-start text-xs font-semibold text-muted-foreground"
                           >
@@ -962,9 +947,6 @@ export function TransactionsTable({
                                 />
                               </label>
                             </TableCell>
-                            <TableCell className="hidden whitespace-nowrap text-xs tabular-nums text-muted-foreground lg:table-cell">
-                              {dayLabel(txn.date)}
-                            </TableCell>
                             <TableCell className="min-w-[11rem] whitespace-normal [overflow-wrap:anywhere]">
                               {/* Below lg the amount rides on the name line (iOS list style) instead of its own column, so nothing clips at 320px. */}
                               <div className="flex items-start justify-between gap-3">
@@ -1043,9 +1025,14 @@ export function TransactionsTable({
                                   )}
                                 </span>
                               </div>
-                              <div className="-mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs tabular-nums text-muted-foreground lg:hidden">
+                              {/* One row, two lines, at every width: the name and the amount, then when it was, what
+                                  kind of spending and which account. Sorting by these lives in the Sort control. */}
+                              <div className="-mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs tabular-nums text-muted-foreground lg:mt-0.5 lg:ps-[46px]">
                                 {dayLabel(txn.date)}
                                 {categoryControl}
+                                <span className="hidden min-w-0 truncate lg:inline">
+                                  {txn.accountLabel?.trim() || txn.provider}
+                                </span>
                               </div>
                               {txn.memo && (
                                 <div className="text-xs text-muted-foreground">{txn.memo}</div>
@@ -1071,15 +1058,6 @@ export function TransactionsTable({
                                   />
                                 </div>
                               )}
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              {categoryControl}
-                            </TableCell>
-                            <TableCell className="hidden xl:table-cell">
-                              <TransactionSourceCell
-                                provider={txn.provider}
-                                accountLabel={txn.accountLabel}
-                              />
                             </TableCell>
                             <TableCell className="hidden whitespace-normal xl:table-cell">
                               {/* One line, like every other cell: a wrapped tags cell doubled the row's height. */}

@@ -85,7 +85,7 @@ export function MoreHub() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-2 rounded-full bg-white/12 px-3 py-2 text-footnote font-medium transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-ring"
+                  className="flex items-center gap-2 rounded-full bg-[var(--ov-line)] px-3 py-2 text-footnote font-medium transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-ring"
                 >
                   <Icon className="size-4 shrink-0" aria-hidden />
                   <span className="truncate">{t(`${key}_title`)}</span>

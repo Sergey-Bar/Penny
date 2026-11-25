@@ -443,6 +443,7 @@
     "filterAccount": "חשבון",
     "filterCategory": "קטגוריה",
     "filterAny": "הכל",
+    "sortBy": "מיון לפי",
     "filters": "מסננים",
     "filterClear": "ניקוי מסננים",
     "filterScopedToList": "המסננים חלים על הרשימה למטה. הסיכומים למעלה לכל החשבונות.",
