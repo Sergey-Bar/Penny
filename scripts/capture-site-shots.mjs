@@ -61,7 +61,11 @@ for (const lang of ["he", "en"]) {
       locale: lang === "he" ? "he-IL" : "en-US",
       reducedMotion: "reduce",
     });
-    await ctx.addCookies([{ name: "NEXT_LOCALE", value: lang, url: BASE }]);
+    // home_view: the pictures show the detailed dashboard, which is no longer what Home opens on.
+    await ctx.addCookies([
+      { name: "NEXT_LOCALE", value: lang, url: BASE },
+      { name: "home_view", value: "detailed", url: BASE },
+    ]);
     const page = await ctx.newPage();
     page.on("dialog", (d) => void d.accept()); // the guide asks "hide for good?"
     await page.goto(`${BASE}/profiles`);

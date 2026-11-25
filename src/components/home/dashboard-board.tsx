@@ -43,8 +43,6 @@ import {
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { MerchantMark } from "@/components/transactions/merchant-mark";
 import { merchantMark } from "@/lib/merchant-mark";
-import { usePlan } from "@/hooks/use-plan";
-import { PetHeroAside } from "./pet-card";
 import { MoneyBoard } from "./money-board";
 import { HOME_TILES, hiddenHomeTiles, type HomeTileId } from "@/lib/home-board";
 import { getAssets, getBalanceForecast, getFi, getInsights, getOwners, getPlan } from "@/lib/api";
@@ -218,7 +216,6 @@ function HomeHero({
   const money = useMoney();
   const locale = useLocale();
   const { household } = useHousehold();
-  const { plan, loaded } = usePlan();
   const q = useQuery({
     queryKey: ["balance-forecast"],
     queryFn: getBalanceForecast,
@@ -283,8 +280,6 @@ function HomeHero({
             <span className="hero-pill px-3.5 text-sm font-medium">{monthLabel}</span>
           )}
         </div>
-        {/* Pip lives here: one face, one count. Tapping it opens what needs care. */}
-        {loaded && plan.pet.enabled ? <PetHeroAside px={54} /> : null}
       </div>
 
       {showBalance &&

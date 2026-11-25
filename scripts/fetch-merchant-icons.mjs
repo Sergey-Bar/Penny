@@ -2,8 +2,8 @@
  * Download the logo of each well-known merchant once and store it in the repo, so the app can show real logos in
  * transaction lists without ever asking a third party at runtime (which would reveal where the user shops).
  *
- * Source: each merchant's site icon, through Google's 128px favicon service. Every image is decoded and re-encoded by
- * sharp into a 96x96 PNG, so nothing downloaded is stored as-is. A merchant whose icon cannot be fetched keeps its
+ * Source: each merchant's site icon, through Google's 128px favicon service, or the site's own touch icon. Every image is decoded and re-encoded by
+ * sharp into an opaque 96x96 PNG that fills its circle, so nothing downloaded is stored as-is. A merchant whose icon cannot be fetched keeps its
  * coloured initial.
  *
  * Output: public/merchants/<domain>.png and src/lib/merchant-logos.generated.ts
@@ -30,20 +30,60 @@ await fs.mkdir(outDir, { recursive: true });
 const done = [];
 for (const domain of domains) {
   try {
-    const res = await fetch(`https://www.google.com/s2/favicons?domain=${domain}&sz=128`, {
-      redirect: "follow",
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (!buf.length || buf.length > MAX_BYTES) throw new Error("unexpected size");
-    const meta = await sharp(buf).metadata();
-    // Google answers with a 16px globe when it knows no icon for a site: not a logo.
-    if ((meta.width ?? 0) < 32) throw new Error("no real icon");
-    const png = await sharp(buf)
-      .resize(96, 96, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+    // Google's favicon service first; where it has nothing usable, the site's own touch icon.
+    let buf = null;
+    for (const url of [
+      `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+      `https://www.${domain}/apple-touch-icon.png`,
+      `https://${domain}/apple-touch-icon.png`,
+      `https://www.${domain}/apple-touch-icon-precomposed.png`,
+    ]) {
+      const res = await fetch(url, {
+        redirect: "follow",
+        signal: AbortSignal.timeout(12000),
+      }).catch(() => null);
+      if (!res?.ok) continue;
+      const got = Buffer.from(await res.arrayBuffer());
+      if (!got.length || got.length > MAX_BYTES) continue;
+      const width = await sharp(got)
+        .metadata()
+        .then((m) => m.width ?? 0)
+        .catch(() => 0);
+      if (width >= 32) {
+        buf = got;
+        break;
+      }
+    }
+    if (!buf) throw new Error("no usable icon");
+    // Every stored logo is a full, opaque 96px square, so the app can show it edge to edge in a circle with no
+    // white gap. The ground is the icon's own corner colour (white for a transparent icon). A mark that sits small
+    // inside its own border is cropped to the mark and given an even margin of that ground.
+    const flat = await sharp(buf)
+      .flatten({ background: "#ffffff" })
+      .resize(128, 128, { fit: "contain", background: "#ffffff" })
       .png()
       .toBuffer();
+    const { data } = await sharp(flat).raw().toBuffer({ resolveWithObject: true });
+    const ground = { r: data[0], g: data[1], b: data[2] };
+    let mark = flat;
+    let trimmedTo = 128;
+    try {
+      const t = await sharp(flat)
+        .trim({ background: ground, threshold: 18 })
+        .toBuffer({ resolveWithObject: true });
+      mark = t.data;
+      trimmedTo = Math.max(t.info.width, t.info.height);
+    } catch {
+      // one flat colour: nothing to crop
+    }
+    const png =
+      trimmedTo >= 118
+        ? await sharp(flat).resize(96, 96).png().toBuffer() // already full-bleed
+        : await sharp(mark)
+            .resize(68, 68, { fit: "contain", background: ground })
+            .extend({ top: 14, bottom: 14, left: 14, right: 14, background: ground })
+            .png()
+            .toBuffer();
     await fs.writeFile(path.join(outDir, `${domain}.png`), png);
     done.push(domain);
     console.log(`ok    ${domain}`);

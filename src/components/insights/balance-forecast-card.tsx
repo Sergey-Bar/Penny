@@ -71,13 +71,19 @@ export function BalanceForecastCard() {
           strokeOpacity="0.2"
           vectorEffect="non-scaling-stroke"
         />
+        {/* The same picture as every line chart in the app: an accent line over a soft fill of itself. */}
+        <polygon
+          points={`0,${H} ${values.map((v, i) => `${x(i)},${y(v)}`).join(" ")} ${W},${H}`}
+          fill="var(--chart-1)"
+          opacity="0.12"
+        />
         <polyline
           points={values.map((v, i) => `${x(i)},${y(v)}`).join(" ")}
           fill="none"
           stroke="var(--chart-1)"
-          strokeWidth="2"
-          strokeDasharray="5 4"
+          strokeWidth="2.5"
           strokeLinejoin="round"
+          strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
         />
         {/* A zero-length round-capped line stays a circle when the SVG is stretched. */}
@@ -86,7 +92,7 @@ export function BalanceForecastCard() {
           x2={x(lowIndex)}
           y1={y(f.low.balance)}
           y2={y(f.low.balance)}
-          stroke={f.low.balance < 0 && !gentle ? "var(--status-over)" : "var(--primary)"}
+          stroke={f.low.balance < 0 && !gentle ? "var(--status-over)" : "var(--chart-1)"}
           strokeWidth="8"
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"

@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -107,51 +106,11 @@ function usePet() {
 }
 type PetState = NonNullable<ReturnType<typeof usePet>>;
 
-/** Pocket Pal in Home's purple card: just the face and a "+n" badge; tapping it opens what needs care. */
-export function PetHeroAside({
-  extra,
-  px: fixed,
-}: {
-  extra?: React.ReactNode;
-  /** A set face size, for places where Pip is a small companion. */ px?: number;
-} = {}) {
-  const p = usePet();
-  const ref = useRef<HTMLSpanElement>(null);
-  const [open, setOpen] = useState(false);
-  const [view, setView] = useState<{ shown: boolean; small: boolean }>({
-    shown: false,
-    small: false,
-  });
-  useEffect(() => {
-    // Simple mode renders the card twice (phone column, desktop layout) and hides one with CSS: only the visible copy gets a live face.
-    const sync = () =>
-      setView({ shown: !!ref.current?.getClientRects().length, small: innerWidth < 768 });
-    sync();
-    addEventListener("resize", sync);
-    return () => removeEventListener("resize", sync);
-  }, [p == null]); // eslint-disable-line react-hooks/exhaustive-deps -- re-measure once the span exists
-  if (!p) return null;
-  // The aside is about a quarter of the width on phones, so the face shrinks with it.
-  const px = fixed ?? Math.round(PET_SIZES[p.pet.size] * (view.small ? 0.6 : 0.9));
-  return (
-    <span ref={ref} className="flex min-h-px min-w-px flex-col items-center">
-      {view.shown && (
-        <>
-          <PetButton p={p} px={px} onOpen={() => setOpen(true)} mini={fixed ? "sm" : undefined} />
-          <PetSheet p={p} open={open} onOpenChange={setOpen} />
-        </>
-      )}
-      {extra}
-    </span>
-  );
-}
-
-/** A small live pet on every other page (its eyes follow the pointer), with the same badge and sheet: in the sidebar footer on desktop, next to the menu button in the page header on phones, so it never covers content. */
+/** Pip, small and live (its eyes follow the pointer), with its badge and sheet: in the sidebar footer on desktop, next to the menu button in the page header on phones, so it never covers content. */
 export function PetMini({ inSidebar }: { inSidebar?: boolean }) {
-  const path = usePathname();
   const p = usePet();
   const [open, setOpen] = useState(false);
-  if (!p || path === "/") return null;
+  if (!p) return null;
   const pet = (
     <>
       <PetButton

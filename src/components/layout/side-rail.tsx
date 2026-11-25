@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -55,7 +54,6 @@ export function SideRail() {
   const t = useTranslations("sideRail");
   const open = useSideRail();
   const pip = usePip();
-  const onHome = usePathname() === "/";
   const count = useAlertCount();
   // Pip's count already includes the alerts; without Pip, the alerts alone.
   const total = pip ? pip.count : count;
@@ -77,10 +75,7 @@ export function SideRail() {
             className="flex flex-col items-center gap-3 rounded-xl px-1 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
           >
             <ChevronsLeft className="size-4 ltr:rotate-0 rtl:rotate-180" aria-hidden />
-            {/* On Home Pip already sits in the hero; one face per screen. */}
-            {pip && !onHome && (
-              <span className="relative grid size-9 place-items-center">{pip.face(32)}</span>
-            )}
+            {pip && <span className="relative grid size-9 place-items-center">{pip.face(32)}</span>}
             <span className="relative grid size-8 place-items-center">
               <Bell className="size-4" aria-hidden />
               {total > 0 && (

@@ -257,7 +257,7 @@ function BandChart({ points }: { points: AccountPoint[] }) {
         points={line}
         fill="none"
         stroke="var(--chart-1)"
-        strokeWidth="2"
+        strokeWidth="2.5"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
       />
@@ -267,7 +267,7 @@ function BandChart({ points }: { points: AccountPoint[] }) {
           x2={x(lowIndex)}
           y1={y(points[lowIndex].expected)}
           y2={y(points[lowIndex].expected)}
-          stroke={points[lowIndex].expected < 0 ? "var(--status-over)" : "var(--primary)"}
+          stroke={points[lowIndex].expected < 0 ? "var(--status-over)" : "var(--chart-1)"}
           strokeWidth="8"
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"

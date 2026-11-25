@@ -84,7 +84,7 @@ export function PivotView() {
               style={
                 a > 0
                   ? {
-                      background: `color-mix(in oklab, var(--primary) ${Math.round((a / max) * 16)}%, transparent)`,
+                      background: `color-mix(in oklab, var(--chart-1) ${Math.round((a / max) * 16)}%, transparent)`,
                     }
                   : undefined
               }

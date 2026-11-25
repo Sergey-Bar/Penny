@@ -22,7 +22,6 @@ import { MobileDock } from "./mobile-dock";
 import { PetMini } from "@/components/home/pet-card";
 import { PipLife } from "@/components/home/pip-life";
 import { SectionTabs } from "./section-tabs";
-import { A11yButton } from "@/components/a11y/a11y-menu";
 import { AnalyticsNav } from "@/components/analytics/analytics-nav";
 
 /** Lives in the root layout so the collapsed state survives page changes. */
@@ -209,11 +208,6 @@ export function PageHeader({
             <p className="truncate text-footnote text-muted-foreground">{meta}</p>
           )}
         </div>
-        {/* Accessibility menu on phones (the sidebar footer has it on larger screens). */}
-        <A11yButton
-          size="icon"
-          className="col-start-3 row-start-1 self-center justify-self-end sm:hidden"
-        />
         <div className="col-start-3 row-start-1 flex flex-wrap items-center justify-end gap-2 max-sm:col-span-3 max-sm:col-start-1 max-sm:row-start-2 max-sm:justify-center">
           {actions}
         </div>

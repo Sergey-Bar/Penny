@@ -331,7 +331,7 @@ function FlowChart({ monthly }: { monthly: OverviewPayload["monthly"] }) {
         <span className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-caption text-muted-foreground">
           <Legend color="var(--flow-income)" label={t("income")} />
           <Legend color="var(--flow-expense)" label={t("expenses")} />
-          <Legend color="var(--primary)" label={t("netTrend")} />
+          <Legend color="var(--chart-1)" label={t("netTrend")} />
         </span>
       }
     >
@@ -407,7 +407,7 @@ function FlowChart({ monthly }: { monthly: OverviewPayload["monthly"] }) {
               name={t("netTrend")}
               type="monotone"
               stroke="var(--chart-1)"
-              strokeWidth={2}
+              strokeWidth={2.5}
               dot={{ r: 2.5 }}
               isAnimationActive={!motionReduced()}
             />

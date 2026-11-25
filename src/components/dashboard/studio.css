@@ -65,6 +65,9 @@
   --sidebar-primary-foreground: var(--on-brand); --sidebar-accent: var(--selection);
   --sidebar-accent-foreground: var(--text-strong); --sidebar-border: var(--divider); --sidebar-ring: var(--focus);
   --chart-1: var(--accent-color); --studio-accent-soft: var(--selection);
+  /* Charts share one language: lines and areas in the accent (2.5px, round joins, a soft fill of the same colour),
+     money in is green, money out is the accent (red is kept for what is wrong), categories keep their own colours. */
+  --flow-income: var(--success); --flow-expense: var(--accent-color); --bucket-need: var(--accent-color);
   color: var(--text);
 }
 /* The figure that matters reads a step brighter than the text around it. */
@@ -468,3 +471,7 @@ html.app-studio :is(.studio-stats dt, .studio-eyebrow) { text-transform: none; l
    width instead of running past the edge. */
 .home-hero [data-figure] { font-size: min(3.5rem, 13.5vw); }
 @media (min-width: 40rem) { .home-hero [data-figure] { font-size: min(4.5rem, 9vw); } }
+
+/* The profile picker covers the app, so it brings its own copy of the canvas and its light. */
+.profiles-screen { background: radial-gradient(60% 46% at 28% 0%, color-mix(in srgb, var(--field-1) 46%, transparent), transparent 70%), radial-gradient(50% 40% at 82% 6%, color-mix(in srgb, var(--field-2) 40%, transparent), transparent 70%), var(--canvas); }
+.profiles-screen .home-hero { text-align: center; }

@@ -124,7 +124,7 @@ export function NetWorthView() {
                   dataKey="netWorth"
                   name={t("title")}
                   stroke="var(--chart-1)"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   fill="url(#nw)"
                 />
               </AreaChart>

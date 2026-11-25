@@ -80,7 +80,11 @@ if (only !== "coin") {
         locale: lang === "he" ? "he-IL" : "en-US",
         reducedMotion: "reduce",
       });
-      await ctx.addCookies([{ name: "NEXT_LOCALE", value: lang, url: APP }]);
+      // home_view: the pictures show the detailed dashboard, which is no longer what Home opens on.
+      await ctx.addCookies([
+        { name: "NEXT_LOCALE", value: lang, url: APP },
+        { name: "home_view", value: "detailed", url: APP },
+      ]);
       const page = await ctx.newPage();
       page.on("dialog", (d) => void d.accept());
       await page.goto(`${APP}/profiles`);
