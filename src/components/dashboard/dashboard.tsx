@@ -178,7 +178,7 @@ export function Dashboard() {
                         />
                       </div>
                       <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-5">
-                        <div className="flex min-w-0 items-center gap-5">
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3">
                           {used != null && (
                             <div className="relative size-24 shrink-0" aria-hidden>
                               <svg viewBox="0 0 100 100" className="size-full -rotate-90">

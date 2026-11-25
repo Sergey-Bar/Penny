@@ -46,6 +46,7 @@ import { merchantMark } from "@/lib/merchant-mark";
 import { usePlan } from "@/hooks/use-plan";
 import { PetHeroAside } from "./pet-card";
 import { MoneyBoard } from "./money-board";
+import { HOME_TILES, hiddenHomeTiles, type HomeTileId } from "@/lib/home-board";
 import { getAssets, getBalanceForecast, getFi, getInsights, getOwners, getPlan } from "@/lib/api";
 import { creditUtilization, parseLimits } from "@/lib/credit-utilization";
 import { useHousehold } from "@/hooks/use-household";
@@ -1117,7 +1118,7 @@ function BudgetTile({ data }: { data: HomePayload }) {
   return (
     <Tile title={t("budgetTile")} href="/budget">
       {used != null ? (
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
           {/* How much of the budget is gone, as one proportion; the sentence beside it says the same in words. */}
           <div className="relative size-24 shrink-0" aria-hidden>
             <svg viewBox="0 0 100 100" className="size-full -rotate-90">
@@ -1264,23 +1265,8 @@ function GoalsTile() {
   );
 }
 
-const TILES = [
-  "balance",
-  "map",
-  "savings",
-  "budget",
-  "latest",
-  "cashFlow",
-  "structure",
-  "fire",
-  "watchlist",
-  "recurring",
-  "attention",
-  "goals",
-  "credit",
-  "members",
-] as const;
-type TileId = (typeof TILES)[number];
+const TILES = HOME_TILES;
+type TileId = HomeTileId;
 
 /** The home dashboard: one grid of tiles. "Customize" hides or shows tiles, saved per profile. */
 export function DashboardBoard({
@@ -1314,10 +1300,7 @@ export function DashboardBoard({
     queryKey: ["preference", "home-board"],
     queryFn: () => loadPreference("home-board"),
   });
-  const raw = (pref.data as { hidden?: unknown } | null)?.hidden;
-  const hidden = Array.isArray(raw)
-    ? raw.filter((x): x is TileId => (TILES as readonly unknown[]).includes(x))
-    : [];
+  const hidden = hiddenHomeTiles(pref.data);
   const toggle = (id: TileId, show: boolean) => {
     const next = { hidden: show ? hidden.filter((x) => x !== id) : [...hidden, id] };
     qc.setQueryData(["preference", "home-board"], next);

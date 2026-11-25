@@ -45,34 +45,38 @@ export function AccountsOverview() {
           {t("add")}
         </Link>
       </div>
-      <section
-        aria-label={t("netWorth")}
-        className="flex flex-wrap items-end gap-x-12 gap-y-4 rounded-2xl border border-border bg-card p-5"
-      >
-        <div>
-          <p className={label}>{t("netWorth")}</p>
-          <p className="text-3xl font-semibold tabular-nums" data-money>
-            <bdi>{money(totals.netWorth)}</bdi>
-          </p>
+      {/* The household's net worth leads the page as its one large figure; assets and liabilities sit beside it. */}
+      <section aria-label={t("netWorth")} className="home-hero text-start">
+        <div className="flex flex-wrap items-end gap-x-12 gap-y-4">
+          <div className="min-w-0">
+            <p className="text-[15px] font-medium text-muted-foreground">{t("netWorth")}</p>
+            <p
+              className="text-5xl leading-none font-semibold tracking-tight tabular-nums sm:text-6xl"
+              data-money
+              data-figure
+            >
+              <bdi>{money(totals.netWorth)}</bdi>
+            </p>
+          </div>
+          <dl className="ms-auto flex flex-wrap gap-x-8 gap-y-2 max-sm:ms-0 max-sm:w-full">
+            {(
+              [
+                [t("assets"), totals.assets, ""],
+                [t("liabilities"), -totals.liabilities, "text-expense"],
+                [t("groups.vehicles"), vehicles, "text-muted-foreground"],
+              ] as const
+            )
+              .filter(([, v]) => v !== 0)
+              .map(([k, v, c]) => (
+                <div key={k}>
+                  <dt className="text-[13px] text-muted-foreground">{k}</dt>
+                  <dd className={`text-lg font-semibold tabular-nums ${c}`} data-money>
+                    <bdi>{money(v)}</bdi>
+                  </dd>
+                </div>
+              ))}
+          </dl>
         </div>
-        <dl className="flex flex-wrap gap-8">
-          {(
-            [
-              [t("assets"), totals.assets, ""],
-              [t("liabilities"), -totals.liabilities, "text-expense"],
-              [t("groups.vehicles"), vehicles, "text-muted-foreground"],
-            ] as const
-          )
-            .filter(([, v]) => v !== 0)
-            .map(([k, v, c]) => (
-              <div key={k}>
-                <dt className={label}>{k}</dt>
-                <dd className={`text-lg font-semibold tabular-nums ${c}`} data-money>
-                  <bdi>{money(v)}</bdi>
-                </dd>
-              </div>
-            ))}
-        </dl>
       </section>
 
       {/* Layout: one list of collapsible groups, each account nested and opening its own page.

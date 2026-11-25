@@ -67,7 +67,7 @@ export function AccountForecastCard() {
       <p className="mb-3 text-caption text-pretty text-muted-foreground">{t("accountsHint")}</p>
 
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <label className="flex items-center gap-2 text-caption text-muted-foreground">
+        <label className="flex min-w-0 flex-wrap items-center gap-2 text-caption text-muted-foreground">
           {t("accountSelect")}
           <Select value={chosen} onValueChange={(v) => v && setSelected(v)}>
             <SelectTrigger className="w-52">

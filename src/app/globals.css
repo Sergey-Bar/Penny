@@ -540,3 +540,7 @@ details[open]::details-content { block-size: auto; opacity: 1; }
   .tap-target::after { content: ""; position: absolute; inset: 50% auto auto 50%; width: max(100%, 44px); height: max(100%, 44px); translate: -50% -50%; }
   select:not([multiple]) { min-height: 44px; }
 }
+
+/* A grid item may shrink below its content. Without this a single long word, figure or enlarged text makes its
+   column, and then the whole page, wider than the screen. */
+.grid > * { min-width: 0; }

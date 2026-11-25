@@ -456,3 +456,15 @@ html.app-studio:not([data-studio-theme="midnight"]) .wallet {
   --ring-income: var(--success); --ring-spending: #c93a66; --ring-savings: var(--accent-color);
   color: var(--text);
 }
+
+/* ---- Labels in sentence case ----
+   Small all-caps, letter-spaced labels were used above figures across the app. They are harder to read than the same
+   words in sentence case and they shout next to the number they describe; one rule turns them all into plain 13px
+   labels (Hebrew has no capitals, so this only changes how Latin text reads). */
+html.app-studio .uppercase:is(.text-\[10px\], .text-\[11px\], .text-xs, .text-caption, .text-\[0\.6875rem\]) { text-transform: none; letter-spacing: 0; font-size: 0.8125rem; line-height: 1.125rem; font-weight: 500; }
+html.app-studio :is(.studio-stats dt, .studio-eyebrow) { text-transform: none; letter-spacing: 0; font-size: 0.8125rem; font-weight: 500; }
+
+/* A pane's headline figure never outgrows the pane: on a narrow screen, or with text enlarged, it scales with the
+   width instead of running past the edge. */
+.home-hero [data-figure] { font-size: min(3.5rem, 13.5vw); }
+@media (min-width: 40rem) { .home-hero [data-figure] { font-size: min(4.5rem, 9vw); } }
