@@ -394,7 +394,8 @@ export function TransactionsTable({
   );
 
   const hasActiveFilters = categoryFilter.length > 0 || accountFilter.length > 0;
-  // On a phone the filters fold behind one button, so the list starts on the first screen; open if one is already set.
+  // The filters fold behind one button at every width: search and the list are what the screen is for, and the
+  // filters are one tap away; open from the start if one is already set.
   const [filtersOpen, setFiltersOpen] = useState(hasActiveFilters);
 
   const bcp = he ? "he-IL" : "en-IL";
@@ -476,14 +477,14 @@ export function TransactionsTable({
                 onSearchChange(e.target.value);
                 onPageChange(0);
               }}
-              className="h-8 w-[200px] max-w-full max-sm:h-11 max-sm:min-w-0 max-sm:flex-1"
+              className="h-9 w-[280px] max-w-full rounded-full ps-4 max-sm:h-11 max-sm:min-w-0 max-sm:flex-1"
             />
             <button
               type="button"
               aria-expanded={filtersOpen}
               aria-controls={filtersId}
               onClick={() => setFiltersOpen(!filtersOpen)}
-              className={`press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:hidden ${filtersOpen || hasActiveFilters ? "border-primary bg-selection text-strong" : "border-interactive active:bg-press"}`}
+              className={`press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:h-9 ${filtersOpen || hasActiveFilters ? "border-primary bg-selection text-strong" : "border-interactive active:bg-press"}`}
             >
               <SlidersHorizontal className="size-4" aria-hidden />
               {t("filters")}
@@ -495,7 +496,7 @@ export function TransactionsTable({
             </button>
             <div
               id={filtersId}
-              className={`flex min-w-0 flex-wrap items-center gap-2 max-sm:w-full sm:contents ${filtersOpen ? "" : "max-sm:hidden"}`}
+              className={`flex w-full min-w-0 flex-wrap items-center gap-2 ${filtersOpen ? "" : "hidden"}`}
             >
               {showAccountFilter ? (
                 <TransactionMultiFilter
@@ -968,12 +969,12 @@ export function TransactionsTable({
                               {/* Below lg the amount rides on the name line (iOS list style) instead of its own column, so nothing clips at 320px. */}
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex min-w-0 items-center gap-2.5">
-                                  <MerchantMark name={txn.description} />
+                                  <MerchantMark name={txn.description} size={36} />
                                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                                     {onEdit ? (
                                       <button
                                         type="button"
-                                        className="min-h-11 text-start font-medium hover:underline focus-visible:outline-2 focus-visible:outline-ring lg:min-h-0"
+                                        className="min-h-11 text-start text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-ring lg:min-h-0"
                                         aria-label={tManual("editRow", { name: txn.description })}
                                         onClick={() => onEdit(txn)}
                                       >
