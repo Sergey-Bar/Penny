@@ -69,6 +69,8 @@ export interface Category {
   id: number;
   parentId: number | null;
   name: string;
+  /** Stable built-in key; survives a rename. Null for a household-created category. */
+  key: string | null;
   color: string;
   icon: string | null;
   kind: CategoryKind;
@@ -1166,4 +1168,29 @@ export interface Asset {
     changeIls: number | null;
     changePct: number | null;
   } | null;
+}
+
+/** A bank/card/other account as an entity, not a free-text name that splits between "Leumi" and "1234". */
+export interface Account {
+  id: number;
+  workspaceId: number;
+  provider: string;
+  kind: "bank" | "card" | "other";
+  number: string;
+  label: string;
+  currency: string;
+  isManual: boolean;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AccountBalanceRow {
+  accountId: number | null;
+  provider: string;
+  accountNumber: string;
+  balance: number;
+  source: "sync" | "file" | "manual" | "calculated";
+  asOf: string | null;
+  updatedAt: string;
 }

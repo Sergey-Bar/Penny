@@ -17,9 +17,12 @@ import {
   writeProfilesReport,
 } from "./profiles-migration";
 import { backupBeforeMigration } from "./backup";
+import { applyImportV2 } from "./import-v2-backfill";
+export { applyImportV2 };
 import { israelDay } from "../lib/date-utils";
 
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");
+export const IMPORT_V2_MIGRATION = "081_import_v2.sql";
 
 export function runMigrations(db: Database.Database): void {
   db.exec(`
@@ -63,6 +66,7 @@ export function runMigrations(db: Database.Database): void {
       SATURATED_COLORS_MIGRATION,
       "052_profile_pip.sql",
       "053_policy_cover.sql",
+      "081_import_v2.sql",
     ].some((f) => !applied.has(f) && files.includes(f))
       ? backupBeforeProfiles(db)
       : null;
@@ -106,6 +110,7 @@ export function runMigrations(db: Database.Database): void {
         if (db.prepare("SELECT 1 FROM _migrations WHERE name = ?").get(file)) return;
         db.exec(sql);
         if (file === CATEGORY_HIERARCHY_MIGRATION) applyCategoryHierarchy(db);
+        if (file === IMPORT_V2_MIGRATION) applyImportV2(db);
         if (file === "049_goal_details.sql") addGoalDetails(db);
         if (file === "073_israel_days.sql") toIsraelDays(db);
         if (file === FAMILY_COLORS_MIGRATION || file === SATURATED_COLORS_MIGRATION)

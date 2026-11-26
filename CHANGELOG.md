@@ -2,6 +2,22 @@
 
 All notable changes to Penny. Versions follow [Semantic Versioning](https://semver.org/); dates are Israel time.
 
+## [0.6.0] - 2026-11-26
+
+One database migration (`081_import_v2`): accounts, import batches and rows, pending folder files, workspace mapping profiles, and the account/origin/source columns on transactions, categories and balances. Existing `sync_runs` and sheet imports are preserved and backfilled idempotently.
+
+### New
+
+- **Import v2 workbench** behind the `import_v2` workspace flag (new workspaces start with it): CSV/XLSX/HTML/paste/PDF, header detection, full column remapping, editable grid, deterministic preview, per-row duplicate reasons, saved mappings, import history and undo.
+- **Accounts are entities.** A statement, a folder file and a sync now land on the same account by number, alias or label; an ambiguous fuzzy match asks before merging.
+- **Stable category keys.** The merchant dictionary, import patterns and rename-safe category resolution share keys; the built-in leaf coverage is tested (or documented as manual-only).
+- **Folder pending inbox** and review-inbox memo/transfer actions.
+
+### Safety
+
+- Card bills become transfers only when a card explains them; loan deposits are transfers; refunds keep the expense category; generic descriptions are never guessed; a wrong-kind category is rejected.
+- Undo keeps adopted bank rows and cleans receipts, expense shares and flow matches; the same file hash is rejected with the previous batch id.
+
 ## [0.5.0] - 2026-11-24
 
 No database migrations.

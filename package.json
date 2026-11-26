@@ -32,6 +32,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"e2e/**/*.ts\" \"scripts/**/*.mjs\"",
     "test:security": "vitest run tests/security-headers.test.ts tests/security-policy.test.ts tests/proxy.test.ts tests/host-guard.test.ts tests/lan-access.test.ts tests/user-access.test.ts tests/access-route.test.ts tests/privacy.test.ts",
     "test:contract": "vitest run tests/api-contract.test.ts",
+    "test:import": "vitest run tests/import-*.test.ts tests/merchant-dictionary.test.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:mutation": "stryker run",

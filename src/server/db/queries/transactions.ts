@@ -9,6 +9,7 @@ import { computeDedupHash } from "../../lib/dedup";
 import { detectKind } from "../../lib/transfers";
 import { BANK_PROVIDERS } from "@/lib/types";
 import { CAPTURED_PREFIX, matchCapturedCharges } from "./manual-transactions";
+import { accountKindForProvider, markAccountSynced, resolveAccount } from "./accounts";
 import type {
   TransactionWithCategory,
   MonthlySummary,
@@ -79,6 +80,21 @@ export function insertTransactions(
   const cardExplainsBill = hasCardCredential(workspaceId);
 
   const hashCounts = new Map<string, number>();
+  const accountIds = new Map<string, number | null>();
+  const accountIdFor = (accountNumber: string): number | null => {
+    if (accountIds.has(accountNumber)) return accountIds.get(accountNumber) ?? null;
+    const resolved = resolveAccount(workspaceId, {
+      provider,
+      kind: accountKindForProvider(provider),
+      number: accountNumber,
+      label: accountNumber,
+      create: true,
+    });
+    const id = resolved?.account.id ?? null;
+    if (id != null) markAccountSynced(workspaceId, id);
+    accountIds.set(accountNumber, id);
+    return id;
+  };
 
   const existingCountStmt = db.prepare(
     "SELECT COUNT(*) as count FROM transactions WHERE workspace_id = ? AND dedup_hash = ?",
@@ -86,12 +102,12 @@ export function insertTransactions(
 
   const insertStmt = db.prepare(`
     INSERT INTO transactions (
-      workspace_id, account_number, date, processed_date, original_amount, original_currency,
+      workspace_id, account_number, account_id, date, processed_date, original_amount, original_currency,
       charged_amount, charged_currency, description, memo, type, status,
       identifier, installment_number, installment_total, provider, credential_id,
       sync_run_id, dedup_hash, dedup_sequence, kind
     ) VALUES (
-      @workspaceId, @accountNumber, @date, @processedDate, @originalAmount, @originalCurrency,
+      @workspaceId, @accountNumber, @accountId, @date, @processedDate, @originalAmount, @originalCurrency,
       @chargedAmount, @chargedCurrency, @description, @memo, @type, @status,
       @identifier, @installmentNumber, @installmentTotal, @provider, @credentialId,
       @syncRunId, @dedupHash, @dedupSequence, @kind
@@ -118,7 +134,12 @@ export function insertTransactions(
       charged_amount = @chargedAmount, charged_currency = @chargedCurrency, description = @description, memo = @memo,
       type = @type, status = @status, identifier = @identifier, installment_number = @installmentNumber,
       installment_total = @installmentTotal, provider = @provider, credential_id = @credentialId,
-      sync_run_id = @syncRunId, dedup_hash = @dedupHash, dedup_sequence = @dedupSequence, updated_at = datetime('now')
+      sync_run_id = @syncRunId, dedup_hash = @dedupHash, dedup_sequence = @dedupSequence, updated_at = datetime('now'),
+      origin = 'sync', adopted_at = datetime('now'),
+      account_id = COALESCE(account_id, (
+        SELECT a.id FROM accounts a
+        WHERE a.workspace_id = @workspaceId AND a.number = @accountNumber
+        ORDER BY CASE WHEN a.provider = @provider THEN 0 ELSE 1 END LIMIT 1))
     WHERE id = @id`);
 
   const batchInsert = db.transaction(() => {
@@ -138,6 +159,7 @@ export function insertTransactions(
       const params = {
         workspaceId,
         accountNumber: txn.accountNumber,
+        accountId: accountIdFor(txn.accountNumber),
         // Scrapers send UTC instants (Israeli midnight is 21:00/22:00Z the day before); stored as the Israeli day so
         // every date-range query and month grouping sees the right day. The dedup hash above still uses the raw value.
         date: israelDay(txn.date),
@@ -1266,10 +1288,20 @@ export function insertFileImport(
         )
         .run(workspaceId, fileName).lastInsertRowid,
     );
+    const resolved = resolveAccount(workspaceId, {
+      provider: "file",
+      kind: source === "card" ? "card" : "bank",
+      number: account,
+      label: account,
+      create: true,
+    });
+    const accountId = resolved?.account.id ?? null;
     const stmt = db.prepare(
-      `INSERT INTO transactions (workspace_id, account_number, date, processed_date, original_amount, original_currency,
-         charged_amount, charged_currency, description, type, status, provider, sync_run_id, dedup_hash, dedup_sequence, kind)
-       VALUES (?, ?, ?, ?, ?, 'ILS', ?, 'ILS', ?, 'normal', 'completed', 'file', ?, ?, ?, ?)
+      `INSERT INTO transactions (workspace_id, account_number, account_id, date, processed_date, original_amount, original_currency,
+         charged_amount, charged_currency, description, type, status, provider, sync_run_id, dedup_hash, dedup_sequence, kind,
+         origin, kind_source, memo_source)
+       VALUES (?, ?, ?, ?, ?, ?, 'ILS', ?, 'ILS', ?, 'normal', 'completed', 'file', ?, ?, ?, ?,
+         'file', 'default', 'file')
        ON CONFLICT(workspace_id, dedup_hash, dedup_sequence) DO NOTHING`,
     );
     const cardExplainsBill = hasCardCredential(workspaceId);
@@ -1293,6 +1325,7 @@ export function insertFileImport(
       added += stmt.run(
         workspaceId,
         account,
+        accountId,
         r.date,
         r.date,
         r.amount,

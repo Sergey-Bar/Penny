@@ -1,5 +1,6 @@
 import "server-only";
 
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { getGlobalSetting, setGlobalSetting } from "@/server/db/queries/settings";
@@ -16,6 +17,7 @@ import { isKeyLocked } from "@/server/lib/encryption";
 import { dataDir } from "@/server/lib/data-dir";
 import { validateDir } from "@/server/lib/legacy-export";
 import { getDb } from "@/server/db";
+import { upsertPendingFile } from "@/server/db/queries/imports";
 import {
   IMPORT_EXTS,
   markDuplicates,
@@ -294,6 +296,7 @@ export async function scanImportFolder(now = false): Promise<FolderImportConfig>
       for (const name of files) {
         const label = prefix + name;
         const at = new Date().toISOString();
+        let parsed = false;
         try {
           const { rows, source } = await statementRows(
             new Uint8Array(fs.readFileSync(path.join(folder, name))),
@@ -301,6 +304,7 @@ export async function scanImportFolder(now = false): Promise<FolderImportConfig>
           );
           if (rows.length === 0) throw new Error("noRows");
           if (rows.length > MAX_IMPORT_ROWS) throw new Error("tooMany");
+          parsed = true;
           const r = saveStatementImport(ws, account, rows, false, source, name);
           moveInto(folder, name, "imported");
           c.history.unshift({
@@ -316,6 +320,32 @@ export async function scanImportFolder(now = false): Promise<FolderImportConfig>
           }
         } catch (e) {
           const msg = e instanceof Error ? e.message.slice(0, 200) : "failed";
+          // A file the reader cannot map is not a failure to retry: it waits in the pending inbox
+          // for the workbench, and stays where it is so the recorded path remains valid.
+          if (!parsed) {
+            try {
+              const pendingPath = path.join(folder, name);
+              const stat = fs.statSync(pendingPath);
+              upsertPendingFile({
+                workspaceId: ws,
+                path: pendingPath,
+                fileName: name,
+                fileSha256: crypto
+                  .createHash("sha256")
+                  .update(fs.readFileSync(pendingPath))
+                  .digest("hex"),
+                size: stat.size,
+                mtimeMs: Math.trunc(stat.mtimeMs),
+                detectedFormat: null,
+                reasonCode: msg.slice(0, 40),
+              });
+              c.history.unshift({ at, file: label, added: 0, duplicates: 0, error: "pending" });
+              delete picked.seen[name];
+              continue;
+            } catch {
+              // Fall through to failed/ when the file cannot be recorded.
+            }
+          }
           try {
             moveInto(folder, name, "failed", `${at}\n${msg}\n`);
           } catch {

@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { FileUp } from "lucide-react";
 import { SettingCard } from "@/components/settings/section-shell";
 import { StatementImportCard } from "@/components/settings/statement-import-card";
+import { ImportWorkbench } from "@/components/import/import-workbench";
 import { FolderImportCard } from "@/components/settings/folder-import-card";
 import { SheetImportCard } from "@/components/settings/sheet-import-card";
 import { InstitutionGrid, InstitutionTile } from "@/components/settings/institution-grid";
@@ -36,6 +38,10 @@ export function ManualImport() {
   const tBanks = useTranslations("banks");
   const locale = useLocale();
   const [chosen, setChosen] = useState<string>("");
+  const flag = useQuery({
+    queryKey: ["import-v2-flag"],
+    queryFn: async () => (await (await fetch("/api/import/flag")).json()) as { enabled?: boolean },
+  });
 
   const groups = useMemo(() => {
     const byName = (x: Institution, y: Institution) => x.label.localeCompare(y.label, locale);
@@ -119,7 +125,11 @@ export function ManualImport() {
       </SettingCard>
 
       <div id="import" className="scroll-mt-20 space-y-7">
-        <StatementImportCard defaultAccount={account} />
+        {flag.data?.enabled ? (
+          <ImportWorkbench defaultAccountLabel={account} />
+        ) : (
+          <StatementImportCard defaultAccount={account} />
+        )}
         <SheetImportCard defaultAccount={account} />
         <FolderImportCard />
       </div>

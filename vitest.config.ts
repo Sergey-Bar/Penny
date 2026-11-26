@@ -30,6 +30,21 @@ export default defineConfig({
         "src/server/lib/dedup.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
         "src/lib/sync-schedule.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
         "src/server/sync/**": { statements: 97, branches: 92, functions: 100, lines: 97 },
+        // Import v2: the pure engine is deterministic and must stay well covered. Floors are the
+        // measured ratchet for the new suite; raise them as tests grow (target 100/90).
+        "src/lib/import/**": { statements: 82, branches: 75, functions: 85, lines: 85 },
+        "src/lib/import/classify.ts": { statements: 83, branches: 81, functions: 100, lines: 82 },
+        "src/lib/import/categorize.ts": { statements: 77, branches: 71, functions: 73, lines: 82 },
+        "src/lib/import/dedupe.ts": { statements: 90, branches: 80, functions: 100, lines: 96 },
+        "src/lib/import/normalize.ts": { statements: 84, branches: 78, functions: 100, lines: 88 },
+        "src/lib/import/validate.ts": { statements: 90, branches: 92, functions: 100, lines: 90 },
+        "src/lib/category-keys.ts": { statements: 100, branches: 60, functions: 100, lines: 100 },
+        "src/lib/merchant-dictionary.ts": {
+          statements: 95,
+          branches: 90,
+          functions: 100,
+          lines: 95,
+        },
         "src/server/db/migrate.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
         // Measured 100 on some runs and 95/87 on most: one branch depends on test timing.
         "src/server/db/backup.ts": { statements: 95, branches: 87, functions: 100, lines: 100 },
