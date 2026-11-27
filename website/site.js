@@ -59,16 +59,18 @@ for (const btn of document.querySelectorAll("[data-copy]")) {
   });
 }
 
-// Language and theme popover: a <details>, closed by a click outside it or by Escape.
-const prefs = document.querySelector("details.prefs");
-if (prefs) {
-  document.addEventListener("click", (e) => !prefs.contains(e.target) && (prefs.open = false));
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || !prefs.open) return;
-    prefs.open = false;
-    prefs.querySelector("summary").focus();
-  });
-}
+// Popovers in the top bar (features, language and theme): each is a <details>, closed by a click outside it,
+// by Escape, or by opening the other one.
+const pops = [...document.querySelectorAll(".nav-bar details")];
+document.addEventListener("click", (e) => {
+  for (const d of pops) if (!d.contains(e.target)) d.open = false;
+});
+document.addEventListener("keydown", (e) => {
+  const d = e.key === "Escape" && pops.find((x) => x.open);
+  if (!d) return;
+  d.open = false;
+  d.querySelector("summary").focus();
+});
 
 // Language: following any link to the other language is a pick, and so is choosing one in the control.
 // Auto forgets the pick and reloads, so lang.js in <head> can send the visitor where their browser points.

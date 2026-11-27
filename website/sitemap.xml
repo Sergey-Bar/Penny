@@ -24,6 +24,18 @@
     <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/features.html"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/features.html"/>
   </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/install.html</loc>
+    <lastmod>2026-11-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/install.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/install.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/install.html</loc>
+    <lastmod>2026-11-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/install.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/install.html"/>
+  </url>
   <url><loc>https://sergey-bar.github.io/Penny/demo/</loc></url>
   <url><loc>https://sergey-bar.github.io/Penny/en/demo/</loc></url>
 </urlset>
