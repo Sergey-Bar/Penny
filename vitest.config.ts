@@ -7,6 +7,7 @@ export default defineConfig({
     setupFiles: ["tests/setup-data-dir.ts"],
     // Migration tests run every SQL file against a real DB; shared CI runners (Windows) need well over the 5s default.
     testTimeout: 60_000,
+    hookTimeout: 60_000,
     coverage: {
       provider: "v8",
       // lcov feeds SonarQube (sonar.javascript.lcov.reportPaths); text-summary prints the gate result.
@@ -39,7 +40,12 @@ export default defineConfig({
         // Sync was one 97/92/100/97 group before the durable backend added jobs, provider health and
         // post-processing to it. The group floor is now a per-file ratchet at measured values, so a
         // large new file cannot hide behind a well-covered small one.
-        "src/server/sync/activity.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
+        "src/server/sync/activity.ts": {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100,
+        },
         "src/server/sync/categorize-local.ts": {
           statements: 96,
           branches: 93,
