@@ -428,6 +428,8 @@ html.app-studio .header-bar { background-color: var(--pane); -webkit-backdrop-fi
 .hero-with-aside { display: flex; align-items: center; gap: 16px; }
 .hero-with-aside > :first-child { flex: 1; min-width: 0; }
 .hero-aside { flex-shrink: 0; width: clamp(72px, 26vw, 180px); display: grid; place-items: center; }
+/* An aside that holds labelled shortcuts needs the full row on a phone, or its labels are cut. */
+@media (max-width: 40rem) { .hero-with-aside:has(.hero-aside-wide) { flex-wrap: wrap; } .hero-aside:has(.hero-aside-wide) { width: 100%; } }
 
 /* Slim hero above a list (transactions): the list, not the card, is the page. */
 .page-hero-compact { padding-block: 18px; }

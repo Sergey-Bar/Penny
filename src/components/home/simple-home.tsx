@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MonthNav, MonthStrip, monthKey, shiftMonth } from "@/components/ui/month-nav";
+import { DataState } from "@/components/ui/data-state";
 import { translateCategoryName } from "@/lib/i18n-data";
 import { toast } from "sonner";
 import {
@@ -110,7 +111,8 @@ export function SimpleHome({
   const assets = useQuery({ queryKey: ["assets"], queryFn: getAssets, enabled: offset === 0 });
   const cash = useQuery({ queryKey: ["cash-ahead"], queryFn: getCashAhead, enabled: offset === 0 });
   // Freshness from the per-bank health Home already loads: the newest sync, or a failure if any bank failed.
-  const banks = useQuery({ queryKey: ["home"], queryFn: () => getHome() }).data?.bankHealth ?? [];
+  const homeQuery = useQuery({ queryKey: ["home"], queryFn: () => getHome() });
+  const banks = homeQuery.data?.bankHealth ?? [];
   const lastAt =
     banks
       .map((b) => b.lastSyncAt)
@@ -157,6 +159,22 @@ export function SimpleHome({
   const wealth = groups
     ? (Object.keys(groups) as WealthGroup[]).filter((g) => groups[g].value > 0)
     : [];
+
+  // A new household has nothing to show yet: one card that says how to begin, instead of a page of zeros.
+  const fresh =
+    offset === 0 &&
+    homeQuery.isSuccess &&
+    !banks.some((b) => b.lastSyncAt) &&
+    Array.isArray(txns.data) &&
+    txns.data.length === 0 &&
+    wealth.length === 0;
+  if (fresh)
+    return (
+      <div className={cardOnly ? "" : "mx-auto w-full max-w-md space-y-4 md:max-w-2xl"}>
+        <DataState />
+        {extra}
+      </div>
+    );
 
   return (
     <div className={cardOnly ? "" : "mx-auto w-full max-w-md md:max-w-2xl lg:max-w-6xl"}>

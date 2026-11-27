@@ -190,7 +190,7 @@ export function CategoryGrid({
                   <button
                     key={f.id}
                     onClick={() => setFilter(f.id)}
-                    className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-ring ${
+                    className={`inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-ring ${
                       active
                         ? "bg-primary/10 font-semibold text-primary"
                         : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"

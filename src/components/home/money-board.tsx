@@ -296,7 +296,7 @@ export function MoneyBoard() {
                   className="h-5 w-1.5 shrink-0 rounded-full"
                   style={{ background: lot.tone, opacity: lot.invite ? 0.4 : 1 }}
                 />
-                <span className="min-w-0 flex-1 truncate font-medium">{lot.name}</span>
+                <span className="min-w-0 flex-1 leading-tight font-medium">{lot.name}</span>
                 {lot.invite ? (
                   <span className="flex items-center gap-1 text-[13px] text-primary">
                     <Plus className="size-3.5" aria-hidden />

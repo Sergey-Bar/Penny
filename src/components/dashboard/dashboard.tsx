@@ -99,6 +99,12 @@ export function Dashboard() {
   });
   const banks = useQuery({ queryKey: ["integrations"], queryFn: listIntegrations });
 
+  // Nothing connected, nothing spent and no budget set: the page says how to begin, with no rows of zeros around it.
+  const fresh =
+    period.data?.total === 0 &&
+    !banks.data?.some((bank) => bank.lastSyncAt) &&
+    (summaryQuery.data?.totalBudget ?? 0) === 0;
+
   return (
     <div
       className="studio-page"
@@ -126,11 +132,14 @@ export function Dashboard() {
         ) : summaryQuery.isPending || period.isPending || banks.isPending ? (
           <DataState loading />
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
+          <div
+            className={`grid gap-6 xl:items-start ${fresh ? "" : "xl:grid-cols-[minmax(0,1fr)_300px]"}`}
+          >
             <div className="flex min-w-0 flex-col gap-[26px]">
               {/* The month's budget in one pane: what is left is the figure people come for, so it leads, with a ring
                   for how much is used; spent, the budget and any overspending sit beside it under their own labels. */}
               {summary &&
+                !fresh &&
                 (() => {
                   const lines = summary.categoriesWithData.filter((c) => !c.isParent);
                   const over = lines.reduce(
@@ -306,7 +315,7 @@ export function Dashboard() {
                 </>
               )}
             </div>
-            {summary && <BudgetSidePanel summary={summary} month={month} />}
+            {summary && !fresh && <BudgetSidePanel summary={summary} month={month} />}
           </div>
         )}
       </div>

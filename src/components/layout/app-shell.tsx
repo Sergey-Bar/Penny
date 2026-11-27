@@ -35,8 +35,9 @@ export function SidebarRoot({
   return <SidebarProvider defaultOpen={defaultOpen}>{children}</SidebarProvider>;
 }
 
-// Screens without the app's frame: the lock screen, "who's using" and the access sign-in.
-const FRAMELESS = ["/lock", "/profiles", "/access"];
+// Screens without the app's frame: the lock screen, "who's using", the access sign-in and first-run setup
+// (on a phone the dock used to cover setup's own Continue button).
+const FRAMELESS = ["/lock", "/profiles", "/access", "/setup"];
 
 /**
  * The app's frame (side menu, top bar, side rail, dock), mounted once in the root layout so it stays put
