@@ -1,5 +1,6 @@
 "use client";
 
+import { translateCategoryName } from "@/lib/i18n-data";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -334,6 +335,7 @@ function nextBill(
  */
 function PipCoach({ onNavigate }: { onNavigate: () => void }) {
   const t = useTranslations("pet.coach");
+  const tCat = useTranslations("categoriesSeeded");
   const locale = useLocale();
   const { plan } = usePlan();
   const money = (n: number) => shekels(Math.abs(n), locale);
@@ -393,6 +395,11 @@ function PipCoach({ onNavigate }: { onNavigate: () => void }) {
   const list = pipInsights(input).slice(0, 5);
   const guru = pipGuru(res.data?.weakest, input);
 
+  // A category named in a line is shown in the reader's language, like everywhere else.
+  const named = <V extends Record<string, unknown> | undefined>(vars: V): V =>
+    vars && typeof vars.name === "string"
+      ? { ...vars, name: translateCategoryName(vars.name, tCat) }
+      : vars;
   return (
     <section
       aria-label={t("title")}
@@ -406,7 +413,7 @@ function PipCoach({ onNavigate }: { onNavigate: () => void }) {
           </span>
         )}
       </div>
-      <p className="text-footnote leading-relaxed">{t(guru.key, guru.vars)}</p>
+      <p className="text-footnote leading-relaxed">{t(guru.key, named(guru.vars))}</p>
       {list.length > 0 && (
         <ul className="space-y-1.5">
           {list.map((x) => (
@@ -415,7 +422,7 @@ function PipCoach({ onNavigate }: { onNavigate: () => void }) {
                 aria-hidden
                 className={`mt-1.5 size-1.5 shrink-0 rounded-full ${TONE_DOT[x.tone]}`}
               />
-              <span className="min-w-0 flex-1">{t(x.key, x.vars)}</span>
+              <span className="min-w-0 flex-1">{t(x.key, named(x.vars))}</span>
             </li>
           ))}
         </ul>

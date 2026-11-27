@@ -35,9 +35,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
-      // Messages sit at the reading end's far corner: bottom-left in Hebrew (RTL), bottom-right in English.
+      // On wide screens messages sit at the bottom centre: side sheets open from a corner, and a corner toast covered
+      // their Save button.
       // On phones they move to the top, where they cannot cover a sheet's primary button.
-      position={narrow ? (he ? "top-left" : "top-right") : he ? "bottom-left" : "bottom-right"}
+      position={narrow ? (he ? "top-left" : "top-right") : "bottom-center"}
       dir={he ? "rtl" : "ltr"}
       // On a phone a message sits under the page header, not over it: the menu, Pip and the title stay in reach.
       mobileOffset={{ top: "4.5rem", left: "0.75rem", right: "0.75rem" }}
