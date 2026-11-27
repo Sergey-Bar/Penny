@@ -4,7 +4,7 @@
 // After editing, run: npm run site:features
 const GH = "https://github.com/Sergey-Bar/Penny";
 
-export default [
+const pages = [
   {
     id: "banks",
     slug: "bank-sync",
@@ -324,3 +324,5 @@ export default [
     },
   },
 ];
+
+export default pages;
