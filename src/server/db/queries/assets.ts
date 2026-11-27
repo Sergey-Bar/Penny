@@ -250,7 +250,7 @@ export function listAccountBalances(workspaceId: number) {
   }[];
 }
 
-/** Per-asset daily values, oldest first. */
+/** Per-asset snapshots, oldest first. */
 export function assetSnapshots(
   workspaceId: number,
 ): Map<number, { date: string; valueIls: number }[]> {
@@ -267,6 +267,115 @@ export function assetSnapshots(
     else out.set(r.assetId, [{ date: r.date, valueIls: r.valueIls }]);
   }
   return out;
+}
+
+export interface AssetSnapshotPoint {
+  date: string;
+  valueIls: number;
+  costBasisIls: number | null;
+  valueNative: number | null;
+  currency: string | null;
+}
+
+export interface ProviderSnapshotPoint {
+  date: string;
+  valueIls: number;
+  costBasisIls: number | null;
+}
+
+function providerFromAsset(note: string | null, detailsRaw: string | null): string | null {
+  if (note && note.startsWith("pension:")) {
+    const parts = note.split(":");
+    if (parts[1] && !/^\d+$/.test(parts[1])) return parts[1];
+  }
+  if (note && note.startsWith("bank-securities:")) {
+    const parts = note.split(":");
+    if (parts[1]) return parts[1];
+  }
+  if (detailsRaw) {
+    try {
+      const parsed = JSON.parse(detailsRaw) as { provider?: unknown };
+      if (typeof parsed.provider === "string" && parsed.provider.trim()) {
+        return parsed.provider.trim();
+      }
+    } catch {
+      // Ignore malformed details JSON.
+    }
+  }
+  return null;
+}
+
+/** Per-asset and per-provider snapshot time series for charts. */
+export function getAssetHistoryPayload(workspaceId: number): {
+  byAsset: Record<number, AssetSnapshotPoint[]>;
+  byProvider: Record<string, ProviderSnapshotPoint[]>;
+} {
+  const rows = getDb()
+    .prepare(
+      `SELECT s.asset_id as assetId, s.date, s.value_ils as valueIls,
+              s.cost_basis_ils as costBasisIls, s.value_native as valueNative, s.currency,
+              a.note, a.details, a.is_liability as isLiability
+       FROM asset_snapshots s
+       JOIN assets a ON a.id = s.asset_id
+       WHERE a.workspace_id = ?
+       ORDER BY s.date`,
+    )
+    .all(workspaceId) as {
+    assetId: number;
+    date: string;
+    valueIls: number;
+    costBasisIls: number | null;
+    valueNative: number | null;
+    currency: string | null;
+    note: string | null;
+    details: string | null;
+    isLiability: number;
+  }[];
+
+  const byAsset: Record<number, AssetSnapshotPoint[]> = {};
+  const providerRows = new Map<string, typeof rows>();
+
+  for (const r of rows) {
+    if (!byAsset[r.assetId]) byAsset[r.assetId] = [];
+    byAsset[r.assetId].push({
+      date: r.date,
+      valueIls: r.valueIls,
+      costBasisIls: r.costBasisIls,
+      valueNative: r.valueNative,
+      currency: r.currency,
+    });
+    const provider = providerFromAsset(r.note, r.details);
+    if (provider && !r.isLiability) {
+      const list = providerRows.get(provider);
+      if (list) list.push(r);
+      else providerRows.set(provider, [r]);
+    }
+  }
+
+  const byProvider: Record<string, ProviderSnapshotPoint[]> = {};
+  for (const [provider, pRows] of providerRows) {
+    const latestValue = new Map<number, number>();
+    const latestCost = new Map<number, number | null>();
+    const series: ProviderSnapshotPoint[] = [];
+    for (const r of pRows) {
+      latestValue.set(r.assetId, r.valueIls);
+      latestCost.set(r.assetId, r.costBasisIls);
+      const valueIls = [...latestValue.values()].reduce((sum, v) => sum + v, 0);
+      const costEntries = [...latestCost.values()].filter((c): c is number => c != null);
+      const costBasisIls =
+        costEntries.length > 0 ? costEntries.reduce((sum, c) => sum + c, 0) : null;
+      const last = series.at(-1);
+      if (last && last.date === r.date) {
+        last.valueIls = valueIls;
+        last.costBasisIls = costBasisIls;
+      } else {
+        series.push({ date: r.date, valueIls, costBasisIls });
+      }
+    }
+    byProvider[provider] = series;
+  }
+
+  return { byAsset, byProvider };
 }
 
 export interface BankSecurityInput {
@@ -307,9 +416,13 @@ export function saveBankSecurities(
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)`,
   );
   const upsertSnapshot = db.prepare(
-    `INSERT INTO asset_snapshots (asset_id, date, value_ils)
-     VALUES (?, ?, ?)
-     ON CONFLICT(asset_id, date) DO UPDATE SET value_ils = excluded.value_ils`,
+    `INSERT INTO asset_snapshots (asset_id, date, value_ils, cost_basis_ils, value_native, currency)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(asset_id, date) DO UPDATE SET
+       value_ils = excluded.value_ils,
+       cost_basis_ils = excluded.cost_basis_ils,
+       value_native = excluded.value_native,
+       currency = excluded.currency`,
   );
   const stale = db.prepare(
     `SELECT id, note, EXISTS (SELECT 1 FROM asset_snapshots s WHERE s.asset_id = assets.id) AS hasHistory
@@ -356,7 +469,8 @@ export function saveBankSecurities(
       }
       const valueIls = s.valueIls ?? (s.currency === "ILS" ? s.value : null);
       if (valueIls != null) {
-        upsertSnapshot.run(assetId, today, valueIls);
+        const costBasisIls = s.currency === "ILS" ? s.costBasis : null;
+        upsertSnapshot.run(assetId, today, valueIls, costBasisIls, s.value, s.currency);
       }
     }
 

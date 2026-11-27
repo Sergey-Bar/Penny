@@ -806,6 +806,27 @@ export function getAssets() {
   return fetchJSON<AssetsPayload>(`/api/assets`);
 }
 
+export interface AssetSnapshotPoint {
+  date: string;
+  valueIls: number;
+  costBasisIls: number | null;
+  valueNative: number | null;
+  currency: string | null;
+}
+
+export interface ProviderSnapshotPoint {
+  date: string;
+  valueIls: number;
+  costBasisIls: number | null;
+}
+
+export function getAssetHistory() {
+  return fetchJSON<{
+    byAsset: Record<number, AssetSnapshotPoint[]>;
+    byProvider: Record<string, ProviderSnapshotPoint[]>;
+  }>(`/api/assets/history`);
+}
+
 export function createAssets(assets: AssetInput[]) {
   return fetchJSON<{ created: number }>(`/api/assets`, {
     method: "POST",

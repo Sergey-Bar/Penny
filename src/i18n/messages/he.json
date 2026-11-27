@@ -754,7 +754,10 @@
       "quickStartHint": "רשימת משימות להתחלה, ליד לוח הבקרה.",
       "upcomingTitle": "תנועות קרובות",
       "upcomingShow": "להציג חיובים קרובים במסך התנועות",
-      "upcomingHint": "חיובים קבועים שמגיעים ב-3 הימים הקרובים או שמאחרים, בראש הרשימה."
+      "upcomingHint": "חיובים קבועים שמגיעים ב-3 הימים הקרובים או שמאחרים, בראש הרשימה.",
+      "marketsTitle": "מדדי שוק ומטבעות",
+      "marketsShow": "להציג כרטיסי שוק במסך נכסים והתחייבויות",
+      "marketsHint": "מציג את סקירת השווקים, המדדים והמטבעות בתחתית עמוד הנכסים וההתחייבויות."
     },
     "bank": {
       "title": "חשבונות וייבוא",
@@ -1983,6 +1986,14 @@
     "byCurrency": "הקצאה לפי מטבע",
     "assetsTitle": "נכסים",
     "liabilitiesTitle": "התחייבויות",
+    "allProviders": "הכל",
+    "historyTitle": "היסטוריית שווי",
+    "historyNoData": "יופיע לאחר הסנכרון הבא (נשמר בכל סנכרון).",
+    "costBasis": "עלות בסיס",
+    "currentValue": "שווי נוכחי",
+    "gainLoss": "רווח / הפסד",
+    "units": "יחידות",
+    "allHoldings": "כל הניירות",
     "vsMarket": "מול השוק",
     "yourReturn": "התשואה שלכם",
     "yourReturnNote": "רווח לא ממומש מול עלות",
@@ -5656,7 +5667,7 @@
   "update": {
     "title": "גרסה חדשה זמינה: {version}",
     "how_desktop": "מורידים את קובץ ההתקנה החדש ומריצים אותו. הנתונים נשמרים.",
-    "how_docker": "מריצים שוב את פקודת ההתקנה של Docker, או ‎scripts/docker/update.sh (בווינדוס: ‎scripts\\docker\\update.bat). הנתונים מגובים קודם.",
+    "how_docker": "מריצים Penny-update.bat (ווינדוס) או ‎./Penny-update.sh (מק). הוא מגבה את הנתונים קודם.",
     "how_source": "מריצים git pull ומפעילים מחדש.",
     "download": "הורדה",
     "whatsNew": "מה חדש",

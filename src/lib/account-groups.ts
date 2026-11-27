@@ -37,6 +37,10 @@ export function assetProviderKey(
     const seg = a.note.split(":")[1];
     if (seg && !/^\d+$/.test(seg)) return seg;
   }
+  if (a.note?.startsWith("bank-securities:")) {
+    const seg = a.note.split(":")[1];
+    if (seg) return seg;
+  }
   if (typeof a.provider === "string" && a.provider.trim()) return a.provider.trim();
   if (a.name.startsWith("אקסלנס - ")) return "excellence";
   return null;

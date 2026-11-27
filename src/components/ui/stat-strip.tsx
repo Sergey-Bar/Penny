@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { InfoTip } from "@/components/ui/info-tip";
 import { cn } from "@/lib/utils";
 
 export interface StatStripItem {
@@ -14,6 +15,9 @@ export interface StatStripItem {
   dot?: string;
   /** Hover tooltip for a label that needs a longer explanation than the hint line. */
   title?: string;
+  /** Rich breakdown or explanation shown inside InfoTip popover. */
+  info?: ReactNode;
+  infoClassName?: string;
   tone?: "positive" | "negative";
 }
 
@@ -53,53 +57,56 @@ export function StatStrip({
         className,
       )}
     >
-      {items.map((item, i) => (
-        <div
-          key={item.key}
-          title={item.title}
-          className={cn(
-            "min-w-0 px-3 py-3.5 sm:px-5 sm:py-4",
-            i > 0 && "border-s",
-            hero ? "border-[var(--ov-line)]" : "border-border/80",
-          )}
-        >
-          <dt
+      {items.map((item, i) => {
+        const tip = item.info ?? item.title;
+        return (
+          <div
+            key={item.key}
             className={cn(
-              "flex items-center gap-1.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] sm:text-[0.6875rem]",
-              hero ? "text-[var(--ov-2)]" : "text-muted-foreground",
+              "min-w-0 px-3 py-3.5 sm:px-5 sm:py-4",
+              i > 0 && "border-s",
+              hero ? "border-[var(--ov-line)]" : "border-border/80",
             )}
           >
-            {item.dot && (
-              <span
-                aria-hidden
-                className="size-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: item.dot }}
-              />
-            )}
-            <span className="min-w-0 truncate">{item.label}</span>
-          </dt>
-          <dd
-            className={cn(
-              "figure mt-1 whitespace-nowrap text-[1.0625rem] leading-tight sm:mt-1.5 sm:text-2xl",
-              item.tone === "positive" && "text-status-on-track",
-              item.tone === "negative" && "text-status-over",
-            )}
-          >
-            {item.value}
-          </dd>
-          {/* On a phone the three figures are the point; the context line returns at 640px. */}
-          {anyHint && (
-            <dd
+            <dt
               className={cn(
-                "mt-1 hidden min-h-4 text-caption sm:block",
+                "flex items-center gap-1.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] sm:text-[0.6875rem]",
                 hero ? "text-[var(--ov-2)]" : "text-muted-foreground",
               )}
             >
-              {item.hint}
+              {item.dot && (
+                <span
+                  aria-hidden
+                  className="size-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: item.dot }}
+                />
+              )}
+              <span className="min-w-0 truncate">{item.label}</span>
+              {tip && <InfoTip text={tip} contentClassName={item.infoClassName} />}
+            </dt>
+            <dd
+              className={cn(
+                "figure mt-1 whitespace-nowrap text-[1.0625rem] leading-tight sm:mt-1.5 sm:text-2xl",
+                item.tone === "positive" && "text-status-on-track",
+                item.tone === "negative" && "text-status-over",
+              )}
+            >
+              {item.value}
             </dd>
-          )}
-        </div>
-      ))}
+            {/* On a phone the three figures are the point; the context line returns at 640px. */}
+            {anyHint && (
+              <dd
+                className={cn(
+                  "mt-1 hidden min-h-4 text-caption sm:block",
+                  hero ? "text-[var(--ov-2)]" : "text-muted-foreground",
+                )}
+              >
+                {item.hint}
+              </dd>
+            )}
+          </div>
+        );
+      })}
     </dl>
   );
 }

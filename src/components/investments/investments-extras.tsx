@@ -3,10 +3,12 @@
 import { accountLabel } from "@/lib/i18n-data";
 import Link from "next/link";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Check, Plus, Trash2 } from "lucide-react";
+import { assetProviderKey } from "@/lib/account-groups";
 import { getPlan, savePlan, savePlanItem } from "@/lib/api";
 import {
   ALLOCATION_CLASSES,
@@ -33,18 +35,21 @@ import type { Asset, AssetsPayload } from "@/lib/types";
 export function InvestmentsExtras({ data: raw }: { data: AssetsPayload }) {
   const plan = useQuery({ queryKey: ["plan"], queryFn: getPlan });
   const tBanks = useTranslations("banks");
+  const selectedProvider = useSearchParams().get("provider");
   // Synced accounts arrive with English bank names; show them in the user's language.
-  const data = { ...raw, assets: raw.assets.map((a) => ({ ...a, name: accountLabel(a, tBanks) })) };
+  const assets = raw.assets
+    .map((a) => ({ ...a, name: accountLabel(a, tBanks) }))
+    .filter((a) => !selectedProvider || assetProviderKey(a) === selectedProvider);
   if (!plan.data) return null;
   const years = plan.data.plan.birthYear
     ? plan.data.plan.birthYear + plan.data.plan.retirementAge - new Date().getFullYear()
     : null;
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <FeesCard assets={data.assets} years={years} />
-      <DebtsCard assets={data.assets.filter((a) => a.isLiability)} />
-      <AllocationTarget assets={data.assets} plan={plan.data.plan} />
-      <PastNetWorth history={data.history} />
+      <FeesCard assets={assets} years={years} />
+      <DebtsCard assets={assets.filter((a) => a.isLiability)} />
+      <AllocationTarget assets={assets} plan={plan.data.plan} />
+      <PastNetWorth history={raw.history} />
     </div>
   );
 }

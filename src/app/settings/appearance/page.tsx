@@ -25,6 +25,7 @@ import { ACCOUNT_GROUPS, type AccountGroupKey } from "@/lib/account-groups";
 import { loadPreference, storePreference } from "@/lib/preference-sync";
 import { useSidebarAccountsPref } from "@/components/layout/sidebar-accounts";
 import { useShowUpcoming } from "@/components/transactions/upcoming-charges";
+import { useShowMarkets } from "@/components/markets/markets-view";
 
 export default function AppearanceSettingsPage() {
   const t = useTranslations("settings.appearance");
@@ -37,6 +38,7 @@ export default function AppearanceSettingsPage() {
       <SidebarSectionsCard />
       <QuickStartCard />
       <UpcomingCard />
+      <MarketsCard />
 
       <PetSettingsCard />
 
@@ -87,6 +89,29 @@ function UpcomingCard() {
       <SettingList>
         <SettingRow label={t("upcomingShow")} hint={t("upcomingHint")} htmlFor="upcoming-show">
           <Switch id="upcoming-show" checked={shown} onCheckedChange={set} />
+        </SettingRow>
+      </SettingList>
+    </SettingCard>
+  );
+}
+
+/** "Show markets": the market indices & currency cards at the bottom of Assets & Liabilities. */
+function MarketsCard() {
+  const t = useTranslations("settings.appearance");
+  const qc = useQueryClient();
+  const shown = useShowMarkets();
+  const set = (show: boolean) => {
+    const next = { hidden: !show };
+    qc.setQueryData(["preference", "investments-markets"], next);
+    void storePreference("investments-markets", next).catch(() =>
+      toast.error(t("sidebarSectionsFailed")),
+    );
+  };
+  return (
+    <SettingCard title={t("marketsTitle")}>
+      <SettingList>
+        <SettingRow label={t("marketsShow")} hint={t("marketsHint")} htmlFor="markets-show">
+          <Switch id="markets-show" checked={shown} onCheckedChange={set} />
         </SettingRow>
       </SettingList>
     </SettingCard>

@@ -22,7 +22,12 @@ import { shekels } from "@/lib/money";
 import { Sparkline } from "@/components/ui/sparkline";
 import { StatStrip, type StatStripItem } from "@/components/ui/stat-strip";
 import { MonthNav, MonthStrip } from "@/components/ui/month-nav";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { assetProviderKey } from "@/lib/account-groups";
+import {
+  buildFutureBreakdowns,
+  UNTAXED_ASSET_TYPES,
+} from "@/components/investments/future-breakdowns";
 import { usePlan } from "@/hooks/use-plan";
 import { wantsExplanations } from "@/lib/plan";
 import { pagePurposeKey } from "@/lib/orientation";
@@ -130,11 +135,48 @@ export function FutureHero() {
   const ti = useTranslations("investments");
   const tn = useTranslations("nav");
   const locale = useLocale();
+  const selectedProvider = useSearchParams().get("provider");
   const q = useQuery({ queryKey: ["assets"], queryFn: getAssets });
-  const tot = q.data?.totals;
+
+  const rawTot = q.data?.totals;
+  const scopedAssets = selectedProvider
+    ? (q.data?.assets ?? []).filter((a) => assetProviderKey(a) === selectedProvider)
+    : (q.data?.assets ?? []);
+  const tot =
+    selectedProvider && rawTot
+      ? (() => {
+          let assets = 0,
+            liquid = 0,
+            liabilities = 0,
+            mortgages = 0,
+            deferredTax = 0;
+          for (const a of scopedAssets) {
+            const v = a.valueIls ?? 0;
+            if (a.isLiability) {
+              liabilities += v;
+              if (a.type === "mortgage") mortgages += v;
+              continue;
+            }
+            assets += v;
+            if (a.liquid) liquid += v;
+            if (a.gainIls != null && a.gainIls > 0 && !UNTAXED_ASSET_TYPES.has(a.type)) {
+              deferredTax += a.gainIls * 0.25;
+            }
+          }
+          const netWorth = assets - liabilities - deferredTax;
+          return {
+            assets,
+            liquid,
+            liabilities,
+            deferredTax,
+            netWorth,
+            liquidNetWorth: liquid - (liabilities - mortgages) - deferredTax,
+          };
+        })()
+      : rawTot;
   const hist = q.data?.history ?? [];
   const first = hist[0];
-  const change = tot && hist.length > 1 ? tot.netWorth - first.netWorth : null;
+  const change = !selectedProvider && tot && hist.length > 1 ? tot.netWorth - first.netWorth : null;
   const since = change != null && (
     <>
       <bdi className="font-semibold tabular-nums">{shekels(change, locale)}</bdi>{" "}
@@ -147,10 +189,19 @@ export function FutureHero() {
       })}
     </>
   );
-  const fact = (key: string, label: string, v: number, title?: string): StatStripItem => ({
+  const breakdowns = tot
+    ? buildFutureBreakdowns({
+        assets: scopedAssets,
+        totals: tot,
+        locale,
+        ti: (key) => ti(key as Parameters<typeof ti>[0]),
+      })
+    : null;
+  const fact = (key: string, label: string, v: number, info?: React.ReactNode): StatStripItem => ({
     key,
     label,
-    title,
+    info,
+    infoClassName: "w-80 sm:w-96 max-w-sm",
     value: <bdi>{shekels(v, locale)}</bdi>,
   });
   return (
@@ -180,7 +231,7 @@ export function FutureHero() {
       {tot && q.data!.assets.length > 0 && (
         <>
           {/* 0-1 points: no trend to draw, so the chart is hidden */}
-          {hist.length > 1 && (
+          {!selectedProvider && hist.length > 1 && (
             <Sparkline
               values={hist.map((h) => h.netWorth)}
               color="var(--chart-1)"
@@ -194,10 +245,20 @@ export function FutureHero() {
             columns={4}
             className="mt-4"
             items={[
-              fact("assets", ti("totalAssets"), tot.assets),
-              fact("liabilities", ti("totalLiabilities"), -tot.liabilities),
-              fact("tax", ti("deferredTax"), -tot.deferredTax, ti("deferredTaxHint")),
-              fact("liquid", ti("liquidNetWorth"), tot.liquidNetWorth, ti("liquidNetWorthHint")),
+              fact("assets", ti("totalAssets"), tot.assets, breakdowns?.assetsInfo),
+              fact(
+                "liabilities",
+                ti("totalLiabilities"),
+                -tot.liabilities,
+                breakdowns?.liabilitiesInfo,
+              ),
+              fact("tax", ti("deferredTax"), -tot.deferredTax, breakdowns?.deferredTaxInfo),
+              fact(
+                "liquid",
+                ti("liquidNetWorth"),
+                tot.liquidNetWorth,
+                breakdowns?.liquidNetWorthInfo,
+              ),
             ]}
           />
         </>

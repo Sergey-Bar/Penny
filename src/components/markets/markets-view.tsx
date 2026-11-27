@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { addMarketSymbol, getMarkets, removeMarketSymbol } from "@/lib/api";
+import { loadPreference } from "@/lib/preference-sync";
 import { normalizeSymbol } from "@/lib/markets";
 import { CardShell } from "@/components/home/card-shell";
 import { RotateCw, X } from "lucide-react";
@@ -29,6 +30,15 @@ function price(q: Quote, group: string, locale: string) {
     minimumFractionDigits: digits,
   });
   return group === "commodities" && q.currency === "USD" ? `$${n}` : n;
+}
+
+/** Whether the person kept the markets section visible (Settings > Appearance). */
+export function useShowMarkets() {
+  const q = useQuery({
+    queryKey: ["preference", "investments-markets"],
+    queryFn: () => loadPreference("investments-markets"),
+  });
+  return (q.data as { hidden?: unknown } | null)?.hidden !== true;
 }
 
 export function MarketsView() {

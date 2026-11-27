@@ -7,7 +7,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 /** Longer explanations stay out of the way: a small "i" that opens the text on click, tap or Enter. */
-export function InfoTip({ text, className }: { text: ReactNode; className?: string }) {
+export function InfoTip({
+  text,
+  className,
+  contentClassName,
+}: {
+  text: ReactNode;
+  className?: string;
+  contentClassName?: string;
+}) {
   const t = useTranslations("common");
   return (
     <Popover>
@@ -20,7 +28,9 @@ export function InfoTip({ text, className }: { text: ReactNode; className?: stri
       >
         <Info className="size-4" aria-hidden />
       </PopoverTrigger>
-      <PopoverContent className="max-w-xs text-sm leading-relaxed">{text}</PopoverContent>
+      <PopoverContent className={cn("max-w-xs text-sm leading-relaxed", contentClassName)}>
+        {text}
+      </PopoverContent>
     </Popover>
   );
 }
