@@ -1,7 +1,7 @@
 // Builds the website's generated pages, in Hebrew and English, from the content files in scripts/site/content:
 //   features-*.mjs  ->  feature-<slug>.html          one page per feature
 //   guides.mjs      ->  guide-<slug>.html, guides.html
-//   compare.mjs     ->  compare-<slug>.html, compare.html   (the table itself is read from the home page)
+//   compare.mjs     ->  compare-<slug>.html, compare.html   (the table is compare-sections.<lang>.partial)
 //   help.mjs        ->  help.html
 // The top bar, footer, icons and card texts are taken from features.html, so that page stays the one place they are
 // edited by hand. Also points the menus, the footer and the cards at every feature page that exists.
@@ -177,7 +177,7 @@ for (const [lang, t] of Object.entries(LANGS)) {
     ].map((m) => [m[1], { icon: m[2], title: m[3], blurb: m[4] }]),
   );
   const EMBED = {
-    banks: () => grab(home, /<ul class="chips"[\s\S]*?<\/ul>/, "bank chips")[0],
+    banks: () => grab(feat, /<ul class="chips"[\s\S]*?<\/ul>/, "bank chips")[0],
     houses: () => grab(feat, /<ul class="houses"[\s\S]*?<\/ul>/, "pension houses")[0],
     chat: () => grab(home, /<figure class="chat"[\s\S]*?<\/figure>/, "telegram chat")[0],
     ledger: () => grab(home, /<ul class="ledger">[\s\S]*?<\/ul>/, "privacy ledger")[0],
@@ -346,7 +346,10 @@ for (const [lang, t] of Object.entries(LANGS)) {
   });
 
   // ---- comparisons: Penny's column and one other, cut from the table on the home page ----
-  const table = grab(home, /<table>[\s\S]*?<\/table>/, "comparison table")[0];
+  const partial = fs
+    .readFileSync(path.join(CONTENT, `compare-sections.${lang}.partial`), "utf8")
+    .replace(/\r\n/g, "\n");
+  const table = grab(partial, /<table>[\s\S]*?<\/table>/, "comparison table")[0];
   const heads = [
     ...grab(table, /<thead>[\s\S]*?<\/thead>/, "table head")[0].matchAll(
       /<th[^>]*>([\s\S]*?)<\/th>/g,
@@ -356,7 +359,7 @@ for (const [lang, t] of Object.entries(LANGS)) {
     m[1],
     [...m[2].matchAll(/<td>(.*?)<\/td>/g)].map((x) => x[1]),
   ]);
-  const sources = grab(home, /<p class="note">[\s\S]*?<\/p>/, "comparison sources")[0];
+  const sources = grab(partial, /<p class="note">[\s\S]*?<\/p>/, "comparison sources")[0];
   for (const p of compare.pages) {
     const c = p[lang];
     const col = heads.indexOf(p.column[lang]) - 1; // heads[0] is the row-label column
@@ -383,7 +386,7 @@ for (const [lang, t] of Object.entries(LANGS)) {
           )
           .join("") +
         `</tbody></table></div>\n      ${sources}\n      <div class="choose"><div><h3>${c.usTitle}</h3><p>${c.us}</p></div><div><h3>${c.themTitle}</h3><p>${c.them}</p></div></div>\n` +
-        `      <p class="map-more"><a class="btn btn-ghost" href="./#compare">${t.fullTable}</a></p>\n      <p class="more-links">${t.otherCompare}: ${others.join("")}</p>\n    </div>\n  </section>\n\n` +
+        `      <p class="map-more"><a class="btn btn-ghost" href="compare.html#compare">${t.fullTable}</a></p>\n      <p class="more-links">${t.otherCompare}: ${others.join("")}</p>\n    </div>\n  </section>\n\n` +
         closing.replace(' tint"', '"'),
     });
   }
@@ -403,7 +406,9 @@ for (const [lang, t] of Object.entries(LANGS)) {
           p[lang].desc,
         ]),
       ) +
-      `      <p class="map-more"><a class="btn btn-ghost" href="./#compare">${t.fullTable}</a></p>\n    </div>\n  </section>\n\n` +
+      `    </div>\n  </section>\n\n` +
+      partial.replace(/      <div class="head">[\s\S]*?      <\/div>\n/, "") +
+      "\n" +
       closing.replace(' tint"', '"'),
   });
 

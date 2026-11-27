@@ -610,3 +610,14 @@ a.feat h3 { color: var(--ink-strong); }
 .compare.vs table { min-width: 620px; }
 .compare.vs tbody th { width: 26%; }
 .more-links a + a { margin-inline-start: 0; }
+
+/* ---------- Home: a hero that leads with the outcome, and the numbers under it ---------- */
+.hero-points { margin: 0 0 30px; gap: 10px; }
+.hero-points li { font-size: clamp(1.02rem, 1.4vw, 1.14rem); color: var(--ink); }
+.btn-lg { min-height: 56px; padding: 0 28px; font-size: 1.06rem; }
+.proof { list-style: none; margin: 56px 0 0; padding: 28px 0 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px 24px; color: var(--ink-2); font-size: 0.93rem; line-height: 1.35; }
+.proof b { display: block; font-size: clamp(1.6rem, 2.6vw, 2.1rem); font-weight: 680; color: var(--ink-strong); letter-spacing: -0.02em; margin-bottom: 4px; }
+.hero { padding-bottom: 56px; }
+.tint .people a { background: var(--paper); }
+#why .note { margin-top: 24px; font-size: 1rem; }
+@media (max-width: 760px) { .proof { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 40px; } }
