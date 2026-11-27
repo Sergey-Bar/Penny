@@ -191,7 +191,7 @@ export function CategoryPicker({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger
-        className="inline-flex min-w-0 max-w-full rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-60"
+        className="tap-target inline-flex min-w-0 max-w-full rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-60"
         disabled={disabled}
       >
         {trigger}

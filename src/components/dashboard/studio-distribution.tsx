@@ -69,6 +69,7 @@ export function StudioDistribution({
           ).map(([value, Icon]) => (
             <button
               key={value}
+              className="tap-target"
               onClick={() => onChartChange(value)}
               aria-label={c[value]}
               title={c[value]}

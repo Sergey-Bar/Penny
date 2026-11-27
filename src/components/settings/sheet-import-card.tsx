@@ -676,7 +676,7 @@ export function SheetImportCard({ defaultAccount = "" }: { defaultAccount?: stri
               </div>
             )}
 
-            <div className="overflow-x-auto rounded-xl border">
+            <div className="relative overflow-x-auto rounded-xl border">
               <table className="w-full min-w-[760px] border-collapse text-footnote">
                 <caption className="sr-only">{t("tableCaption")}</caption>
                 <thead className="bg-muted/40 text-muted-foreground">

@@ -59,7 +59,7 @@ export function InvestmentCards() {
             >
               <span className="flex items-center gap-3">
                 <span
-                  className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-sm font-semibold text-primary"
+                  className="grid size-10 shrink-0 place-items-center rounded-xl bg-selection text-sm font-semibold text-accent-c"
                   aria-hidden
                 >
                   {a.symbol?.slice(0, 3) ?? a.name.slice(0, 2)}
@@ -82,7 +82,7 @@ export function InvestmentCards() {
                 >
                   <Trend className="size-3.5" aria-hidden />
                   <bdi data-money>{money(a.gainIls)}</bdi>
-                  <bdi className="text-xs opacity-80">({pct.format(a.gainIls / cost)})</bdi>
+                  <bdi className="text-xs">({pct.format(a.gainIls / cost)})</bdi>
                 </span>
               ) : null}
               {cost != null && (

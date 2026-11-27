@@ -236,7 +236,7 @@ export function FutureHero() {
           {!selectedProvider && hist.length > 1 && (
             <Sparkline
               values={hist.map((h) => h.netWorth)}
-              color="currentColor"
+              color="var(--chart-1)"
               label={`${ti("netWorthTrend")}: ${shekels(first.netWorth, locale)} → ${shekels(tot.netWorth, locale)}`}
               fitToRange
               className="mt-3 h-12 w-full opacity-70"

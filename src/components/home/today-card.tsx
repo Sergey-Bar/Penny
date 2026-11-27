@@ -303,6 +303,8 @@ function WeekSummary() {
   const money = (n: number) => shekels(n, locale);
   const spent = week.expense.total;
   const usual = month ? month.expense.total / 4 : 0;
+  // No spending this week and no earlier weeks to compare with: there is nothing to say yet.
+  if (!usual && !(spent > 0)) return null;
   const line = !usual
     ? t(g("weekPlain"), { spent: money(spent) })
     : spent > usual * 1.15

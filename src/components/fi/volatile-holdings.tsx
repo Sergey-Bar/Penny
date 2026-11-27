@@ -96,7 +96,7 @@ export function VolatileHoldings() {
                           : t("manual", { date: c?.since ? date(c.since) : t("today") })}
                       </span>
                     </span>
-                    <span className="shrink-0 text-end">
+                    <span className="min-w-0 max-w-[60%] text-end">
                       <span className="block font-medium tabular-nums">
                         {a.valueIls == null ? "—" : shekels(a.valueIls, locale)}
                       </span>

@@ -145,7 +145,7 @@ function Forecast({ data }: { data: FiPayload }) {
       </p>
       <Sparkline
         values={points}
-        color="var(--foreground)"
+        color="var(--chart-1)"
         label={t("forecastTitle")}
         fitToRange
         className="mt-4 h-14 w-full"

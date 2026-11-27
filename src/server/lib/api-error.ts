@@ -1,8 +1,16 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
+import type { ZodType } from "zod";
 import type { ErrorCode } from "@/lib/error-codes";
 import { logError } from "./log";
+import {
+  currentRequestId,
+  requestIdFrom,
+  runWithRequestContext,
+  type RequestContext,
+} from "./request-context";
+import { recordDbBusy, recordHttpMetric } from "@/server/observability/metrics";
 
 /**
  * A failure the caller can fix: bad input, a missing id, a conflict. Its message is
@@ -13,14 +21,22 @@ export class ApiError extends Error {
     message: string,
     readonly status: number = 400,
     readonly code?: string,
+    readonly details?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
   }
 }
 
+const body = (error: string, status: number, code?: string, details?: unknown) => ({
+  error,
+  ...(code ? { code } : {}),
+  ...(details === undefined ? {} : { details }),
+  ...(currentRequestId() ? { requestId: currentRequestId() } : {}),
+});
+
 const coded = (error: string, status: number, code: ErrorCode) =>
-  NextResponse.json({ error, code }, { status });
+  NextResponse.json(body(error, status, code), { status });
 
 /** SQLite failures the person can act on. better-sqlite3 reports extended codes (SQLITE_BUSY_SNAPSHOT), hence the prefixes. */
 const SQLITE: [prefix: string, status: number, code: ErrorCode, error: string][] = [
@@ -45,11 +61,13 @@ function knownResponse(scope: string, error: unknown): NextResponse | null {
   const status = (error as { status?: unknown }).status;
   // EditError: a rejected edit with its own status and a message written for the UI.
   if (error.name === "EditError" && typeof status === "number")
-    return NextResponse.json({ error: error.message }, { status });
+    return NextResponse.json(body(error.message, status), { status });
+  if (error.name === "MoneyContractError") return coded("Invalid amount", 400, "bad_money");
   const code = (error as { code?: unknown }).code;
   if (typeof code !== "string") return null;
   const hit = SQLITE.find(([prefix]) => code.startsWith(prefix));
   if (!hit) return null;
+  if (hit[2] === "db_busy") recordDbBusy();
   logError(scope, error);
   return coded(hit[3], hit[1], hit[2]);
 }
@@ -61,15 +79,14 @@ function knownResponse(scope: string, error: unknown): NextResponse | null {
  */
 export function errorResponse(scope: string, error: unknown): NextResponse {
   if (error instanceof ApiError) {
-    return NextResponse.json(
-      error.code ? { error: error.message, code: error.code } : { error: error.message },
-      { status: error.status },
-    );
+    return NextResponse.json(body(error.message, error.status, error.code, error.details), {
+      status: error.status,
+    });
   }
   const known = knownResponse(scope, error);
   if (known) return known;
   logError(scope, error);
-  return NextResponse.json({ error: "Unable to complete the request" }, { status: 500 });
+  return NextResponse.json(body("Unable to complete the request", 500), { status: 500 });
 }
 
 /**
@@ -82,11 +99,34 @@ export function handle<A extends unknown[]>(
   fn: (...args: A) => Response | Promise<Response>,
 ): (...args: A) => Promise<Response> {
   return async (...args) => {
-    try {
-      return await fn(...args);
-    } catch (error) {
-      return errorResponse(scope, error);
-    }
+    const request = args[0] instanceof Request ? args[0] : null;
+    const requestId = request ? requestIdFrom(request) : "";
+    const context: RequestContext = {
+      requestId,
+      route: scope,
+      actor: "local",
+      startedAt: Date.now(),
+    };
+    const invoke = async () => {
+      try {
+        const response = await fn(...args);
+        if (requestId) response.headers.set("X-Request-Id", requestId);
+        if (request) {
+          recordHttpMetric(request.method, scope, response.status, Date.now() - context.startedAt);
+        }
+        return response;
+      } catch (error) {
+        const response = errorResponse(scope, error);
+        if (requestId) response.headers.set("X-Request-Id", requestId);
+        if (request) {
+          recordHttpMetric(request.method, scope, response.status, Date.now() - context.startedAt);
+        }
+        return response;
+      }
+    };
+    // A Request that is not a real web Request (some tests call handlers with mocks) still runs,
+    // just without a request id.
+    return request ? runWithRequestContext(context, invoke) : invoke();
   };
 }
 
@@ -101,6 +141,14 @@ export async function readJson<T = any>(request: Request): Promise<T> {
   } catch {
     throw new ApiError("Invalid JSON", 400, "bad_json");
   }
+}
+
+export async function readValidatedJson<T>(request: Request, schema: ZodType<T>): Promise<T> {
+  const raw = await readJson(request);
+  const parsed = schema.safeParse(raw);
+  if (!parsed.success)
+    throw new ApiError("Invalid request", 400, "bad_request", parsed.error.issues);
+  return parsed.data;
 }
 
 /**

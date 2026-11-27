@@ -108,7 +108,7 @@ export function BusinessReportView() {
             <h2 className="text-footnote font-semibold text-muted-foreground">
               {t("monthsTitle")}
             </h2>
-            <div className="overflow-x-auto rounded-2xl border">
+            <div className="relative overflow-x-auto rounded-2xl border">
               <table className="w-full text-footnote">
                 <caption className="sr-only">{t("monthsTitle")}</caption>
                 <thead className="bg-muted/40 text-muted-foreground">

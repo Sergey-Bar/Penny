@@ -496,13 +496,11 @@ export function NavRow({
   Icon,
   title,
   hint,
-  color,
 }: {
   href: string;
   Icon: LucideIcon;
   title: string;
   hint: string;
-  color?: string;
 }) {
   return (
     <Link
@@ -510,8 +508,7 @@ export function NavRow({
       className="flex min-h-16 items-center gap-3 px-4 py-3 transition-[background-color] duration-150 hover:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring sm:px-5"
     >
       <span
-        className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground"
-        style={color ? { backgroundColor: color, color: "#fff" } : undefined}
+        className="grid size-9 shrink-0 place-items-center rounded-xl bg-selection text-accent-c"
         aria-hidden
       >
         <Icon className="size-[1.125rem]" />
@@ -532,7 +529,6 @@ export const groupedList =
   "overflow-hidden rounded-2xl border border-border/60 bg-card divide-y divide-border/60";
 
 /** One saturated colour per life stage, so the seven groups read apart at a glance (white icons stay above 3:1). */
-const STAGE_COLORS = ["#0a7ea4", "#2b8a4e", "#c8384f", "#b86e00", "#5541cc", "#0b63c4", "#8a3fb0"];
 
 export function CalculatorTiles() {
   const t = useTranslations("calculators");
@@ -549,8 +545,7 @@ export function CalculatorTiles() {
           <li key={stage} aria-labelledby={`stage-${stage}`}>
             <div className="mb-2 flex items-start gap-3 px-1">
               <span
-                style={{ backgroundColor: STAGE_COLORS[i % STAGE_COLORS.length] }}
-                className="mt-px grid size-6 shrink-0 place-items-center rounded-full text-white text-caption font-semibold tabular-nums"
+                className="mt-px grid size-6 shrink-0 place-items-center rounded-full bg-primary text-caption font-semibold text-primary-foreground tabular-nums"
                 aria-hidden
               >
                 {i + 1}
@@ -575,7 +570,6 @@ export function CalculatorTiles() {
                       Icon={Icon}
                       title={t(`${key}_title`)}
                       hint={t(`${key}_q`)}
-                      color={STAGE_COLORS[i % STAGE_COLORS.length]}
                     />
                   </li>
                 );

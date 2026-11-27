@@ -66,7 +66,7 @@ export function Segmented<T extends string | number>({
               "min-h-11 rounded-full px-3.5 text-sm font-medium tabular-nums transition-[background-color,color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
               variant === "track"
                 ? cn(
-                    "min-h-9 flex-1 whitespace-nowrap px-3 text-[13px] md:min-h-8",
+                    "min-h-10 flex-1 whitespace-nowrap px-3 text-[13px] md:min-h-8",
                     selected
                       ? "bg-[var(--segmented-thumb)] font-semibold text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground",

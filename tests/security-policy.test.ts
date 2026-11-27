@@ -19,7 +19,7 @@ const API_PATHS = Object.keys(modules)
 
 // Public on purpose: the sign-in screen, the lock screen and the health probe the service
 // wrapper and Docker HEALTHCHECK use.
-const PUBLIC = new Set(["/api/access", "/api/health", "/api/lock/unlock"]);
+const PUBLIC = new Set(["/api/access", "/api/health", "/api/health/ready", "/api/lock/unlock"]);
 
 let adminCookie = "";
 let memberCookie = "";
@@ -131,6 +131,7 @@ describe("access policy: household member", () => {
       const workspaceFree = [
         "/api/access",
         "/api/health",
+        "/api/health/ready",
         "/api/lock/unlock",
         "/api/workspaces",
         "/api/quick-add",
