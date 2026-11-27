@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { ProviderBadge } from "@/components/setup/provider-badge";
 import { cn } from "@/lib/utils";
 
-/** Two columns on a phone, three on a tablet, four on a wide screen: one rhythm for every institution list. */
+/** One column on narrow phones, two on tablets, three on wide screens so names and dates fit without clipping. */
 export function InstitutionGrid({
   children,
   className,
@@ -13,7 +13,7 @@ export function InstitutionGrid({
   className?: string;
 }) {
   return (
-    <div className={cn("grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4", className)}>
+    <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3", className)}>
       {children}
     </div>
   );
@@ -50,7 +50,7 @@ export function InstitutionTile({
       <ProviderBadge color={color} name={label} domain={domain} size={30} radius={8} />
       <span
         title={label}
-        className="min-w-0 flex-1 truncate text-footnote font-medium leading-tight"
+        className="min-w-0 flex-1 line-clamp-2 text-footnote font-medium leading-tight"
       >
         {label}
       </span>
@@ -77,7 +77,11 @@ export function InstitutionTile({
       ) : (
         <div className="flex min-h-11 items-center gap-2">{head}</div>
       )}
-      {subline && <div className="truncate text-caption text-muted-foreground">{subline}</div>}
+      {subline && (
+        <div className="line-clamp-2 text-caption leading-snug text-muted-foreground">
+          {subline}
+        </div>
+      )}
       {children}
     </div>
   );
