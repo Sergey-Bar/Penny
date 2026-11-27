@@ -124,13 +124,13 @@ export function BudgetsStep({ onComplete, onBack }: BudgetsStepProps) {
       </header>
 
       {isLoading ? (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {Array.from({ length: 18 }).map((_, i) => (
-            <div key={i} className="h-9 animate-pulse rounded-lg bg-card/60" />
+            <div key={i} className="h-11 animate-pulse rounded-lg bg-card/60" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {categories.map((cat) => (
             <CategoryCell
               key={cat.id}
@@ -208,7 +208,7 @@ function CategoryCell({
 
   return (
     <label
-      className="group flex min-w-0 items-center gap-1.5 rounded-lg border bg-card px-1.5 py-1.5 transition-colors"
+      className="group flex min-h-11 min-w-0 items-center gap-2 rounded-lg border bg-card px-2.5 py-1.5 transition-colors"
       style={{
         borderColor: filled ? accent : "var(--border)",
         background: filled ? `color-mix(in oklch, ${category.color} 10%, var(--card))` : undefined,
@@ -223,7 +223,7 @@ function CategoryCell({
       <Tooltip>
         <TooltipTrigger
           render={
-            <span className="min-w-0 flex-1 cursor-default truncate text-xs font-medium">
+            <span className="min-w-0 flex-1 cursor-default truncate text-sm font-medium">
               {name}
             </span>
           }
@@ -242,7 +242,7 @@ function CategoryCell({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="—"
-          className="w-12 border-0 bg-transparent p-0 text-end text-xs tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring placeholder:text-muted-foreground/70 focus:underline focus:decoration-foreground/30 focus:underline-offset-4"
+          className="w-16 border-0 bg-transparent p-0 text-end text-sm tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring placeholder:text-muted-foreground/70 focus:underline focus:decoration-foreground/30 focus:underline-offset-4"
           style={{
             fontWeight: filled ? 600 : 400,
           }}
