@@ -44,6 +44,7 @@ import {
   Tags,
   EyeOff,
   Eye,
+  Trash2,
   X,
   Plus,
   ArrowUpDown,
@@ -1148,6 +1149,23 @@ export function TransactionsTable({
                                         {t("excludeMerchantAction")}
                                       </DropdownMenuItem>
                                     </>
+                                  )}
+                                  {/* Only a row typed in by hand can be deleted (a bank row would come back on the next
+                                      sync); the toast that follows offers Undo for five seconds. */}
+                                  {isManualTxn(txn) && (
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={() =>
+                                        void deleteWithUndo(
+                                          [txn.id],
+                                          tManual,
+                                          () => void queryClient.invalidateQueries(),
+                                        )
+                                      }
+                                    >
+                                      <Trash2 className="me-2 h-3.5 w-3.5" />
+                                      {tManual("delete")}
+                                    </DropdownMenuItem>
                                   )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
