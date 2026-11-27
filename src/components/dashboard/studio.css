@@ -266,6 +266,13 @@ html.app-studio [data-slot="sidebar-menu-button"] { border-radius: 13px; min-hei
 html.app-studio [data-slot="sidebar-menu-button"][data-active="true"] { background: var(--studio-accent-soft); color: var(--primary); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 12%, transparent); }
 html.app-studio .studio-settings-nav { background: color-mix(in srgb, var(--card) 50%, var(--background)); padding: 8px; }
 html.app-studio .studio-settings-nav a { border-radius: 13px; min-height: 44px; }
+/* The current page in any menu or tab row: the accent's soft ground with full-strength text. Accent-coloured text
+   on a grey tint measured 3.8-4.4:1 in the light theme, under the 4.5:1 that small text needs. */
+/* Soft grounds under accent or expense text. The utility tints mix the button colour (black) into the ground, which
+   left accent text at 3.4-4.4:1 and expense text at 4.25:1 in the light theme; these keep both above 4.5:1. */
+html.app-studio :is(.bg-primary\/10, .bg-primary\/12, .bg-primary\/15) { background-color: var(--selection); }
+html.app-studio .bg-expense\/15.text-expense { background-color: color-mix(in srgb, var(--expense) 8%, transparent); }
+html.app-studio a[aria-current="page"]:is(.text-primary, .bg-primary\/10) { background: var(--selection); color: var(--text-strong); }
 html.app-studio .studio-settings-nav a[aria-current="page"] { color: var(--primary); background: var(--studio-accent-soft); font-weight: 500; }
 html.app-studio :is([data-slot="dropdown-menu-content"], [data-slot="select-content"], [data-slot="popover-content"], [data-slot="dialog-content"]) { border: 1px solid var(--border); box-shadow: 0 16px 50px #18132618; }
 html.app-studio [data-slot="sidebar-inset"] { background: transparent; }

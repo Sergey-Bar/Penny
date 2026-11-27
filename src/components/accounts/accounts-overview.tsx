@@ -176,7 +176,7 @@ export function AccountsOverview() {
             </h2>
             <Link
               href="/settings/bank"
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary/15 px-3 text-sm font-medium text-primary hover:bg-primary/25 focus-visible:outline-2 focus-visible:outline-ring"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-selection px-3 text-sm font-medium text-foreground hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring"
             >
               <Link2 className="size-4" aria-hidden />
               {t("connect")}

@@ -349,6 +349,8 @@ function FlowChart({ monthly }: { monthly: OverviewPayload["monthly"] }) {
       <div className="h-56" dir="ltr" aria-hidden>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
+            // The chart is decoration for assistive tech (the table below says the same), so it takes no keyboard stop.
+            accessibilityLayer={false}
             data={monthly.map((m) => ({
               label: monthLabel(m.month),
               income: m.income,

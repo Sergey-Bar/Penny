@@ -149,8 +149,17 @@ export function PageHeader({
   const purpose = key && largeTitle && tPurpose.has(key) ? tPurpose(key) : null;
   const [scrolled, setScrolled] = useState(false);
   // Every page sets its own tab title, so tabs, history and screen readers can tell pages apart.
+  // The framework writes its own <title> after the page streams in, which put every tab back to the bare product name;
+  // the page's title is kept by setting it again whenever that happens.
   useEffect(() => {
-    document.title = `${heading} · Penny`;
+    const want = `${heading} · Penny`;
+    const apply = () => {
+      if (document.title !== want) document.title = want;
+    };
+    apply();
+    const watch = new MutationObserver(apply);
+    watch.observe(document.head, { childList: true, subtree: true, characterData: true });
+    return () => watch.disconnect();
   }, [heading]);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -191,7 +200,10 @@ export function PageHeader({
         <div className="col-start-2 row-start-1 flex min-w-0 flex-col items-start text-start">
           {hideTitle && titleSlot ? <div className="w-full md:hidden">{titleSlot}</div> : null}
           {eyebrow && <p className="mb-0.5 text-xs text-muted-foreground">{eyebrow}</p>}
-          <div className="relative min-w-0 max-w-full">
+          {/* Room is kept for the "i" that hangs off the title's end, so a long title cannot push it off a phone screen. */}
+          <div
+            className={`relative min-w-0 ${purpose || (meta && meta.length > 24) ? "max-w-[calc(100%-2.75rem)]" : "max-w-full"}`}
+          >
             <h1
               title={heading}
               className={
