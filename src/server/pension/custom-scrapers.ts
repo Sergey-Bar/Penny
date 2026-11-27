@@ -17,6 +17,7 @@ import {
   parseAltshulerCards,
   parseExcellenceCash,
   parseExcellenceRows,
+  parseHarelCards,
   parsePhoenixCards,
   type AltshulerCard,
   type PhoenixCard,
@@ -218,6 +219,7 @@ async function enterOtp(page: Page, args: ScrapeArgs, otp: OtpStep): Promise<boo
 
 interface SignIn {
   url: string;
+  beforeLogin?: (page: Page) => Promise<void>;
   /** The first field doubles as the "is the login form showing" check. */
   fields: { selectors: string[]; value: string }[];
   submitLabels: string[];
@@ -231,6 +233,7 @@ async function signIn(page: Page, args: ScrapeArgs, s: SignIn): Promise<boolean>
   args.onProgress?.("login");
   await page.goto(s.url, { waitUntil: "domcontentloaded", timeout: 45000 });
   await delay(2000);
+  if (s.beforeLogin) await s.beforeLogin(page);
   const first = await findFirstVisible(page, s.fields[0].selectors, 8000);
   if (first) {
     for (const [i, field] of s.fields.entries()) {
@@ -473,10 +476,96 @@ async function scrapeExcellence(page: Page, args: ScrapeArgs): Promise<ScrapeOut
   }
 }
 
+async function scrapeHarel(page: Page, args: ScrapeArgs): Promise<ScrapeOutcome> {
+  const ok = await signIn(page, args, {
+    url: "https://www.harel-group.co.il/Pages/login-Page/Login.aspx",
+    beforeLogin: async (p) => {
+      await clickButtonByText(p, ["כניסה לאזור האישי"]);
+      await delay(1500);
+    },
+    fields: [
+      {
+        selectors: ["#idUser", 'input[placeholder*="ת.ז"]', 'input[placeholder*="זהות"]'],
+        value: args.credentials.id ?? "",
+      },
+      { selectors: ["#phone", 'input[placeholder*="טלפון"]'], value: args.credentials.phone ?? "" },
+    ],
+    submitLabels: ["המשך", "כניסה", "שלח"],
+    otp: {
+      selectors: [
+        'input[name*="otp"]',
+        'input[id*="code"]',
+        'input[name*="sms"]',
+        'input[placeholder*="קוד"]',
+        'input[autocomplete="one-time-code"]',
+      ],
+      confirm: OTP_LABELS,
+      required: true,
+    },
+    signedIn: () =>
+      window.location.href.includes("client-view") ||
+      window.location.href.includes("my-harel") ||
+      Boolean(document.querySelector("#client-view")),
+  });
+  if (!ok) return failed(SYNC_ERRORS.pensionLoginFailed);
+
+  args.onProgress?.("balances");
+  if (!page.url().includes("client-view")) {
+    await page
+      .goto("https://www.harel-group.co.il/personal-info/my-harel/Pages/client-view.aspx", {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      })
+      .catch(() => {});
+  }
+
+  const deadline = Date.now() + 25000;
+  let cards: { name: string; amount: string }[] = [];
+  while (Date.now() < deadline) {
+    const targetFrame =
+      page.frames().find((f) => f.url().includes("apps.client-view/client-view")) ??
+      page.mainFrame();
+    cards = await targetFrame
+      .evaluate(() => {
+        const candidates: { el: Element; name: string; amount: string }[] = [];
+        const els = Array.from(document.querySelectorAll("a, button, div, li"));
+        for (const el of els) {
+          const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+          if (!text.includes("₪") || text.length > 80) continue;
+          if (el.querySelectorAll("div, a, button").length > 6) continue;
+          const m = text.match(/^(.+?)\s*(₪\s*[\d,]+(?:\.\d+)?)$/);
+          if (!m) continue;
+          const name = m[1].trim();
+          const amount = m[2].trim();
+          if (!name) continue;
+          candidates.push({ el, name, amount });
+        }
+        const out: { name: string; amount: string }[] = [];
+        const seen = new Set<string>();
+        for (const item of candidates) {
+          // Drop wrapper containers that enclose another matched card element.
+          const isWrapper = candidates.some(
+            (other) => other.el !== item.el && item.el.contains(other.el),
+          );
+          if (isWrapper || seen.has(item.name)) continue;
+          seen.add(item.name);
+          out.push({ name: item.name, amount: item.amount });
+        }
+        return out;
+      })
+      .catch(() => []);
+    if (cards.length > 0) break;
+    await delay(500);
+  }
+
+  return parseHarelCards(cards);
+}
+
 const SCRAPERS = {
   altshuler: scrapeAltshuler,
   phoenix: scrapePhoenix,
   excellence: scrapeExcellence,
+  harel: scrapeHarel,
 };
 export type CustomFund = keyof typeof SCRAPERS;
 

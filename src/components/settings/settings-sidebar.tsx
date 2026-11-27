@@ -19,12 +19,12 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
-  FileUp,
   LifeBuoy,
   Tag,
   Store,
   Coins,
   Languages,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -118,16 +118,16 @@ export const SETTINGS_GROUPS: NavGroup[] = [
         match: (p) => p.startsWith("/settings/rules"),
       },
       {
-        href: "/settings/data",
-        labelKey: "data",
-        Icon: FileUp,
-        match: (p) => p.startsWith("/settings/data"),
-      },
-      {
         href: "/settings/bank",
         labelKey: "bank",
         Icon: Landmark,
-        match: (p) => p.startsWith("/settings/bank"),
+        match: (p) => p.startsWith("/settings/bank") || p.startsWith("/settings/data"),
+      },
+      {
+        href: "/settings/sync-logs",
+        labelKey: "syncLogs",
+        Icon: ScrollText,
+        match: (p) => p.startsWith("/settings/sync-logs"),
       },
       {
         href: "/settings/ai",

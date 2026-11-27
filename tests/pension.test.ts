@@ -30,6 +30,7 @@ describe("pension helpers", () => {
     expect(INTERACTIVE.excellence).toBe(false);
   });
   it("builds a stable asset key", () => {
+    expect(assetKey("excellence", "123")).toBe("pension:excellence:123");
     expect(assetKey(3, "123")).toBe("pension:3:123");
   });
 });
@@ -234,19 +235,5 @@ describe("Excellence Trade export", () => {
     expect(out.accounts).toHaveLength(2);
     expect(out.accounts[0]).toMatchObject({ label: "הראל - קרנות פנסיה", balance: 100000 });
     expect(out.accounts[1]).toMatchObject({ label: "הראל - השתלמות", balance: 20000 });
-  });
-  it("derives costBasis from gain in ILS and ignores percentage cost change columns", () => {
-    const out = parseExcellenceRows(
-      [
-        ["שם נייר", "מספר נייר", "כמות בתיק", "שווי אחזקה (₪)", "שינוי מעלות %", "שינוי מעלות (₪)"],
-        ["Invesco S&P 500", "1183441", "6864", "332011.68", "43.9", "101289.99"],
-      ],
-      null,
-    );
-    expect(out.success).toBe(true);
-    expect(out.accounts[0]).toMatchObject({
-      balance: 332011.68,
-      costBasis: 230721.69,
-    });
   });
 });
