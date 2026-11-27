@@ -159,7 +159,11 @@ export function listAllSyncLogs(workspaceId: number, limit = 60): SyncLogEntry[]
   })[];
 
   const combined: SyncLogEntry[] = [
-    ...bankRows.map((r, idx) => ({ ...r, id: `bank-${idx}-${r.startedAt}`, kind: "bank" as const })),
+    ...bankRows.map((r, idx) => ({
+      ...r,
+      id: `bank-${idx}-${r.startedAt}`,
+      kind: "bank" as const,
+    })),
     ...pensionRows.map((r) => ({
       id: `inv-${r.id}`,
       kind: "investment" as const,
@@ -175,18 +179,24 @@ export function listAllSyncLogs(workspaceId: number, limit = 60): SyncLogEntry[]
 }
 
 /** Clears all recorded sync/activity logs for this workspace without breaking transaction foreign keys. */
-export function clearAllSyncLogs(workspaceId: number): void {
+export function clearAllSyncLogs(workspaceId: number): number {
   const db = getDb();
   const nowSql = new Date().toISOString().replace("T", " ").slice(0, 19);
+  let removed = 0;
   db.transaction(() => {
-    db.prepare(`DELETE FROM pension_sync_logs WHERE workspace_id = ?`).run(workspaceId);
-    db.prepare(
-      `DELETE FROM sync_runs
-       WHERE workspace_id = ?
-         AND id NOT IN (SELECT DISTINCT sync_run_id FROM transactions WHERE workspace_id = ?)`,
-    ).run(workspaceId, workspaceId);
+    removed += db
+      .prepare(`DELETE FROM pension_sync_logs WHERE workspace_id = ?`)
+      .run(workspaceId).changes;
+    removed += db
+      .prepare(
+        `DELETE FROM sync_runs
+         WHERE workspace_id = ?
+           AND id NOT IN (SELECT DISTINCT sync_run_id FROM transactions WHERE workspace_id = ?)`,
+      )
+      .run(workspaceId, workspaceId).changes;
   })();
   setWorkspaceSetting(workspaceId, "logs_cleared_at", nowSql);
+  return removed;
 }
 
 async function run(workspaceId: number, row: Row, logId: number) {
@@ -225,10 +235,9 @@ async function run(workspaceId: number, row: Row, logId: number) {
         session,
         onProgress: (message: string) => {
           status.set(row.id, { state: "running", message });
-          db.prepare(`UPDATE pension_sync_logs SET status = 'running', message = ? WHERE id = ?`).run(
-            message,
-            logId,
-          );
+          db.prepare(
+            `UPDATE pension_sync_logs SET status = 'running', message = ? WHERE id = ?`,
+          ).run(message, logId);
         },
         onOtpNeeded: () => {
           status.set(row.id, { state: "otp" });
