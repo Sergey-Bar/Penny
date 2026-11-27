@@ -91,6 +91,6 @@ export const HOW_TO_UPDATE: Record<InstallKind, string> = {
   desktop:
     "On Windows, Penny downloads the update itself and asks to restart. On Mac, download the new .dmg from the release page and open it. Your data stays.",
   docker:
-    "To update, run Penny-update.bat (Windows) or ./Penny-update.sh (Mac, Linux). It backs up your data first and keeps the current version if the new one fails its tests.",
+    "To update, run the Docker install command again, or scripts/docker/update.sh (scripts\\docker\\update.bat on Windows) in the Penny folder. It backs up your data first and keeps the current version if the new one fails its tests.",
   source: "To update, run git pull and restart Penny.",
 };

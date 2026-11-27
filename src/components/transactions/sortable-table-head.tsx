@@ -37,7 +37,7 @@ export function SortableTableHead({
         type="button"
         onClick={() => onSort(field)}
         className={cn(
-          "inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+          "tap-target inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
           align === "end" && "ms-auto",
           active && "text-foreground",
         )}

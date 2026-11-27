@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MonthNav, MonthStrip, monthKey, shiftMonth } from "@/components/ui/month-nav";
+import { DataState } from "@/components/ui/data-state";
 import { translateCategoryName } from "@/lib/i18n-data";
 import { toast } from "sonner";
 import {
@@ -110,7 +111,8 @@ export function SimpleHome({
   const assets = useQuery({ queryKey: ["assets"], queryFn: getAssets, enabled: offset === 0 });
   const cash = useQuery({ queryKey: ["cash-ahead"], queryFn: getCashAhead, enabled: offset === 0 });
   // Freshness from the per-bank health Home already loads: the newest sync, or a failure if any bank failed.
-  const banks = useQuery({ queryKey: ["home"], queryFn: () => getHome() }).data?.bankHealth ?? [];
+  const homeQuery = useQuery({ queryKey: ["home"], queryFn: () => getHome() });
+  const banks = homeQuery.data?.bankHealth ?? [];
   const lastAt =
     banks
       .map((b) => b.lastSyncAt)
@@ -158,6 +160,22 @@ export function SimpleHome({
     ? (Object.keys(groups) as WealthGroup[]).filter((g) => groups[g].value > 0)
     : [];
 
+  // A new household has nothing to show yet: one card that says how to begin, instead of a page of zeros.
+  const fresh =
+    offset === 0 &&
+    homeQuery.isSuccess &&
+    !banks.some((b) => b.lastSyncAt) &&
+    Array.isArray(txns.data) &&
+    txns.data.length === 0 &&
+    wealth.length === 0;
+  if (fresh)
+    return (
+      <div className={cardOnly ? "" : "mx-auto w-full max-w-md space-y-4 md:max-w-2xl"}>
+        <DataState />
+        {extra}
+      </div>
+    );
+
   return (
     <div className={cardOnly ? "" : "mx-auto w-full max-w-md md:max-w-2xl lg:max-w-6xl"}>
       {/* One quick-add line; the menu itself lives in the page's top corner, so nothing more sits above the card. */}
@@ -165,7 +183,7 @@ export function SimpleHome({
         <div className="mb-1 flex items-center justify-end md:hidden">
           <Link
             href="/transactions?add=1"
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 text-footnote font-medium text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+            className="tap-target inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 text-footnote font-medium text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
           >
             <Plus className="size-4" aria-hidden />
             {tManual("addTitle")}
@@ -188,7 +206,7 @@ export function SimpleHome({
       ) : !cf ? (
         <div className="wallet h-64 rounded-3xl px-5 pt-[22px] min-[600px]:rounded-[28px] min-[600px]:px-[30px] min-[600px]:pt-7">
           <div className="flex justify-end">{monthNav}</div>
-          <div role="status" className="mt-6 h-24 animate-pulse rounded-2xl bg-white/10">
+          <div role="status" className="mt-6 h-24 animate-pulse rounded-2xl bg-[var(--hover)]">
             <span className="sr-only">{t("loading")}</span>
           </div>
         </div>
@@ -415,7 +433,7 @@ export function SimpleHome({
                         </span>
                       </div>
                       <div
-                        className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/15"
+                        className="mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--hover)]"
                         role="progressbar"
                         aria-valuenow={Math.round(spentPct)}
                         aria-valuemin={0}
@@ -439,7 +457,7 @@ export function SimpleHome({
                 </div>
                 {/* Simple mode keeps the purple card to the numbers alone; Advanced borrows it with its next step. */}
                 {cardOnly && extra && (
-                  <div className="mt-5 lg:mt-1 lg:border-s lg:border-white/15 lg:ps-8">{extra}</div>
+                  <div className="mt-5 lg:mt-1 lg:border-s lg:border-border lg:ps-8">{extra}</div>
                 )}
               </div>
               {/* Full width under both columns: twelve months need the room. */}
@@ -510,7 +528,7 @@ export function SimpleHome({
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           aria-label={t("filterLabel")}
-                          className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+                          className="tap-target grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
                         >
                           <SlidersHorizontal className="size-4" aria-hidden />
                         </DropdownMenuTrigger>
@@ -638,7 +656,8 @@ function HeatMap({
               const sel = l.key === selected;
               const share = Math.max(0, Math.min(1, l.spent / top));
               const over = !!l.showLeft && l.expected > 0 && l.spent > l.expected;
-              const tint = over ? "var(--status-over)" : l.tone;
+              // One hue for every line: how deep it is says how much of the month went there. Red is kept for a line over its budget.
+              const tint = over ? "var(--status-over)" : "var(--accent-color)";
               return (
                 <button
                   key={l.key}
@@ -699,7 +718,7 @@ function TrackPicker({
         aria-label={t("trackCategory")}
         className={
           compact
-            ? "relative grid size-9 place-items-center rounded-full text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+            ? "tap-target relative grid size-9 place-items-center rounded-full text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
             : "flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card/40 px-4 text-sm font-medium text-primary hover:bg-accent disabled:opacity-50 max-lg:min-h-14"
         }
         disabled={options.length === 0}
@@ -788,7 +807,7 @@ function BalancePill({
   const formatCurrency = useMoney();
   return (
     <Popover>
-      <PopoverTrigger className="-ms-2 inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-footnote text-muted-foreground hover:bg-white/10 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
+      <PopoverTrigger className="-ms-2 inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-footnote text-muted-foreground hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
         {t("bankBalance")}
         <span className="font-medium tabular-nums">{bank != null ? <Signed n={bank} /> : "—"}</span>
         <ChevronDown className="size-4" aria-hidden />

@@ -19,7 +19,7 @@ export const POST = handle("setup/ai", async (request: Request) => {
     ollamaModel?: string;
   };
 
-  if (!["claude", "ollama", "none", ...Object.keys(CLI_AGENTS)].includes(body.provider)) {
+  if (!["claude", "openai", "ollama", "none", ...Object.keys(CLI_AGENTS)].includes(body.provider)) {
     return NextResponse.json({ error: "invalid provider" }, { status: 400 });
   }
   if (body.provider === "ollama" && body.ollamaUrl && !normalizeOllamaUrl(body.ollamaUrl)) {
@@ -33,6 +33,12 @@ export const POST = handle("setup/ai", async (request: Request) => {
     setGlobalSetting("ai_api_key_iv", iv.toString("hex"));
     setGlobalSetting("ai_api_key_auth_tag", authTag.toString("hex"));
   }
+  if (body.provider === "openai" && body.apiKey) {
+    const { encrypted, iv, authTag } = encrypt(body.apiKey);
+    setGlobalSetting("ai_openai_key_encrypted", encrypted.toString("hex"));
+    setGlobalSetting("ai_openai_key_iv", iv.toString("hex"));
+    setGlobalSetting("ai_openai_key_auth_tag", authTag.toString("hex"));
+  }
 
   if (body.provider === "ollama") {
     if (body.ollamaUrl) setGlobalSetting("ai_ollama_url", normalizeOllamaUrl(body.ollamaUrl)!);
@@ -42,7 +48,10 @@ export const POST = handle("setup/ai", async (request: Request) => {
   return NextResponse.json({ success: true });
 });
 
-/** Whether a Claude API key is stored (never the key itself). */
+/** Whether API keys are stored (never the keys themselves). */
 export const GET = handle("setup/ai", async () => {
-  return NextResponse.json({ hasClaudeKey: !!getGlobalSetting("ai_api_key_encrypted") });
+  return NextResponse.json({
+    hasClaudeKey: !!getGlobalSetting("ai_api_key_encrypted"),
+    hasOpenAIKey: !!getGlobalSetting("ai_openai_key_encrypted"),
+  });
 });

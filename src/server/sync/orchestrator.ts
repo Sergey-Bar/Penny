@@ -47,6 +47,13 @@ import { markSyncEnd, markSyncHeartbeat, markSyncStart } from "@/server/sync/act
 import type { ScrapeResult } from "@/server/scrapers/types";
 import { SYNC_ERRORS } from "@/lib/sync-errors";
 import { withDeadline } from "@/lib/sync-schedule";
+import {
+  classifyProviderError,
+  recordProviderFailure,
+  recordProviderSuccess,
+} from "./provider-health";
+import { getBackendMode } from "@/server/lib/backend-mode";
+import { recordSyncMetric } from "@/server/observability/metrics";
 
 export type SyncEventSender = (event: string, data: Record<string, unknown>) => void;
 
@@ -58,7 +65,9 @@ export interface ProviderResult {
   added: number;
   updated: number;
   errorMessage?: string;
+  errorCode?: string;
   syncRunId?: number;
+  postProcessJobId?: number;
   /** Failed for a reason that usually clears on its own (network, a slow site); the scheduler retries these. */
   retryable?: boolean;
 }
@@ -84,7 +93,11 @@ export interface WorkspaceSummary {
   updated: number;
   categorized: number;
   aiWarning: string | null;
+  /** Post-process jobs the manual route should execute inline, one per credential. */
+  postProcessJobs: { syncRunId: number; jobId: number }[];
 }
+
+export type PostProcessMode = "inline" | "enqueue" | "shadow" | "manual";
 
 export function friendlyAIError(err: unknown, modelName: string): string {
   const msg = err instanceof Error ? err.message : String(err);
@@ -213,10 +226,12 @@ async function syncOneCredential(
   credentials: Record<string, string>,
   startDate: Date,
   send: SyncEventSender,
+  mode: PostProcessMode = "inline",
 ): Promise<ProviderResult> {
   const provider = meta.provider as BankProvider;
   // A scrape abandoned at the deadline may still hold a login; a second one to the same bank can lock the account.
   if (inFlight.has(meta.id)) {
+    recordProviderFailure(workspaceId, meta.id, "timeout");
     return {
       provider,
       credentialId: meta.id,
@@ -225,6 +240,7 @@ async function syncOneCredential(
       added: 0,
       updated: 0,
       errorMessage: SYNC_ERRORS.timeout,
+      errorCode: "timeout",
       retryable: true,
     };
   }
@@ -259,7 +275,11 @@ async function syncOneCredential(
     }
 
     if (!result.success) {
-      failSyncRun(syncRunId, result.errorMessage ?? "Scraping failed");
+      const message = result.errorMessage ?? "Scraping failed";
+      failSyncRun(syncRunId, message);
+      const errorCode = classifyProviderError(message);
+      recordProviderFailure(workspaceId, meta.id, errorCode);
+      recordSyncMetric("failed");
       return {
         provider,
         credentialId: meta.id,
@@ -267,7 +287,8 @@ async function syncOneCredential(
         ok: false,
         added: 0,
         updated: 0,
-        errorMessage: result.errorMessage ?? "Scraping failed",
+        errorMessage: message,
+        errorCode,
         syncRunId,
         retryable: result.retryable,
       };
@@ -282,23 +303,36 @@ async function syncOneCredential(
       })),
     );
 
-    const { added, updated } = saveSyncTransactions(
+    const durable = mode !== "inline";
+    const shadow = mode === "shadow";
+    const saved = saveSyncTransactions(
       workspaceId,
       allTransactions,
       provider,
       meta.id,
       syncRunId,
       result.accounts.map((a) => a.accountNumber),
+      {
+        enabled: durable,
+        shadow,
+        manualOwner: mode === "manual" ? `manual:${syncRunId}` : null,
+      },
     );
+    const { added, updated } = saved;
     // Bank balances feed cash, the emergency fund and net worth without typing them in.
     if (BANK_PROVIDERS.find((b) => b.id === provider)?.kind === "bank") {
       saveAccountBalances(workspaceId, provider, result.accounts, toLocalISODate(startDate));
     }
-    applyMerchantRulesToSyncRun(workspaceId, syncRunId);
-    applyRulesToSyncRun(workspaceId, syncRunId);
-    // Link transfers, refunds and loan repayments before any report reads the new rows.
-    reconcileFlows(workspaceId);
-    completeSyncRun(syncRunId, added, updated);
+    // Off and shadow still run the safe inline steps; the durable path runs them in the job.
+    if (!durable || shadow) {
+      applyMerchantRulesToSyncRun(workspaceId, syncRunId);
+      applyRulesToSyncRun(workspaceId, syncRunId);
+      // Link transfers, refunds and loan repayments before any report reads the new rows.
+      reconcileFlows(workspaceId);
+    }
+    completeSyncRun(syncRunId, added, updated, saved.postProcessJobId ? "pending" : "completed");
+    recordProviderSuccess(workspaceId, meta.id);
+    recordSyncMetric("completed");
 
     return {
       provider,
@@ -308,10 +342,14 @@ async function syncOneCredential(
       added,
       updated,
       syncRunId,
+      postProcessJobId: saved.postProcessJobId ?? undefined,
     };
   } catch (err) {
     const message = err instanceof Error ? redactError(err) : "Unknown scrape error";
     failSyncRun(syncRunId, message);
+    const errorCode = classifyProviderError(message);
+    recordProviderFailure(workspaceId, meta.id, errorCode);
+    recordSyncMetric("failed");
     return {
       provider,
       credentialId: meta.id,
@@ -320,6 +358,7 @@ async function syncOneCredential(
       added: 0,
       updated: 0,
       errorMessage: message,
+      errorCode,
       syncRunId,
     };
   }
@@ -330,7 +369,9 @@ export async function syncWorkspace(
   filterCredentialId: number | undefined,
   send: SyncEventSender,
   interactive = true,
+  options: { mode?: PostProcessMode } = {},
 ): Promise<WorkspaceSummary> {
+  const mode = options.mode ?? "inline";
   const workspace = getWorkspace(workspaceId);
   const workspaceName = workspace?.name ?? `Workspace ${workspaceId}`;
 
@@ -354,6 +395,7 @@ export async function syncWorkspace(
       updated: 0,
       categorized: 0,
       aiWarning: null,
+      postProcessJobs: [],
     };
   }
 
@@ -434,6 +476,7 @@ export async function syncWorkspace(
         credentials,
         startDate,
         send,
+        mode,
       );
       results.push(result);
       send("provider-done", {
@@ -474,6 +517,26 @@ export async function syncWorkspace(
 
   const totalAdded = results.reduce((s, r) => s + r.added, 0);
   const totalUpdated = results.reduce((s, r) => s + r.updated, 0);
+  const postProcessJobs = results
+    .filter(
+      (r): r is ProviderResult & { syncRunId: number; postProcessJobId: number } =>
+        r.syncRunId != null && r.postProcessJobId != null,
+    )
+    .map((r) => ({ syncRunId: r.syncRunId, jobId: r.postProcessJobId }));
+
+  // Durable modes run the deterministic passes in the job; the manual SSE route executes it inline.
+  if (mode === "enqueue" || mode === "manual") {
+    return {
+      workspaceId,
+      workspaceName,
+      providers: results,
+      added: totalAdded,
+      updated: totalUpdated,
+      categorized: 0,
+      aiWarning: null,
+      postProcessJobs,
+    };
+  }
 
   let aiWarning: string | null = null;
   // Memory and the merchant dictionary first, with or without AI.
@@ -537,13 +600,23 @@ export async function syncWorkspace(
           allTxns.map((t) => t.description),
         );
 
-        const memoryUpdates: { id: number; categoryId: number }[] = [];
+        const memoryUpdates: {
+          id: number;
+          categoryId: number;
+          origin: string;
+          confidence: number;
+        }[] = [];
         const memoryKeysHit: string[] = [];
         const remainingTxns: typeof allTxns = [];
         for (const t of allTxns) {
           const m = memoryMap.get(t.description);
           if (m && m.kind === kind) {
-            memoryUpdates.push({ id: t.id, categoryId: m.categoryId });
+            memoryUpdates.push({
+              id: t.id,
+              categoryId: m.categoryId,
+              origin: "memory",
+              confidence: 0.9,
+            });
             memoryKeysHit.push(normalizeMerchant(t.description));
           } else {
             remainingTxns.push(t);
@@ -581,6 +654,9 @@ export async function syncWorkspace(
               id: number;
               categoryId: number;
               aiConfidence: number | null;
+              origin: string;
+              confidence: number | null;
+              reasons: unknown;
             }[] = [];
             const reviewFlags: { id: number; needsReview: boolean }[] = [];
 
@@ -593,6 +669,9 @@ export async function syncWorkspace(
                 id: txn.id,
                 categoryId: category.id,
                 aiConfidence: confidence,
+                origin: "ai",
+                confidence,
+                reasons: [{ code: "aiSuggested" }],
               });
               reviewFlags.push({
                 id: txn.id,
@@ -623,6 +702,7 @@ export async function syncWorkspace(
     updated: totalUpdated,
     categorized,
     aiWarning,
+    postProcessJobs,
   };
 }
 
@@ -633,7 +713,7 @@ export async function runAllWorkspaces(
   onEvent?: SyncEventSender,
   kind: SyncKind = "manual",
   /** The caller already holds the sync lock (the SSE route does, so it can answer 409 itself). */
-  options: { lockHeld?: boolean } = {},
+  options: { lockHeld?: boolean; mode?: PostProcessMode | "auto" } = {},
 ): Promise<WorkspaceSummary[]> {
   const release = options.lockHeld ? null : tryAcquireSync(kind);
   if (!options.lockHeld && !release) throw new SyncBusyError();
@@ -644,11 +724,20 @@ export async function runAllWorkspaces(
     const workspaceIds = listAllWorkspaceIds();
     const summaries: WorkspaceSummary[] = [];
     for (const workspaceId of workspaceIds) {
+      const workspaceMode: PostProcessMode =
+        options.mode === "auto"
+          ? getBackendMode(workspaceId) === "on"
+            ? "manual"
+            : getBackendMode(workspaceId) === "shadow"
+              ? "shadow"
+              : "inline"
+          : (options.mode ?? "inline");
       const summary = await syncWorkspace(
         workspaceId,
         filterCredentialId,
         send,
         kind !== "scheduled",
+        { mode: workspaceMode },
       );
       summaries.push(summary);
     }

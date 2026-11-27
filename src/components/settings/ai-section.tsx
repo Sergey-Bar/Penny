@@ -38,10 +38,12 @@ import { toast } from "sonner";
 /** "none" has no row: no connected provider means manual categorization. */
 type ProviderId = Exclude<AppSettings["aiProvider"], "none">;
 type AgentId = "codex" | "gemini" | "opencode" | "kilo";
-const isAgent = (id: ProviderId): id is AgentId => id !== "claude" && id !== "ollama";
+const isAgent = (id: ProviderId): id is AgentId =>
+  id !== "claude" && id !== "openai" && id !== "ollama";
 
 const ROWS: { id: ProviderId; title: string; desc: string }[] = [
   { id: "claude", title: "providerClaudeTitle", desc: "providerClaudeDesc" },
+  { id: "openai", title: "providerOpenAITitle", desc: "providerOpenAIDesc" },
   { id: "ollama", title: "providerOllamaTitle", desc: "providerOllamaDesc" },
   { id: "codex", title: "providerCodexTitle", desc: "providerCodexDesc" },
   { id: "gemini", title: "providerGeminiTitle", desc: "providerGeminiDesc" },
@@ -93,6 +95,11 @@ export function AISection() {
       case "claude":
         if (!keyStatus) return checking;
         return keyStatus.hasClaudeKey
+          ? { text: t("statusConnected"), ok: true }
+          : { text: t("statusNeedsKey"), ok: false };
+      case "openai":
+        if (!keyStatus) return checking;
+        return keyStatus.hasOpenAIKey
           ? { text: t("statusConnected"), ok: true }
           : { text: t("statusNeedsKey"), ok: false };
       case "ollama":
@@ -170,6 +177,7 @@ export function AISection() {
               provider={open}
               settings={settings}
               hasClaudeKey={!!keyStatus?.hasClaudeKey}
+              hasOpenAIKey={!!keyStatus?.hasOpenAIKey}
               agentInstalled={isAgent(open) ? agents?.[open] : undefined}
               onDone={() => setOpen(null)}
             />
@@ -184,12 +192,14 @@ function ProviderSheet({
   provider,
   settings,
   hasClaudeKey,
+  hasOpenAIKey,
   agentInstalled,
   onDone,
 }: {
   provider: ProviderId;
   settings: AppSettings;
   hasClaudeKey: boolean;
+  hasOpenAIKey: boolean;
   agentInstalled: boolean | undefined;
   onDone: () => void;
 }) {
@@ -210,7 +220,7 @@ function ProviderSheet({
     mutationFn: (target: AppSettings["aiProvider"]) =>
       saveAIConfig({
         provider: target,
-        apiKey: provider === "claude" && apiKey ? apiKey : undefined,
+        apiKey: (provider === "claude" || provider === "openai") && apiKey ? apiKey : undefined,
         ollamaUrl: provider === "ollama" ? ollamaUrl : undefined,
         ollamaModel: provider === "ollama" ? ollamaModel : undefined,
       }),
@@ -244,19 +254,23 @@ function ProviderSheet({
           </p>
         )}
 
-        {provider === "claude" && (
+        {(provider === "claude" || provider === "openai") && (
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">{t("claudeKeyCardDescription")}</p>
-            <Label htmlFor="claude-key">{t("apiKeyLabel")}</Label>
+            <p className="text-sm text-muted-foreground">
+              {t(provider === "openai" ? "openaiKeyCardDescription" : "claudeKeyCardDescription")}
+            </p>
+            <Label htmlFor="ai-api-key">{t("apiKeyLabel")}</Label>
             <Input
-              id="claude-key"
+              id="ai-api-key"
               type="password"
               dir="ltr"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-ant-…"
+              placeholder={provider === "openai" ? "sk-…" : "sk-ant-…"}
             />
-            {hasClaudeKey && <p className="text-xs text-muted-foreground">{t("keyStored")}</p>}
+            {(provider === "openai" ? hasOpenAIKey : hasClaudeKey) && (
+              <p className="text-xs text-muted-foreground">{t("keyStored")}</p>
+            )}
           </div>
         )}
 

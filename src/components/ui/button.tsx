@@ -4,15 +4,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap transition-[color,background-color,scale] duration-150 ease-out enabled:active:scale-[0.96] motion-reduce:enabled:active:scale-100 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,scale] duration-100 ease-out [-webkit-tap-highlight-color:transparent] enabled:active:scale-[0.97] motion-reduce:enabled:active:scale-100 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        outline: "border border-border bg-card hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        // Each variant has its own hover, pressed and selected (aria-pressed / data-pressed) step; disabled and
+        // keyboard focus are shared above. Pressed is a colour step as well as a scale, so it reads with motion off.
+        default: "bg-primary text-primary-foreground hover:bg-brand-hover active:bg-brand-press",
+        outline:
+          "border border-interactive bg-card hover:bg-hover active:bg-press aria-pressed:border-primary aria-pressed:bg-selection aria-pressed:text-strong",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-press active:bg-press aria-pressed:bg-selection aria-pressed:text-strong",
+        ghost: "hover:bg-hover active:bg-press aria-pressed:bg-selection aria-pressed:text-strong",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:brightness-95 active:brightness-90",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

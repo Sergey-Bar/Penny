@@ -1,7 +1,18 @@
 {
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
   "testRunner": "vitest",
-  "mutate": ["src/lib/money.ts", "src/server/lib/dedup.ts", "src/lib/sync-schedule.ts"],
+  "mutate": [
+    "src/lib/money.ts",
+    "src/lib/money-contract.ts",
+    "src/lib/merchant-normalize.ts",
+    "src/server/lib/dedup.ts",
+    "src/lib/sync-schedule.ts",
+    "src/lib/import/classify.ts",
+    "src/lib/import/categorize.ts",
+    "src/lib/import/dedupe.ts",
+    "src/lib/import/normalize.ts",
+    "src/lib/import/validate.ts"
+  ],
   "coverageAnalysis": "perTest",
   "reporters": ["clear-text", "progress", "html", "json"],
   "htmlReporter": { "fileName": "coverage/mutation/index.html" },

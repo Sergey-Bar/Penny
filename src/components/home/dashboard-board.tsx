@@ -2,7 +2,13 @@
 
 import { israelToday, monthDate, utcDay } from "@/lib/dates";
 import Link from "next/link";
-import { MerchantMark } from "@/components/transactions/merchant-mark";
+import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { loadPreference, storePreference } from "@/lib/preference-sync";
@@ -13,15 +19,32 @@ import {
   AreaChart,
   Bar,
   ComposedChart,
-  Line,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowUpLeft, ArrowUpRight, Flame, Plus, Repeat, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowUpLeft,
+  Check,
+  FileUp,
+  Flame,
+  Landmark,
+  Plus,
+  RefreshCw,
+  Repeat,
+  SlidersHorizontal,
+  TriangleAlert,
+  WalletCards,
+} from "lucide-react";
+import { CategoryIcon } from "@/components/ui/category-icon";
+import { MerchantMark } from "@/components/transactions/merchant-mark";
+import { merchantMark } from "@/lib/merchant-mark";
+import { MoneyBoard } from "./money-board";
+import { HOME_TILES, hiddenHomeTiles, type HomeTileId } from "@/lib/home-board";
 import { getAssets, getBalanceForecast, getFi, getInsights, getOwners, getPlan } from "@/lib/api";
 import { creditUtilization, parseLimits } from "@/lib/credit-utilization";
 import { useHousehold } from "@/hooks/use-household";
@@ -66,15 +89,15 @@ function Tile({
   return (
     <section
       aria-label={title}
-      className={`flex min-w-0 flex-col rounded-2xl border border-border bg-card p-5 ${className}`}
+      className={`flex min-w-0 flex-col rounded-[26px] border border-border bg-card p-5 sm:p-6 ${className}`}
     >
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-[15px] font-semibold">{title}</h2>
+        <h2 className="text-[17px] font-semibold">{title}</h2>
         {href && (
           <Link
             href={href}
             aria-label={t("open", { title })}
-            className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            className="tap-target grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
           >
             <ArrowUpLeft className="size-4 ltr:-scale-x-100" aria-hidden />
           </Link>
@@ -110,52 +133,266 @@ function useMoney() {
   return (n: number) => shekels(Math.round(n), locale);
 }
 
-function BalanceTrend() {
+/** One round action under the balance: an icon in a glass circle with its name below. */
+function HeroAction({
+  label,
+  icon,
+  href,
+  onClick,
+  primary,
+  badge,
+  pressed,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  href?: string;
+  onClick?: () => void;
+  primary?: boolean;
+  badge?: number;
+  pressed?: boolean;
+}) {
+  const body = (
+    <>
+      <span className={`hero-circle ${primary ? "is-primary" : ""}`}>
+        {icon}
+        {badge ? (
+          <span className="hero-badge" dir="ltr">
+            {badge}
+          </span>
+        ) : null}
+      </span>
+      <span className="text-[13px] font-medium">{label}</span>
+    </>
+  );
+  const cls =
+    "press group grid w-16 justify-items-center gap-2 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring";
+  return href ? (
+    <Link href={href} className={cls}>
+      {body}
+    </Link>
+  ) : (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={pressed}
+      aria-controls="board-customize"
+      className={cls}
+    >
+      {body}
+    </button>
+  );
+}
+
+/**
+ * The top of Home: whose money and which month, the balance today, the lowest point ahead, the things people do
+ * here, and the forecast as one line. Pip sits in the corner and carries what needs attention.
+ */
+function HomeHero({
+  showBalance,
+  owner,
+  onOwnerChange,
+  month,
+  onMonthChange,
+  monthLabel,
+  editing,
+  onEdit,
+  review,
+}: {
+  showBalance: boolean;
+  owner: string;
+  onOwnerChange?: (owner: string) => void;
+  month: string;
+  onMonthChange?: (month: string) => void;
+  monthLabel: string;
+  editing: boolean;
+  onEdit: () => void;
+  review: number;
+}) {
   const t = useTranslations("board");
+  const tData = useTranslations("dataState");
+  const tOwner = useTranslations("ownerFilter");
+  const tShell = useTranslations("shell");
+  const tTop = useTranslations("topBar");
+  const router = useRouter();
   const money = useMoney();
   const locale = useLocale();
-  const q = useQuery({ queryKey: ["balance-forecast"], queryFn: getBalanceForecast });
-  const points = q.data?.forecast?.points ?? [];
-  if (q.isError) return <CardError label={t("balance")} className="lg:col-span-2" />;
-  if (q.isLoading)
-    return (
-      <div className="lg:col-span-2">
-        <CardSkeleton label={t("balance")} height={300} />
-      </div>
-    );
+  const { household } = useHousehold();
+  const q = useQuery({
+    queryKey: ["balance-forecast"],
+    queryFn: getBalanceForecast,
+    enabled: showBalance,
+  });
+  const points = useMemo(() => q.data?.forecast?.points ?? [], [q.data]);
   const first = points[0]?.balance ?? 0;
   const low = q.data?.forecast?.low;
+  // The line is a glance, not a ledger: one point a week (plus today, the lowest day and the last day) drawn as a
+  // curve. Every point shown is a real day's balance; the day-by-day steps live on the "What's ahead" screen.
+  const line = useMemo(
+    () =>
+      points.filter(
+        (p, i) => i === 0 || i === points.length - 1 || i % 7 === 0 || p.date === low?.date,
+      ),
+    [points, low?.date],
+  );
+  // Room above and below the line, so it never touches the edge of the pane.
+  const pad = useMemo(() => {
+    const values = points.map((p) => p.balance);
+    return values.length ? (Math.max(...values) - Math.min(...values)) * 0.18 || 1 : 1;
+  }, [points]);
+  // One tick per month, on the first sampled day of that month.
+  const monthTicks = useMemo(
+    () =>
+      line
+        .filter((p, i) => i > 0 && p.date.slice(0, 7) !== line[i - 1].date.slice(0, 7))
+        .map((p) => p.date),
+    [line],
+  );
   const day = (d: string) =>
     new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(new Date(d));
   return (
-    <Tile title={t("balance")} href="/overview?tab=ahead" className="lg:col-span-2">
-      {points.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">{t("noBalance")}</p>
-      ) : (
-        <>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-3xl font-semibold tabular-nums" data-money>
-                <bdi>{money(first)}</bdi>
-              </p>
-              <p className="text-xs uppercase text-muted-foreground">{t("today")}</p>
-            </div>
-            {low && (
-              <div className="text-end text-xs text-muted-foreground">
-                <p
-                  className={
-                    low.balance < 0 ? "font-semibold text-expense" : "font-semibold text-foreground"
-                  }
-                  data-money
-                >
-                  <bdi>{money(low.balance)}</bdi>
-                </p>
-                <p>{t("lowPoint", { date: day(low.date) })}</p>
-              </div>
-            )}
+    <section aria-label={t("balance")} className="home-hero md:col-span-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {onOwnerChange && household.members.length >= 2 && (
+            <label className="hero-pill">
+              <span className="sr-only">{tOwner("filter")}</span>
+              <select
+                value={owner}
+                onChange={(e) => onOwnerChange(e.target.value)}
+                className="max-w-36 border-0! bg-transparent! py-0 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <option value="">{tOwner("everyone")}</option>
+                {household.members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+                <option value="shared">{tOwner("shared")}</option>
+              </select>
+            </label>
+          )}
+          {/* Month arrows: the month's figures (budget, cash flow, structure, watchlist) follow; balance, goals and FIRE stay today's. */}
+          {onMonthChange ? (
+            <MonthNav
+              value={month || monthKey(new Date())}
+              onChange={(m) => onMonthChange(m === monthKey(new Date()) ? "" : m)}
+            />
+          ) : (
+            <span className="hero-pill px-3.5 text-sm font-medium">{monthLabel}</span>
+          )}
+        </div>
+      </div>
+
+      {showBalance &&
+        (q.isError ? (
+          // A failed load says so and offers another try; "no bank yet" here would send people to connect one again.
+          <div className="py-10">
+            <p className="text-sm font-medium" role="alert">
+              {tData("error")}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{tData("errorHint")}</p>
+            <button
+              type="button"
+              onClick={() => void q.refetch()}
+              className="hero-pill mx-auto mt-4 px-4 text-sm font-medium"
+            >
+              {tData("retry")}
+            </button>
           </div>
+        ) : q.isLoading ? (
+          <div className="mx-auto mt-8 mb-6 h-28 w-64 animate-pulse rounded-3xl bg-pane-clear" />
+        ) : points.length === 0 ? (
+          <p className="py-12 text-sm text-muted-foreground">{t("noBalance")}</p>
+        ) : (
+          <>
+            <p className="mt-6 text-[15px] font-medium text-muted-foreground">
+              {t("balance")} · {t("today")}
+            </p>
+            <p
+              className="mt-1 text-[3.5rem] leading-none font-semibold tracking-tight tabular-nums sm:text-7xl"
+              data-money
+              data-figure
+            >
+              <bdi>{money(first)}</bdi>
+            </p>
+            {low && (
+              <p
+                className={`hero-pill mx-auto mt-4 w-fit px-3.5 text-sm font-medium ${low.balance < 0 ? "text-expense" : ""}`}
+                data-money
+              >
+                {low.balance < 0 && <TriangleAlert className="size-4 shrink-0" aria-hidden />}
+                <span>{t("heroLow", { amount: money(low.balance), date: day(low.date) })}</span>
+              </p>
+            )}
+          </>
+        ))}
+
+      <div className="mt-7 flex justify-center gap-3 sm:gap-6">
+        {/* Add opens the same choices as the + in the top bar: a transaction, a file, a bank, an account. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="press group grid w-16 justify-items-center gap-2 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+            <span className="hero-circle is-primary">
+              <Plus className="size-[22px]" strokeWidth={2.4} aria-hidden />
+            </span>
+            <span className="text-[13px] font-medium">{t("heroAdd")}</span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="min-w-56 bg-popover">
+            <DropdownMenuItem onClick={() => router.push("/transactions?add=1")}>
+              <Plus className="size-4" aria-hidden />
+              {tShell("addTransaction")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/settings/data")}>
+              <FileUp className="size-4" aria-hidden />
+              {tTop("importFile")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/settings/bank")}>
+              <Landmark className="size-4" aria-hidden />
+              {tTop("connectBank")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/investments")}>
+              <WalletCards className="size-4" aria-hidden />
+              {tTop("addAccount")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <HeroAction
+          label={t("heroReview")}
+          href="/transactions?review=1"
+          badge={review}
+          icon={<Check className="size-5" strokeWidth={2.2} aria-hidden />}
+        />
+        <HeroAction
+          label={t("heroSync")}
+          href="/settings/bank?sync=1"
+          icon={<RefreshCw className="size-5" strokeWidth={2.2} aria-hidden />}
+        />
+        <HeroAction
+          label={t("customize")}
+          onClick={onEdit}
+          pressed={editing}
+          icon={<SlidersHorizontal className="size-5" strokeWidth={2.2} aria-hidden />}
+        />
+      </div>
+
+      {showBalance && points.length > 1 && (
+        <Link
+          href="/overview?tab=ahead"
+          aria-label={t("open", { title: t("balance") })}
+          className="hero-chart"
+        >
+          {/* The forecast as one line. A dotted rule marks today's balance, so "above or below where I am now" reads
+              at a glance; months run along the bottom; where it ends is said in words above the line. */}
+          <p className="flex items-baseline justify-between gap-3 px-5 pt-4 text-[13px] text-muted-foreground">
+            <span>{t("heroAhead")}</span>
+            <span data-money>
+              {t("heroEnd", {
+                amount: money(points.at(-1)!.balance),
+                date: day(points.at(-1)!.date),
+              })}
+            </span>
+          </p>
           <div
-            className="mt-3 h-56"
+            className="h-40 sm:h-48"
             dir="ltr"
             role="img"
             aria-label={t("balanceChart", {
@@ -164,61 +401,71 @@ function BalanceTrend() {
             })}
           >
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+              <AreaChart data={line} margin={{ top: 12, right: 0, bottom: 4, left: 0 }}>
                 <defs>
                   <linearGradient id="bal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--accent-color)" stopOpacity={0.34} />
+                    <stop offset="70%" stopColor="var(--accent-color)" stopOpacity={0.04} />
+                    <stop offset="100%" stopColor="var(--accent-color)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis
                   dataKey="date"
-                  tickFormatter={day}
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                  ticks={monthTicks}
+                  tickFormatter={(d: string) =>
+                    new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(d))
+                  }
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                   axisLine={false}
                   tickLine={false}
-                  minTickGap={40}
+                  height={26}
+                  padding={{ left: 20, right: 20 }}
                 />
-                <YAxis
-                  tickFormatter={(v: number) => `${Math.round(v / 1000)}K`}
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={44}
+                <YAxis hide domain={[(min: number) => min - pad, (max: number) => max + pad]} />
+                <ReferenceLine
+                  y={first}
+                  stroke="var(--muted-foreground)"
+                  strokeOpacity={0.45}
+                  strokeDasharray="2 6"
+                  strokeLinecap="round"
                 />
                 <Tooltip
                   formatter={(v) => money(Number(v))}
                   labelFormatter={(l) => day(String(l))}
+                  cursor={{ stroke: "var(--muted-foreground)", strokeOpacity: 0.35 }}
                   contentStyle={{
                     background: "var(--popover)",
                     border: "1px solid var(--border)",
-                    borderRadius: 10,
+                    borderRadius: 14,
                     color: "var(--foreground)",
+                    boxShadow: "0 12px 30px -16px rgb(0 0 0 / 50%)",
                   }}
                 />
                 <Area
-                  isAnimationActive={!motionReduced()}
+                  isAnimationActive={false}
                   type="monotone"
                   dataKey="balance"
                   name={t("balance")}
-                  stroke="var(--primary)"
-                  strokeWidth={2}
+                  stroke="var(--accent-color)"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
                   fill="url(#bal)"
+                  dot={false}
+                  activeDot={{
+                    r: 5,
+                    strokeWidth: 3,
+                    stroke: "var(--surface)",
+                    fill: "var(--accent-color)",
+                  }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </>
+        </Link>
       )}
-    </Tile>
+    </section>
   );
 }
-
-const NEED_TONE: Record<string, string> = {
-  need: "bg-status-heads-up/15 text-status-heads-up",
-  want: "bg-status-on-track/15 text-status-on-track",
-  saving: "bg-primary/15 text-primary",
-};
 
 function LatestTransactions({ data }: { data: HomePayload }) {
   const cat = useCategoryName();
@@ -241,45 +488,43 @@ function LatestTransactions({ data }: { data: HomePayload }) {
             <li key={r.id}>
               <Link
                 href={`/transactions?search=${encodeURIComponent(r.description)}&month=${r.date.slice(0, 7)}`}
-                className="flex min-h-12 items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+                className="flex min-h-14 items-center gap-3.5 rounded-2xl px-2 py-2 hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring"
               >
-                <MerchantMark name={r.description} size={30} />
+                {/* A known merchant shows its real logo (bundled, never fetched); anything else its category's icon. */}
+                {merchantMark(r.description).logo ? (
+                  <MerchantMark name={r.description} size={44} />
+                ) : (
+                  <CategoryIcon
+                    icon={r.categoryIcon}
+                    color={r.categoryColor ?? "var(--muted-foreground)"}
+                    size="lg"
+                  />
+                )}
                 <span className="min-w-0 flex-1">
                   <span className="flex min-w-0 items-center gap-1.5">
-                    <span className="truncate text-sm font-medium">
-                      {r.categoryName ? cat(r.categoryName) : t("uncategorized")}
+                    <span className="truncate text-[15px] font-medium" title={r.description}>
+                      {r.description}
                     </span>
-                    {r.needType && (
-                      <span
-                        className={`shrink-0 rounded px-1.5 text-[10px] font-semibold leading-4 ${NEED_TONE[r.needType]}`}
-                      >
-                        {t(`need_${r.needType}`)}
-                      </span>
-                    )}
                   </span>
-                  <span
-                    className="block truncate text-xs text-muted-foreground"
-                    title={r.description}
-                  >
-                    {r.description}
-                  </span>
-                </span>
-                <span className="text-end">
-                  <bdi
-                    data-money
-                    className={`block text-sm font-semibold tabular-nums ${r.kind === "income" ? "text-status-on-track" : r.kind === "expense" ? "text-expense" : ""}`}
-                  >
-                    {fmt(
-                      r.kind === "expense" ? -Math.abs(r.chargedAmount) : r.chargedAmount,
-                      r.chargedCurrency,
-                    )}
-                  </bdi>
-                  <span className="block text-[11px] text-muted-foreground">
+                  <span className="block truncate text-[13px] text-muted-foreground">
+                    {r.categoryName ? cat(r.categoryName) : t("uncategorized")}
+                    {" · "}
                     {new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(
                       new Date(r.date),
                     )}
                   </span>
                 </span>
+                {/* Spending is plain; only money coming in takes a colour (and its plus sign). */}
+                <bdi
+                  data-money
+                  className={`text-[15px] font-medium tabular-nums ${r.kind === "income" ? "text-status-on-track" : ""}`}
+                >
+                  {r.kind === "income" ? "+" : ""}
+                  {fmt(
+                    r.kind === "expense" ? -Math.abs(r.chargedAmount) : r.chargedAmount,
+                    r.chargedCurrency,
+                  )}
+                </bdi>
               </Link>
             </li>
           ))}
@@ -296,7 +541,6 @@ function CashFlow({ data }: { data: HomePayload }) {
   const flow = data.cashFlow;
   const trend = data.historicalTrend ?? [];
   if (!flow) return <CardError label={t("cashFlow")} />;
-  const total = flow.income + flow.expenses || 1;
   const saved = flow.income > 0 ? Math.round((flow.net / flow.income) * 100) : null;
   // Spending so far against the same days of last month, not against all of last month.
   const delta = data.thisMonth?.deltaVsLastMonth ?? null;
@@ -305,7 +549,7 @@ function CashFlow({ data }: { data: HomePayload }) {
       <div className="flex items-start justify-between gap-2">
         <div>
           <p
-            className={`text-2xl font-semibold tabular-nums ${flow.net >= 0 ? "text-status-on-track" : "text-expense"}`}
+            className={`text-[1.75rem] leading-tight font-semibold tracking-tight tabular-nums ${flow.net >= 0 ? "text-status-on-track" : "text-expense"}`}
             data-money
           >
             <bdi>
@@ -313,26 +557,19 @@ function CashFlow({ data }: { data: HomePayload }) {
               {money(flow.net)}
             </bdi>
           </p>
-          <p className="text-xs uppercase text-muted-foreground">{t("thisMonth")}</p>
+          <p className="text-[13px] text-muted-foreground">{t("thisMonth")}</p>
         </div>
         {delta != null ? <Delta value={-delta} suffix={t("vsPrevious")} /> : null}
       </div>
-      <div className="my-4 flex h-2.5 overflow-hidden rounded-full bg-muted" aria-hidden>
-        <div className="bg-status-on-track" style={{ width: `${(flow.income / total) * 100}%` }} />
-        <div className="bg-expense" style={{ width: `${(flow.expenses / total) * 100}%` }} />
-      </div>
-      <dl className="grid gap-2 2xl:grid-cols-3">
+      <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-muted-foreground">
         {[
-          [t("income"), money(flow.income), "text-status-on-track"],
-          [t("expenses"), money(flow.expenses), "text-expense"],
-          [t("saved"), saved === null ? "—" : `${saved}%`, "text-status-on-track"],
-        ].map(([k, v, c]) => (
-          <div
-            key={k}
-            className="flex items-center justify-between gap-2 rounded-xl border border-border px-3 py-2 2xl:block"
-          >
-            <dt className="text-[11px] uppercase text-muted-foreground">{k}</dt>
-            <dd className={`whitespace-nowrap text-sm font-semibold tabular-nums ${c}`}>
+          [t("income"), money(flow.income)],
+          [t("expenses"), money(flow.expenses)],
+          [t("saved"), saved === null ? "—" : `${saved}%`],
+        ].map(([k, v]) => (
+          <div key={k} className="flex items-baseline gap-1.5">
+            <dt>{k}</dt>
+            <dd className="font-medium text-foreground tabular-nums">
               <bdi data-money>{v}</bdi>
             </dd>
           </div>
@@ -340,7 +577,7 @@ function CashFlow({ data }: { data: HomePayload }) {
       </dl>
       {trend.length > 1 && (
         <>
-          <p className="mt-4 text-[11px] uppercase text-muted-foreground">{t("previousMonths")}</p>
+          <p className="mt-5 text-[13px] text-muted-foreground">{t("previousMonths")}</p>
           <div className="mt-1 h-28" dir="ltr" role="img" aria-label={t("spendTrend")}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
@@ -366,24 +603,15 @@ function CashFlow({ data }: { data: HomePayload }) {
                     borderRadius: 10,
                     color: "var(--foreground)",
                   }}
-                  cursor={{ fill: "var(--accent)" }}
+                  cursor={{ fill: "var(--hover)" }}
                 />
                 <Bar
                   isAnimationActive={!motionReduced()}
                   dataKey="total"
                   name={t("expenses")}
-                  radius={[4, 4, 0, 0]}
-                  fill="var(--expense)"
-                  fillOpacity={0.85}
-                />
-                <Line
-                  isAnimationActive={!motionReduced()}
-                  dataKey="total"
-                  tooltipType="none"
-                  type="monotone"
-                  stroke="var(--chart-4, #eab308)"
-                  strokeDasharray="3 3"
-                  dot={{ r: 3 }}
+                  radius={[7, 7, 7, 7]}
+                  maxBarSize={14}
+                  fill="var(--accent-color)"
                 />
               </ComposedChart>
             </ResponsiveContainer>
@@ -493,7 +721,7 @@ function FireProgress() {
                 cy="60"
                 r={r}
                 fill="none"
-                stroke="var(--primary)"
+                stroke="var(--chart-1)"
                 strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={`${(pct / 100) * c} ${c}`}
@@ -682,7 +910,7 @@ function WhoSpent() {
                 </span>
                 <span className="block h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
                   <span
-                    className="block h-full rounded-full bg-primary"
+                    className="block h-full rounded-full bg-[var(--chart-1)]"
                     style={{ width: `${(r.spent / max) * 100}%` }}
                   />
                 </span>
@@ -898,39 +1126,59 @@ function BudgetTile({ data }: { data: HomePayload }) {
   const over = used != null && used > 1;
   return (
     <Tile title={t("budgetTile")} href="/budget">
-      <p className="flex items-baseline gap-2">
-        <bdi className="text-2xl font-semibold tabular-nums" data-money>
-          {shekels(Math.round(m.spent), locale)}
-        </bdi>
-        {m.budget > 0 && (
-          <span className="text-xs text-muted-foreground" data-money>
-            {t("ofBudget", { amount: shekels(Math.round(m.budget), locale) })}
-          </span>
-        )}
-      </p>
       {used != null ? (
-        <>
-          <div className="relative mt-3 h-2 rounded-full bg-muted" aria-hidden>
-            <div
-              className={`h-full rounded-full ${over ? "bg-expense" : "bg-primary"}`}
-              style={{ width: `${Math.min(100, used * 100)}%` }}
-            />
-            <span
-              className="absolute -top-1 h-4 w-0.5 rounded bg-foreground/60"
-              style={{ insetInlineStart: `${Math.min(100, m.timeElapsedPercent)}%` }}
-            />
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          {/* How much of the budget is gone, as one proportion; the sentence beside it says the same in words. */}
+          <div className="relative size-24 shrink-0" aria-hidden>
+            <svg viewBox="0 0 100 100" className="size-full -rotate-90">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--hover)" strokeWidth="10" />
+              <circle
+                cx="50"
+                cy="50"
+                r="42"
+                fill="none"
+                stroke={over ? "var(--expense)" : "var(--accent-color)"}
+                strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray={`${Math.min(1, used) * 263.9} 263.9`}
+              />
+            </svg>
+            <span className="absolute inset-0 grid place-items-center text-xl font-semibold tabular-nums">
+              {Math.round(used * 100)}%
+            </span>
           </div>
-          <p className={`mt-2 text-xs ${over ? "text-expense" : "text-muted-foreground"}`}>
-            {over
-              ? t("budgetOver", { amount: shekels(Math.round(m.spent - m.budget), locale) })
-              : t("budgetPace", {
-                  used: Math.round(used * 100),
-                  month: Math.round(m.timeElapsedPercent),
-                })}
-          </p>
-        </>
+          <div className="min-w-0">
+            <p
+              className="text-[1.75rem] leading-tight font-semibold tracking-tight tabular-nums"
+              data-money
+              data-figure
+            >
+              <bdi>{shekels(Math.round(m.spent), locale)}</bdi>
+            </p>
+            <p className="text-[13px] text-muted-foreground" data-money>
+              {t("ofBudget", { amount: shekels(Math.round(m.budget), locale) })}
+            </p>
+            <p className={`mt-1.5 text-[13px] ${over ? "text-expense" : "text-muted-foreground"}`}>
+              {over
+                ? t("budgetOver", { amount: shekels(Math.round(m.spent - m.budget), locale) })
+                : t("budgetPace", {
+                    used: Math.round(used * 100),
+                    month: Math.round(m.timeElapsedPercent),
+                  })}
+            </p>
+          </div>
+        </div>
       ) : (
-        <p className="mt-2 text-sm text-muted-foreground">{t("noBudget")}</p>
+        <>
+          <p
+            className="text-[1.75rem] leading-tight font-semibold tracking-tight tabular-nums"
+            data-money
+            data-figure
+          >
+            <bdi>{shekels(Math.round(m.spent), locale)}</bdi>
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("noBudget")}</p>
+        </>
       )}
     </Tile>
   );
@@ -1026,22 +1274,8 @@ function GoalsTile() {
   );
 }
 
-const TILES = [
-  "balance",
-  "savings",
-  "budget",
-  "latest",
-  "cashFlow",
-  "structure",
-  "fire",
-  "watchlist",
-  "recurring",
-  "attention",
-  "goals",
-  "credit",
-  "members",
-] as const;
-type TileId = (typeof TILES)[number];
+const TILES = HOME_TILES;
+type TileId = HomeTileId;
 
 /** The home dashboard: one grid of tiles. "Customize" hides or shows tiles, saved per profile. */
 export function DashboardBoard({
@@ -1061,7 +1295,6 @@ export function DashboardBoard({
   month?: string;
   onMonthChange?: (month: string) => void;
 }) {
-  const tOwner = useTranslations("ownerFilter");
   const tMot = useTranslations("moneyOnTable");
   const t = useTranslations("board");
   const qc = useQueryClient();
@@ -1076,10 +1309,7 @@ export function DashboardBoard({
     queryKey: ["preference", "home-board"],
     queryFn: () => loadPreference("home-board"),
   });
-  const raw = (pref.data as { hidden?: unknown } | null)?.hidden;
-  const hidden = Array.isArray(raw)
-    ? raw.filter((x): x is TileId => (TILES as readonly unknown[]).includes(x))
-    : [];
+  const hidden = hiddenHomeTiles(pref.data);
   const toggle = (id: TileId, show: boolean) => {
     const next = { hidden: show ? hidden.filter((x) => x !== id) : [...hidden, id] };
     qc.setQueryData(["preference", "home-board"], next);
@@ -1094,7 +1324,9 @@ export function DashboardBoard({
       render(data)
     );
   const tiles: Record<TileId, { label: string; node: React.ReactNode }> = {
-    balance: { label: t("balance"), node: <BalanceTrend /> },
+    // Drawn by the hero at the top of the board; listed here so it can still be hidden from "Customize".
+    balance: { label: t("balance"), node: null },
+    map: { label: t("mapTile"), node: <MoneyBoard /> },
     savings: { label: tMot("title"), node: <MoneyOnTableTile /> },
     budget: {
       label: t("budgetTile"),
@@ -1125,63 +1357,6 @@ export function DashboardBoard({
   };
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/transactions?add=1"
-          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary md:hidden px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-ring"
-        >
-          <Plus className="size-4" aria-hidden />
-          {t("addTransaction")}
-        </Link>
-        {/* Month arrows: the month's figures (budget, cash flow, structure, watchlist) follow; balance, goals and FIRE stay today's. */}
-        {onMonthChange ? (
-          <MonthNav
-            value={shownMonth || monthKey(new Date())}
-            onChange={(m) => onMonthChange(m === monthKey(new Date()) ? "" : m)}
-          />
-        ) : (
-          <span className="rounded-lg border border-border px-3 py-2 text-sm font-medium">
-            {month}
-          </span>
-        )}
-        <div className="flex flex-wrap gap-2">
-          {onOwnerChange && household.members.length >= 2 && (
-            <label className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm">
-              {tOwner("filter")}
-              <select
-                value={owner}
-                onChange={(e) => onOwnerChange(e.target.value)}
-                className="bg-transparent text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"
-              >
-                <option value="">{tOwner("everyone")}</option>
-                {household.members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-                <option value="shared">{tOwner("shared")}</option>
-              </select>
-            </label>
-          )}
-          <Link
-            href="/transactions?review=1"
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-border px-3 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
-          >
-            {t("review")}
-            <ArrowUpRight className="size-4 rtl:-scale-x-100" aria-hidden />
-          </Link>
-          <button
-            type="button"
-            aria-expanded={editing}
-            aria-controls="board-customize"
-            onClick={() => setEditing(!editing)}
-            className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring ${editing ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-accent"}`}
-          >
-            <SlidersHorizontal className="size-4" aria-hidden />
-            {t("customize")}
-          </button>
-        </div>
-      </div>
       {editing && (
         <fieldset id="board-customize" className="rounded-2xl border border-border bg-card p-4">
           <legend className="px-1 text-sm font-semibold">{t("customizeTitle")}</legend>
@@ -1205,8 +1380,22 @@ export function DashboardBoard({
       )}
       {/* Dense packing: a wide tile never leaves a hole beside it. */}
       <div className="grid grid-flow-row-dense gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <HomeHero
+          showBalance={!hidden.includes("balance")}
+          owner={owner}
+          onOwnerChange={onOwnerChange}
+          month={shownMonth}
+          onMonthChange={onMonthChange}
+          monthLabel={month}
+          editing={editing}
+          onEdit={() => setEditing(!editing)}
+          review={data?.needsAttention?.flagged ?? 0}
+        />
         {TILES.filter(
-          (id) => !hidden.includes(id) && (id !== "members" || household.members.length >= 2),
+          (id) =>
+            id !== "balance" &&
+            !hidden.includes(id) &&
+            (id !== "members" || household.members.length >= 2),
         ).map((id) => (
           <Fragment key={id}>{tiles[id].node}</Fragment>
         ))}

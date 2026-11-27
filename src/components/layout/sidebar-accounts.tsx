@@ -92,8 +92,8 @@ export function SidebarAccounts({ onNavigate }: { onNavigate: () => void }) {
         </Link>
       ) : (
         groups.map((g) => (
-          // Open by default: each group's name and total, then its accounts.
-          <details key={g.key} open className="group/acc">
+          // Closed until opened: the group's name and total are the summary; its accounts are one tap away.
+          <details key={g.key} className="group/acc">
             <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-md px-2 text-sm hover:bg-sidebar-accent focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
               <ChevronDown
                 className="size-3.5 shrink-0 text-muted-foreground transition-transform -rotate-90 rtl:rotate-90 group-open/acc:rotate-0 motion-reduce:transition-none"

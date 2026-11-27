@@ -183,7 +183,10 @@ export function PeriodicCard() {
                   aria-valuemax={100}
                   aria-label={t("savedOf", { saved: shekels(e.savedSoFar, locale), pct })}
                 >
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                  <div
+                    className="h-full rounded-full bg-[var(--chart-1)]"
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground tabular-nums">
                   {t("savedOf", { saved: shekels(e.savedSoFar, locale), pct })}

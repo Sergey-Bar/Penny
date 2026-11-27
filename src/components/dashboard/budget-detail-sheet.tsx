@@ -1,5 +1,6 @@
 "use client";
 
+import { translateCategoryName } from "@/lib/i18n-data";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -122,6 +123,7 @@ function DetailSkeleton() {
 
 function DetailContent({ data }: { data: CategoryDetail }) {
   const tb = useTranslations("budgetDetail");
+  const tCat = useTranslations("categoriesSeeded");
   const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const sameKindCategoriesQuery = useQuery({
@@ -184,8 +186,8 @@ function DetailContent({ data }: { data: CategoryDetail }) {
             <div className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
               {data.category.kind === "income" ? tb("incomeCategory") : tb("expenseCategory")}
             </div>
-            <SheetTitle className="truncate font-semibold text-2xl">
-              {data.category.name}
+            <SheetTitle className="text-xl leading-tight font-semibold sm:text-2xl">
+              {translateCategoryName(data.category.name, tCat)}
             </SheetTitle>
           </div>
           {data.category.kind !== "income" && (
@@ -400,7 +402,7 @@ function DetailContent({ data }: { data: CategoryDetail }) {
                               className="me-2 h-2 w-2 rounded-full"
                               style={{ backgroundColor: cat.color }}
                             />
-                            {cat.name}
+                            {translateCategoryName(cat.name, tCat)}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
@@ -429,6 +431,7 @@ function ChildrenBreakdownSection({
   color: string;
 }) {
   const tb = useTranslations("budgetDetail");
+  const tCat = useTranslations("categoriesSeeded");
   const td = useTranslations("dashboard");
   const ts = useTranslations("settings.categories");
   const banner = budgetSource === "own" ? tb("bannerOwn") : tb("bannerRollup");
@@ -456,7 +459,9 @@ function ChildrenBreakdownSection({
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ background: c.color }}
                 />
-                <span className="truncate text-sm font-medium">{c.name}</span>
+                <span className="line-clamp-2 text-sm leading-tight font-medium">
+                  {translateCategoryName(c.name, tCat)}
+                </span>
               </div>
               <div className="flex shrink-0 items-center gap-3 text-xs tabular-nums">
                 <div className="text-end">
@@ -470,7 +475,7 @@ function ChildrenBreakdownSection({
                   </div>
                 </div>
                 {c.budget > 0 && (
-                  <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+                  <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted max-sm:hidden">
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -503,6 +508,7 @@ function NeedsReviewSection({
   color: string;
 }) {
   const tb = useTranslations("budgetDetail");
+  const tCat = useTranslations("categoriesSeeded");
   return (
     <div className="space-y-2 rounded-2xl p-4" style={{ background: tint(color, 0.12) }}>
       <div className="flex items-center gap-2">
@@ -545,7 +551,7 @@ function NeedsReviewSection({
                         className="me-2 h-2 w-2 rounded-full"
                         style={{ backgroundColor: cat.color }}
                       />
-                      {cat.name}
+                      {translateCategoryName(cat.name, tCat)}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

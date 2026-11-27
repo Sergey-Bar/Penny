@@ -1,7 +1,371 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://sergey-bar.github.io/Penny/</loc></url>
-  <url><loc>https://sergey-bar.github.io/Penny/en/</loc></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/</loc>
+    <lastmod>2026-11-24</lastmod>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/</loc>
+    <lastmod>2026-11-24</lastmod>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/features.html</loc>
+    <lastmod>2026-11-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/features.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/features.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/features.html</loc>
+    <lastmod>2026-11-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/features.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/features.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/install.html</loc>
+    <lastmod>2026-11-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/install.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/install.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/install.html</loc>
+    <lastmod>2026-11-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/install.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/install.html"/>
+  </url>
   <url><loc>https://sergey-bar.github.io/Penny/demo/</loc></url>
   <url><loc>https://sergey-bar.github.io/Penny/en/demo/</loc></url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-bank-sync.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-bank-sync.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-bank-sync.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-bank-sync.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-bank-sync.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-bank-sync.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-import-files.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-import-files.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-import-files.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-import-files.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-import-files.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-import-files.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-budgeting.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-budgeting.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-budgeting.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-budgeting.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-budgeting.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-budgeting.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-pension-savings.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-pension-savings.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-pension-savings.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-pension-savings.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-pension-savings.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-pension-savings.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-telegram-bot.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-telegram-bot.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-telegram-bot.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-telegram-bot.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-telegram-bot.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-telegram-bot.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-privacy-security.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-privacy-security.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-privacy-security.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-privacy-security.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-privacy-security.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-privacy-security.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-transactions-rules.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-transactions-rules.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-transactions-rules.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-transactions-rules.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-transactions-rules.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-transactions-rules.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-forecasts-insights.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-forecasts-insights.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-forecasts-insights.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-forecasts-insights.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-forecasts-insights.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-forecasts-insights.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-money-on-the-table.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-money-on-the-table.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-money-on-the-table.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-money-on-the-table.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-money-on-the-table.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-money-on-the-table.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-investments-markets.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-investments-markets.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-investments-markets.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-investments-markets.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-investments-markets.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-investments-markets.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-net-worth-goals.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-net-worth-goals.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-net-worth-goals.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-net-worth-goals.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-net-worth-goals.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-net-worth-goals.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-ai-mcp.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-ai-mcp.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-ai-mcp.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-ai-mcp.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-ai-mcp.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-ai-mcp.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-insurance-family-document.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-insurance-family-document.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-insurance-family-document.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-insurance-family-document.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-insurance-family-document.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-insurance-family-document.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-israeli-money-tools.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-israeli-money-tools.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-israeli-money-tools.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-israeli-money-tools.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-israeli-money-tools.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-israeli-money-tools.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-household-profiles.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-household-profiles.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-household-profiles.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-household-profiles.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-household-profiles.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-household-profiles.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-desktop-docker-phone.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-desktop-docker-phone.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-desktop-docker-phone.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-desktop-docker-phone.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-desktop-docker-phone.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-desktop-docker-phone.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/guide-connect-your-first-bank.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-connect-your-first-bank.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-connect-your-first-bank.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/guide-connect-your-first-bank.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-connect-your-first-bank.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-connect-your-first-bank.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/guide-move-from-excel-or-another-app.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-move-from-excel-or-another-app.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-move-from-excel-or-another-app.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/guide-move-from-excel-or-another-app.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-move-from-excel-or-another-app.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-move-from-excel-or-another-app.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/guide-monthly-family-budget.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-monthly-family-budget.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-monthly-family-budget.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/guide-monthly-family-budget.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-monthly-family-budget.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-monthly-family-budget.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/guide-import-your-pension-report.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-import-your-pension-report.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-import-your-pension-report.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/guide-import-your-pension-report.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-import-your-pension-report.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-import-your-pension-report.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/guide-backup-and-move-computers.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-backup-and-move-computers.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-backup-and-move-computers.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/guide-backup-and-move-computers.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-backup-and-move-computers.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-backup-and-move-computers.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/guide-connect-the-telegram-bot.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-connect-the-telegram-bot.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-connect-the-telegram-bot.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/guide-connect-the-telegram-bot.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guide-connect-the-telegram-bot.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guide-connect-the-telegram-bot.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/guides.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guides.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guides.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/guides.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/guides.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/guides.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/compare-riseup.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-riseup.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-riseup.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/compare-riseup.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-riseup.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-riseup.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/compare-shavve.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-shavve.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-shavve.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/compare-shavve.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-shavve.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-shavve.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/compare-moneytor.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-moneytor.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-moneytor.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/compare-moneytor.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-moneytor.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-moneytor.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/compare-familybiz.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-familybiz.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-familybiz.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/compare-familybiz.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-familybiz.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-familybiz.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/compare-cover.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-cover.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-cover.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/compare-cover.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-cover.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-cover.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/compare-myfinanda.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-myfinanda.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-myfinanda.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/compare-myfinanda.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-myfinanda.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-myfinanda.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/compare-bank-app.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-bank-app.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-bank-app.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/compare-bank-app.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-bank-app.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-bank-app.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/compare-excel.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-excel.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/compare-excel.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare-excel.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare-excel.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/compare.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/compare.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/compare.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/compare.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/help.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/help.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/help.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/help.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/help.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/help.html"/>
+  </url>
 </urlset>

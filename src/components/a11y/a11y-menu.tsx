@@ -25,7 +25,6 @@ import { Segmented } from "@/components/ui/segmented";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/icon-button";
 import { loadPreference, storePreference } from "@/lib/preference-sync";
 import { useActiveProfileId } from "@/lib/workspace-store";
 import {
@@ -223,32 +222,6 @@ export function A11yOptions({ idPrefix = "a11y-sheet" }: { idPrefix?: string }) 
         </Link>
       </div>
     </div>
-  );
-}
-
-/** The trigger: the universal access figure. */
-export function A11yButton({
-  className,
-  size = "icon-sm",
-}: {
-  className?: string;
-  size?: "icon-sm" | "icon";
-}) {
-  const { open, setOpen } = useA11y();
-  const t = useTranslations("a11y");
-  return (
-    <IconButton
-      label={t("open")}
-      size={size}
-      variant="ghost"
-      className={className}
-      aria-haspopup="dialog"
-      aria-expanded={open}
-      aria-keyshortcuts="Alt+A"
-      onClick={() => setOpen(true)}
-    >
-      <Accessibility className="size-5" aria-hidden />
-    </IconButton>
   );
 }
 

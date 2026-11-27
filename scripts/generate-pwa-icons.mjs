@@ -3,7 +3,7 @@
 import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
 
-const BG = "#2f22b0"; // --primary (light)
+const BG = "#15141a"; // the action colour (light)
 const logo = "public/logo.svg";
 await mkdir("public/icons", { recursive: true });
 

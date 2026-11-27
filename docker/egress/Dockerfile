@@ -1,4 +1,4 @@
-# Egress proxy for docker-compose.egress.yml: tinyproxy lets through only the hosts in
+# Egress proxy for docker/egress/compose.yml: tinyproxy lets through only the hosts in
 # allowlist.txt, and socat publishes the app's port (a container on an internal-only
 # network cannot publish ports itself).
 FROM alpine:3.20

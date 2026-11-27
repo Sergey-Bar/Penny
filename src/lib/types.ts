@@ -69,6 +69,8 @@ export interface Category {
   id: number;
   parentId: number | null;
   name: string;
+  /** Stable built-in key; survives a rename. Null for a household-created category. */
+  key: string | null;
   color: string;
   icon: string | null;
   kind: CategoryKind;
@@ -236,6 +238,8 @@ export interface HomeRecentTransaction {
   kind: "expense" | "income" | "transfer";
   categoryName: string | null;
   categoryColor: string | null;
+  /** The category's icon name (see ICON_MAP); absent on payloads from older servers. */
+  categoryIcon?: string | null;
   /** For expenses: need, want or saving, from the category. */
   needType?: NeedType | null;
 }
@@ -320,7 +324,7 @@ export interface Integration {
 
 export interface AppSettings {
   monthsToSync: number;
-  aiProvider: "claude" | "ollama" | "codex" | "gemini" | "opencode" | "kilo" | "none";
+  aiProvider: "claude" | "openai" | "ollama" | "codex" | "gemini" | "opencode" | "kilo" | "none";
   ollamaUrl: string;
   ollamaModel: string;
   showBrowser: boolean;
@@ -1166,4 +1170,29 @@ export interface Asset {
     changeIls: number | null;
     changePct: number | null;
   } | null;
+}
+
+/** A bank/card/other account as an entity, not a free-text name that splits between "Leumi" and "1234". */
+export interface Account {
+  id: number;
+  workspaceId: number;
+  provider: string;
+  kind: "bank" | "card" | "other";
+  number: string;
+  label: string;
+  currency: string;
+  isManual: boolean;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AccountBalanceRow {
+  accountId: number | null;
+  provider: string;
+  accountNumber: string;
+  balance: number;
+  source: "sync" | "file" | "manual" | "calculated";
+  asOf: string | null;
+  updatedAt: string;
 }

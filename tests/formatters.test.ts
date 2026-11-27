@@ -21,6 +21,7 @@ it("last sync reads the DB's UTC time and steps minute, hour, day, week, month",
     new Date(Date.now() - ms).toISOString().slice(0, 19).replace("T", " ");
   expect(formatLastSync(null)).toBe("Never synced");
   expect(formatLastSync(ago(30_000))).toBe("just now");
+  expect(formatLastSync(`${ago(5 * 60_000).replace(" ", "T")}Z`)).toBe("5m ago");
   expect(formatLastSync(ago(5 * 60_000))).toBe("5m ago");
   expect(formatLastSync(ago(3 * 3_600_000))).toBe("3h ago");
   expect(formatLastSync(ago(2 * 86_400_000))).toBe("2d ago");

@@ -331,7 +331,7 @@ function FlowChart({ monthly }: { monthly: OverviewPayload["monthly"] }) {
         <span className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-caption text-muted-foreground">
           <Legend color="var(--flow-income)" label={t("income")} />
           <Legend color="var(--flow-expense)" label={t("expenses")} />
-          <Legend color="var(--primary)" label={t("netTrend")} />
+          <Legend color="var(--chart-1)" label={t("netTrend")} />
         </span>
       }
     >
@@ -349,6 +349,8 @@ function FlowChart({ monthly }: { monthly: OverviewPayload["monthly"] }) {
       <div className="h-56" dir="ltr" aria-hidden>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
+            // The chart is decoration for assistive tech (the table below says the same), so it takes no keyboard stop.
+            accessibilityLayer={false}
             data={monthly.map((m) => ({
               label: monthLabel(m.month),
               income: m.income,
@@ -406,8 +408,8 @@ function FlowChart({ monthly }: { monthly: OverviewPayload["monthly"] }) {
               dataKey="net"
               name={t("netTrend")}
               type="monotone"
-              stroke="var(--primary)"
-              strokeWidth={2}
+              stroke="var(--chart-1)"
+              strokeWidth={2.5}
               dot={{ r: 2.5 }}
               isAnimationActive={!motionReduced()}
             />
@@ -540,7 +542,7 @@ function YearTable({ data }: { data: OverviewPayload }) {
   return (
     <CardShell label={t("tableTitle")} className="p-0 md:p-0">
       <div
-        className="overflow-x-auto px-5 pb-5 md:px-6 md:pb-6"
+        className="relative overflow-x-auto px-5 pb-5 md:px-6 md:pb-6"
         tabIndex={0}
         role="region"
         aria-label={t("tableCaption")}

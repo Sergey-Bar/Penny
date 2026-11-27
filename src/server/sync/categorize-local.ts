@@ -1,5 +1,6 @@
 import "server-only";
 
+import { categorizeRow } from "@/lib/import/categorize";
 import { getAllCategories } from "@/server/db/queries/categories";
 import {
   batchUpdateCategories,
@@ -11,38 +12,61 @@ import {
   lookupMerchantCategoriesBulk,
   normalizeMerchant,
 } from "@/server/lib/merchant-memory";
-import { dictionaryCategory } from "@/lib/merchant-dictionary";
 
 /**
- * Categorizes without AI, on every sync: first what this household already taught (a merchant it categorized before),
- * then the built-in dictionary of Israeli merchants. AI, when connected, only sees what is left.
+ * Categorizes without AI, on every sync: first what this household already taught (a merchant it
+ * categorized before), then the built-in dictionary of Israeli merchants. Both go through the
+ * same pure engine as the importer, so a renamed category keeps working through its stable key.
+ * AI, when connected, only sees what is left.
  */
 export function categorizeLocally(workspaceId: number): number {
   let done = 0;
   for (const kind of ["expense", "income"] as const) {
     const ids = getUncategorizedIdsByKind(workspaceId, kind);
     if (ids.length === 0) continue;
-    // The dictionary names leaf categories; a household that renamed or removed one simply gets no match.
-    const byName = new Map(
-      getAllCategories(workspaceId, kind, { leavesOnly: true }).map((c) => [c.name, c.id]),
+    const categories = getAllCategories(workspaceId, kind, { leavesOnly: true }).map(
+      (category) => ({
+        id: category.id,
+        name: category.name,
+        kind: category.kind,
+        key: category.key,
+      }),
     );
     const txns = getTransactionsForCategorization(workspaceId, ids);
     const memory = lookupMerchantCategoriesBulk(
       workspaceId,
       txns.map((t) => t.description),
     );
-    const updates: { id: number; categoryId: number }[] = [];
+    const updates: {
+      id: number;
+      categoryId: number;
+      origin: string;
+      confidence: number;
+      reasons: unknown;
+    }[] = [];
     const learned: string[] = [];
     for (const t of txns) {
-      const m = memory.get(t.description);
-      if (m && m.kind === kind) {
-        updates.push({ id: t.id, categoryId: m.categoryId });
-        learned.push(normalizeMerchant(t.description));
-        continue;
-      }
-      const name = dictionaryCategory(t.description, kind);
-      const categoryId = name ? byName.get(name) : undefined;
-      if (categoryId) updates.push({ id: t.id, categoryId });
+      const remembered = memory.get(t.description);
+      const decision = categorizeRow(
+        {
+          description: t.description,
+          kind,
+          refund: false,
+          memory: remembered && remembered.kind === kind ? remembered : null,
+        },
+        { categories },
+      );
+      if (decision.categoryId == null) continue;
+      // Below the calibrated threshold the row is left for review instead of guessed.
+      if (decision.confidence < 0.7) continue;
+      updates.push({
+        id: t.id,
+        categoryId: decision.categoryId,
+        origin: decision.source,
+        confidence: decision.confidence,
+        reasons: decision.reasons,
+      });
+      if (decision.source === "memory") learned.push(normalizeMerchant(t.description));
     }
     if (updates.length === 0) continue;
     batchUpdateCategories(workspaceId, updates);

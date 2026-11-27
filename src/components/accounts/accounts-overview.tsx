@@ -45,40 +45,45 @@ export function AccountsOverview() {
           {t("add")}
         </Link>
       </div>
-      <section
-        aria-label={t("netWorth")}
-        className="flex flex-wrap items-end gap-x-12 gap-y-4 rounded-2xl border border-border bg-card p-5"
-      >
-        <div>
-          <p className={label}>{t("netWorth")}</p>
-          <p className="text-3xl font-semibold tabular-nums" data-money>
-            <bdi>{money(totals.netWorth)}</bdi>
-          </p>
+      {/* The household's net worth leads the page as its one large figure; assets and liabilities sit beside it. */}
+      <section aria-label={t("netWorth")} className="home-hero text-start">
+        <div className="flex flex-wrap items-end gap-x-12 gap-y-4">
+          <div className="min-w-0">
+            <p className="text-[15px] font-medium text-muted-foreground">{t("netWorth")}</p>
+            <p
+              className="text-5xl leading-none font-semibold tracking-tight tabular-nums sm:text-6xl"
+              data-money
+              data-figure
+            >
+              <bdi>{money(totals.netWorth)}</bdi>
+            </p>
+          </div>
+          <dl className="ms-auto flex flex-wrap gap-x-8 gap-y-2 max-sm:ms-0 max-sm:w-full">
+            {(
+              [
+                [t("assets"), totals.assets, ""],
+                [t("liabilities"), -totals.liabilities, "text-expense"],
+                [t("groups.vehicles"), vehicles, "text-muted-foreground"],
+              ] as const
+            )
+              .filter(([, v]) => v !== 0)
+              .map(([k, v, c]) => (
+                <div key={k}>
+                  <dt className="text-[13px] text-muted-foreground">{k}</dt>
+                  <dd className={`text-lg font-semibold tabular-nums ${c}`} data-money>
+                    <bdi>{money(v)}</bdi>
+                  </dd>
+                </div>
+              ))}
+          </dl>
         </div>
-        <dl className="flex flex-wrap gap-8">
-          {(
-            [
-              [t("assets"), totals.assets, ""],
-              [t("liabilities"), -totals.liabilities, "text-expense"],
-              [t("groups.vehicles"), vehicles, "text-muted-foreground"],
-            ] as const
-          )
-            .filter(([, v]) => v !== 0)
-            .map(([k, v, c]) => (
-              <div key={k}>
-                <dt className={label}>{k}</dt>
-                <dd className={`text-lg font-semibold tabular-nums ${c}`} data-money>
-                  <bdi>{money(v)}</bdi>
-                </dd>
-              </div>
-            ))}
-        </dl>
       </section>
 
       {/* Layout: one list of collapsible groups, each account nested and opening its own page.
           On wide screens the bank connections sit beside it, so a row never spans the whole screen. */}
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section aria-labelledby="account-groups">
+      {/* One column on a phone still needs a zero minimum, or a long account name widens the whole page. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section aria-labelledby="account-groups" className="min-w-0">
           <h2 id="account-groups" className={`mb-2 ${label}`}>
             {t("manualAccounts")} · {groups.reduce((n, g) => n + g.items.length, 0)}
           </h2>
@@ -164,14 +169,14 @@ export function AccountsOverview() {
           </div>
         </section>
 
-        <section aria-labelledby="bank-connections">
+        <section aria-labelledby="bank-connections" className="min-w-0">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h2 id="bank-connections" className={label}>
               {t("connections")}
             </h2>
             <Link
               href="/settings/bank"
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary/15 px-3 text-sm font-medium text-primary hover:bg-primary/25 focus-visible:outline-2 focus-visible:outline-ring"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-selection px-3 text-sm font-medium text-foreground hover:bg-hover focus-visible:outline-2 focus-visible:outline-ring"
             >
               <Link2 className="size-4" aria-hidden />
               {t("connect")}

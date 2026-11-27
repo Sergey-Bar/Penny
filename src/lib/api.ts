@@ -38,6 +38,11 @@ function withWorkspaceHeader(init?: RequestInit): RequestInit {
   const profileId = getActiveProfileIdSync();
   if (profileId != null && !headers.has("x-profile-id"))
     headers.set("x-profile-id", String(profileId));
+  // Every first-party mutation carries a key so a retried request replays instead of repeating.
+  const method = (init?.method ?? "GET").toUpperCase();
+  if (method !== "GET" && method !== "HEAD" && !headers.has("idempotency-key")) {
+    headers.set("idempotency-key", crypto.randomUUID());
+  }
   return { ...init, headers };
 }
 
@@ -131,6 +136,7 @@ const CODE_MESSAGES: Record<string, keyof typeof ERRORS.he> &
   "sign-in-required": "signInRequired",
   "sync-running": "syncBusy",
   bad_json: "badJson",
+  bad_money: 400,
   db_busy: "dbBusy",
   disk_full: "diskFull",
   db_corrupt: "dbCorrupt",
@@ -347,7 +353,7 @@ export function saveAIConfig(config: {
 }
 
 export function getAIKeyStatus() {
-  return fetchJSON<{ hasClaudeKey: boolean }>("/api/setup/ai");
+  return fetchJSON<{ hasClaudeKey: boolean; hasOpenAIKey?: boolean }>("/api/setup/ai");
 }
 
 export function getSettings() {
