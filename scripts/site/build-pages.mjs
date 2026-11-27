@@ -100,12 +100,21 @@ const grab = (text, re, what) => {
   if (!m) throw new Error(`build-pages: ${what} not found`);
   return m;
 };
-// Text only: tags go, then any stray angle bracket, so nothing tag-like can survive.
+// Text only. Walks the characters and drops everything between < and >, and the brackets themselves.
 const plain = (html) =>
-  html
-    .replace(/<[^>]*>/g, "")
-    .replace(/[<>]/g, "")
-    .replace(/&amp;/g, "&")
+  [...html]
+    .reduce(
+      (s, ch) =>
+        ch === "<"
+          ? { ...s, tag: true }
+          : ch === ">"
+            ? { ...s, tag: false }
+            : s.tag
+              ? s
+              : { ...s, out: s.out + ch },
+      { out: "", tag: false },
+    )
+    .out.replace(/&amp;/g, "&")
     .replace(/‏/g, "");
 // JSON that sits inside a <script> element must not be able to close it.
 const jsonLd = (data) => JSON.stringify(data).replace(/</g, "\\u003c");
