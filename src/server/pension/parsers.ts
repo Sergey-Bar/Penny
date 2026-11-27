@@ -180,7 +180,10 @@ export function parseExcellenceRows(rows: string[][], cash: number | null): Scra
   const iValue = iValueIls >= 0 ? iValueIls : col(/שווי|market\s*value|value/i, /עלות/);
   const valueIsIls = iValueIls >= 0;
   // Total cost only: exclude per-unit price and percentage/gain change columns (e.g. "שינוי מעלות %").
-  const iCost = col(/עלות|cost/i, /שער|מחיר|ממוצע|ליחידה|price|per\s*unit|%|אחוז|שינוי|רווח|הפסד|change|gain|pct/i);
+  const iCost = col(
+    /עלות|cost/i,
+    /שער|מחיר|ממוצע|ליחידה|price|per\s*unit|%|אחוז|שינוי|רווח|הפסד|change|gain|pct/i,
+  );
   const iGainIls = col(/שינוי\s*מעלות\s*\(₪\)|רווח.*₪/i, /%|אחוז/);
   const iGainNative = col(/שינוי\s*מעלות\s*במטבע|שינוי\s*מעלות/i, /%|אחוז|₪/);
   const iCurrency = col(/^\s*(מטבע|currency)\s*$/i);

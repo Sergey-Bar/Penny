@@ -105,7 +105,11 @@ export function buildFutureBreakdowns({
         ))}
       </div>
       <div className="border-t border-border/70 pt-1.5">
-        <Row label={he ? "סה״כ נכסים" : "Total assets"} amount={shekels(totals.assets, locale)} bold />
+        <Row
+          label={he ? "סה״כ נכסים" : "Total assets"}
+          amount={shekels(totals.assets, locale)}
+          bold
+        />
       </div>
     </div>
   );
@@ -163,7 +167,9 @@ export function buildFutureBreakdowns({
         </p>
         {taxedAssets.length === 0 ? (
           <p className="text-muted-foreground">
-            {he ? "אין השקעות חייבות במס עם רווח חיובי." : "No taxable holdings with positive gain."}
+            {he
+              ? "אין השקעות חייבות במס עם רווח חיובי."
+              : "No taxable holdings with positive gain."}
           </p>
         ) : (
           <div className="max-h-40 space-y-1 overflow-y-auto pe-1">

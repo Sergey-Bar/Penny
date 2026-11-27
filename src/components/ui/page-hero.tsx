@@ -24,7 +24,10 @@ import { StatStrip, type StatStripItem } from "@/components/ui/stat-strip";
 import { MonthNav, MonthStrip } from "@/components/ui/month-nav";
 import { usePathname, useSearchParams } from "next/navigation";
 import { assetProviderKey } from "@/lib/account-groups";
-import { buildFutureBreakdowns, UNTAXED_ASSET_TYPES } from "@/components/investments/future-breakdowns";
+import {
+  buildFutureBreakdowns,
+  UNTAXED_ASSET_TYPES,
+} from "@/components/investments/future-breakdowns";
 import { usePlan } from "@/hooks/use-plan";
 import { wantsExplanations } from "@/lib/plan";
 import { pagePurposeKey } from "@/lib/orientation";
@@ -194,12 +197,7 @@ export function FutureHero() {
         ti: (key) => ti(key as Parameters<typeof ti>[0]),
       })
     : null;
-  const fact = (
-    key: string,
-    label: string,
-    v: number,
-    info?: React.ReactNode,
-  ): StatStripItem => ({
+  const fact = (key: string, label: string, v: number, info?: React.ReactNode): StatStripItem => ({
     key,
     label,
     info,
@@ -248,9 +246,19 @@ export function FutureHero() {
             className="mt-4"
             items={[
               fact("assets", ti("totalAssets"), tot.assets, breakdowns?.assetsInfo),
-              fact("liabilities", ti("totalLiabilities"), -tot.liabilities, breakdowns?.liabilitiesInfo),
+              fact(
+                "liabilities",
+                ti("totalLiabilities"),
+                -tot.liabilities,
+                breakdowns?.liabilitiesInfo,
+              ),
               fact("tax", ti("deferredTax"), -tot.deferredTax, breakdowns?.deferredTaxInfo),
-              fact("liquid", ti("liquidNetWorth"), tot.liquidNetWorth, breakdowns?.liquidNetWorthInfo),
+              fact(
+                "liquid",
+                ti("liquidNetWorth"),
+                tot.liquidNetWorth,
+                breakdowns?.liquidNetWorthInfo,
+              ),
             ]}
           />
         </>

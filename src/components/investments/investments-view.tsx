@@ -199,7 +199,11 @@ function Body({
       )}
 
       <HoldingsList
-        title={selectedProvider ? `${t("assetsTitle")} · ${houseName(selectedProvider)}` : t("assetsTitle")}
+        title={
+          selectedProvider
+            ? `${t("assetsTitle")} · ${houseName(selectedProvider)}`
+            : t("assetsTitle")
+        }
         assets={owned}
         byAssetHistory={historyQuery.data?.byAsset ?? {}}
         onSelectHistory={(id) => setSelectedAssetId(id)}

@@ -60,7 +60,7 @@ export function ProviderHistoryCard({
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const selectedAsset = useMemo(
-    () => (selectedAssetId != null ? assets.find((a) => a.id === selectedAssetId) ?? null : null),
+    () => (selectedAssetId != null ? (assets.find((a) => a.id === selectedAssetId) ?? null) : null),
     [assets, selectedAssetId],
   );
 
@@ -71,9 +71,7 @@ export function ProviderHistoryCard({
   }, [selectedAsset, byAsset, providerSeries]);
 
   const activeIdx =
-    hoverIdx != null && hoverIdx >= 0 && hoverIdx < points.length
-      ? hoverIdx
-      : points.length - 1;
+    hoverIdx != null && hoverIdx >= 0 && hoverIdx < points.length ? hoverIdx : points.length - 1;
   const active = points[activeIdx] ?? null;
 
   const { min, max } = useMemo(() => {
@@ -139,13 +137,11 @@ export function ProviderHistoryCard({
                 <span>
                   <span className="text-muted-foreground">{t("currentValue")}: </span>
                   <strong className="tabular-nums">{shekels(active.valueIls, locale)}</strong>
-                  {active.valueNative != null &&
-                    active.currency &&
-                    active.currency !== "ILS" && (
-                      <span className="ms-1.5 text-caption text-muted-foreground" dir="ltr">
-                        ({formatNative(active.valueNative, active.currency, locale)})
-                      </span>
-                    )}
+                  {active.valueNative != null && active.currency && active.currency !== "ILS" && (
+                    <span className="ms-1.5 text-caption text-muted-foreground" dir="ltr">
+                      ({formatNative(active.valueNative, active.currency, locale)})
+                    </span>
+                  )}
                 </span>
                 {active.costBasisIls != null && (
                   <span>
@@ -209,7 +205,8 @@ export function ProviderHistoryCard({
                 const cx = xAt(i);
                 const cy = yAt(p.valueIls);
                 const isActive = i === activeIdx;
-                const showLabel = isActive || i === 0 || i === points.length - 1 || points.length <= 6;
+                const showLabel =
+                  isActive || i === 0 || i === points.length - 1 || points.length <= 6;
                 return (
                   <g key={p.date}>
                     <circle
