@@ -11,8 +11,32 @@ const SITE = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../webs
 const ORIGIN = "https://sergey-bar.github.io/Penny/";
 const DEMO = "https://penny-finance-demo.vercel.app";
 const LANGS = {
-  he: { dir: "", up: "", crumb: "פיצ'רים", crumbs: "מיקום באתר", tryIt: "לנסות בדפדפן", tryScreen: "לפתוח את המסך הזה בדפדפן", know: "טוב לדעת", faq: "שאלות ותשובות", related: "פיצ'רים קשורים", more: "לדף המלא", arrow: "←" },
-  en: { dir: "en/", up: "../", crumb: "Features", crumbs: "Breadcrumb", tryIt: "Try it in your browser", tryScreen: "Open this screen in your browser", know: "Good to know", faq: "Questions and answers", related: "Related features", more: "Full page", arrow: "→" },
+  he: {
+    dir: "",
+    up: "",
+    crumb: "פיצ'רים",
+    crumbs: "מיקום באתר",
+    tryIt: "לנסות בדפדפן",
+    tryScreen: "לפתוח את המסך הזה בדפדפן",
+    know: "טוב לדעת",
+    faq: "שאלות ותשובות",
+    related: "פיצ'רים קשורים",
+    more: "לדף המלא",
+    arrow: "←",
+  },
+  en: {
+    dir: "en/",
+    up: "../",
+    crumb: "Features",
+    crumbs: "Breadcrumb",
+    tryIt: "Try it in your browser",
+    tryScreen: "Open this screen in your browser",
+    know: "Good to know",
+    faq: "Questions and answers",
+    related: "Related features",
+    more: "Full page",
+    arrow: "→",
+  },
 };
 
 const read = (f) => fs.readFileSync(path.join(SITE, f), "utf8");
@@ -28,7 +52,15 @@ const grab = (text, re, what) => {
   if (!m) throw new Error(`build-feature-pages: ${what} not found`);
   return m;
 };
-const plain = (html) => html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/‏/g, "");
+// Text only: tags go, then any stray angle bracket, so nothing tag-like can survive.
+const plain = (html) =>
+  html
+    .replace(/<[^>]*>/g, "")
+    .replace(/[<>]/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/‏/g, "");
+// JSON that sits inside a <script> element must not be able to close it.
+const jsonLd = (data) => JSON.stringify(data).replace(/</g, "\u003c");
 const fileOf = (p) => `feature-${p.slug}.html`;
 const bySlugId = Object.fromEntries(pages.map((p) => [p.id, p]));
 
@@ -39,10 +71,23 @@ for (const [lang, t] of Object.entries(LANGS)) {
     for (const p of pages) {
       h = h.replaceAll(`href="features.html#f-${p.id}"`, `href="${fileOf(p)}"`);
       if (name !== "features.html") continue;
-      h = h.replace(new RegExp(`(<nav class="feat-index"[\\s\\S]*?)href="#f-${p.id}"`), `$1href="${fileOf(p)}"`);
-      const card = grab(h, new RegExp(`<article class="feat[^"]*" id="f-${p.id}">.*</article>`), `card f-${p.id}`)[0];
+      h = h.replace(
+        new RegExp(`(<nav class="feat-index"[\\s\\S]*?)href="#f-${p.id}"`),
+        `$1href="${fileOf(p)}"`,
+      );
+      const card = grab(
+        h,
+        new RegExp(`<article class="feat[^"]*" id="f-${p.id}">.*</article>`),
+        `card f-${p.id}`,
+      )[0];
       if (!card.includes("feat-more"))
-        h = h.replace(card, card.replace("</article>", `<a class="feat-more" href="${fileOf(p)}">${t.more} <span aria-hidden="true">${t.arrow}</span></a></article>`));
+        h = h.replace(
+          card,
+          card.replace(
+            "</article>",
+            `<a class="feat-more" href="${fileOf(p)}">${t.more} <span aria-hidden="true">${t.arrow}</span></a></article>`,
+          ),
+        );
     }
     write(t.dir + name, h);
   }
@@ -54,9 +99,17 @@ for (const [lang, t] of Object.entries(LANGS)) {
   const chrome = grab(feat, /<a class="skip"[\s\S]*?<\/header>\n/, "top bar")[0];
   const footer = grab(feat, /<footer>[\s\S]*?<\/footer>\n/, "footer")[0];
   const closing = grab(feat, /  <section class="closing">[\s\S]*?<\/section>\n/, "closing band")[0];
-  const dlBtn = grab(chrome, /<a class="btn btn-primary cta-btn"[^>]*data-dl[^>]*>[^<]*<\/a>/, "download button")[0].replace(" cta-btn", "");
+  const dlBtn = grab(
+    chrome,
+    /<a class="btn btn-primary cta-btn"[^>]*data-dl[^>]*>[^<]*<\/a>/,
+    "download button",
+  )[0].replace(" cta-btn", "");
   const cards = Object.fromEntries(
-    [...feat.matchAll(/<article class="feat[^"]*" id="f-([a-z]+)"><div class="glyph" aria-hidden="true">(<svg.*?<\/svg>)<\/div><h3>(.*?)(?:<span class="badge.*?<\/span>)?<\/h3><p>(.*?)<\/p>/g)].map((m) => [m[1], { icon: m[2], title: m[3], blurb: m[4] }]),
+    [
+      ...feat.matchAll(
+        /<article class="feat[^"]*" id="f-([a-z]+)"><div class="glyph" aria-hidden="true">(<svg.*?<\/svg>)<\/div><h3>(.*?)(?:<span class="badge.*?<\/span>)?<\/h3><p>(.*?)<\/p>/g,
+      ),
+    ].map((m) => [m[1], { icon: m[2], title: m[3], blurb: m[4] }]),
   );
   const EMBED = {
     banks: () => grab(home, /<ul class="chips"[\s\S]*?<\/ul>/, "bank chips")[0],
@@ -78,12 +131,16 @@ for (const [lang, t] of Object.entries(LANGS)) {
       .replace(/(<meta property="og:title" content=")[^"]*/, `$1${plain(card.title)} · Penny`)
       .replace(/(<meta property="og:description" content=")[^"]*/, `$1${c.desc}`)
       .replace(/Penny\/((?:en\/)?)features\.html"/g, `Penny/$1${file}"`);
-    const faqLd = JSON.stringify({
+    const faqLd = jsonLd({
       "@context": "https://schema.org",
       "@type": "FAQPage",
       inLanguage: lang,
       url: ORIGIN + t.dir + file,
-      mainEntity: c.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: plain(a) } })),
+      mainEntity: c.faq.map(([q, a]) => ({
+        "@type": "Question",
+        name: q,
+        acceptedAnswer: { "@type": "Answer", text: plain(a) },
+      })),
     });
 
     let flip = false;
@@ -97,7 +154,9 @@ for (const [lang, t] of Object.entries(LANGS)) {
         const visual = beside || shot;
         const copy =
           `<div class="copy">\n        <span class="num" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>\n        <h2>${s.h}</h2>\n        <p>${s.p}</p>` +
-          (s.list ? `\n        <ul class="ticks">${s.list.map((x) => `<li>${x}</li>`).join("")}</ul>` : "") +
+          (s.list
+            ? `\n        <ul class="ticks">${s.list.map((x) => `<li>${x}</li>`).join("")}</ul>`
+            : "") +
           inline +
           `\n      </div>`;
         const cls = visual ? `wrap spread${(flip = !flip) ? "" : " flip"}` : "wrap narrow";
@@ -115,18 +174,26 @@ for (const [lang, t] of Object.entries(LANGS)) {
       .join("");
 
     const page =
-      pageHead + `<script type="application/ld+json">${faqLd}</script>\n</head>\n<body>\n` +
-      chrome.replace(/features\.html" hreflang/g, `${file}" hreflang`) + "\n" +
+      pageHead +
+      `<script type="application/ld+json">${faqLd}</script>\n</head>\n<body>\n` +
+      chrome.replace(/features\.html" hreflang/g, `${file}" hreflang`) +
+      "\n" +
       `<!-- Generated by scripts/site/build-feature-pages.mjs from scripts/site/feature-pages.mjs. Edit those, not this file. -->\n` +
       `<main id="main">\n  <div class="page-head">\n    <div class="wrap">\n      <nav class="crumbs" aria-label="${t.crumbs}"><a href="features.html">${t.crumb}</a><span aria-hidden="true">/</span><span aria-current="page">${card.title}</span></nav>\n` +
       `      <h1>${c.h1}</h1>\n      <p class="lead">${c.intro}</p>\n      <div class="cta">${dlBtn}<a class="btn btn-ghost" href="${DEMO}${p.demo ?? ""}">${p.demo ? t.tryScreen : t.tryIt}</a></div>\n    </div>\n  </div>\n\n` +
-      sections + "\n" +
+      sections +
+      "\n" +
       `  <section id="know">\n    <div class="wrap narrow">\n      <h2>${t.know}</h2>\n      <ul class="ticks">${c.know.map((x) => `<li>${x}</li>`).join("")}</ul>\n    </div>\n  </section>\n\n` +
       `  <section id="faq" class="tint">\n    <div class="wrap narrow">\n      <h2>${t.faq}</h2>\n      <div class="faq">\n` +
-      c.faq.map(([q, a]) => `        <details><summary>${q}</summary><p>${a}</p></details>\n`).join("") +
+      c.faq
+        .map(([q, a]) => `        <details><summary>${q}</summary><p>${a}</p></details>\n`)
+        .join("") +
       `      </div>\n    </div>\n  </section>\n\n` +
       `  <section id="related">\n    <div class="wrap">\n      <div class="head">\n        <h2>${t.related}</h2>\n      </div>\n      <div class="feat-grid">\n${related}      </div>\n    </div>\n  </section>\n\n` +
-      closing.replace('class="closing"', 'class="closing tint"') + "</main>\n\n" + footer + "\n" +
+      closing.replace('class="closing"', 'class="closing tint"') +
+      "</main>\n\n" +
+      footer +
+      "\n" +
       `<script type="module" src="${t.up}theme.js"></script>\n<script type="module" src="${t.up}site.js"></script>\n<script type="module" src="${t.up}os-lead.js"></script>\n</body>\n</html>\n`;
     write(t.dir + file, page);
   }
