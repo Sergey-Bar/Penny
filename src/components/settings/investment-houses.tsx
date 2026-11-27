@@ -18,9 +18,17 @@ import {
 } from "@/lib/pension";
 import { parseSyncError } from "@/lib/sync-errors";
 import { deletePension, listPension, pensionAction, type PensionConnection } from "@/lib/api";
-import { formatLastSync } from "@/lib/formatters";
-import { useFormatterLabels } from "@/lib/i18n-data";
 import { PensionReportImport } from "./pension-report-import";
+
+function formatSyncTime(ts: string, locale: string): string {
+  const iso = ts.includes("T") ? ts : `${ts.replace(" ", "T")}Z`;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return ts;
+  return new Intl.DateTimeFormat(locale === "he" ? "he-IL" : "en-US", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(d);
+}
 
 const FIELD_INPUTS = {
   id: { label: "pensionId", props: { inputMode: "numeric", autoComplete: "off" } },
@@ -55,7 +63,6 @@ export function InvestmentHouses() {
     return key ? [tError(key), detail].filter(Boolean).join(" ") : message;
   };
   const locale = useLocale();
-  const labels = useFormatterLabels();
   const qc = useQueryClient();
   const list = useQuery({
     queryKey: ["pension"],
@@ -94,7 +101,7 @@ export function InvestmentHouses() {
       : c.state === "error" || (c.state === "idle" && c.lastError)
         ? t("pensionError", { message: errorText(c.message ?? c.lastError ?? "") })
         : c.lastSyncAt
-          ? t("lastSync", { time: formatLastSync(`${c.lastSyncAt.replace(" ", "T")}Z`, labels) })
+          ? t("lastSync", { time: formatSyncTime(c.lastSyncAt, locale) })
           : t("statusNeverSynced");
 
   return (
