@@ -21,8 +21,7 @@ export async function initRemoteAccess(): Promise<void> {
 }
 
 export type RemoteRequestCheck =
-  | { ok: true }
-  | { ok: false; status: number; code: string; message: string };
+  { ok: true } | { ok: false; status: number; code: string; message: string };
 
 export function remoteAccessCheck(input: {
   host: string | null;

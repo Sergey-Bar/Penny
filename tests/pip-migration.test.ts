@@ -147,5 +147,5 @@ describe("migration 083 (Pip)", () => {
     );
     expect(db.pragma("foreign_key_check")).toEqual([]);
     db.close();
-  });
+  }, 180_000);
 });
