@@ -70,10 +70,14 @@ export function SyncProgressDialog({
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        if (!o && done) onClose();
+        if (!o) onClose();
       }}
     >
-      <DialogContent className="max-w-md p-0 sm:max-w-md" showCloseButton={done}>
+      <DialogContent
+        data-sync-progress-dialog="true"
+        className="max-h-[85vh] max-w-md overflow-y-auto p-0 sm:max-w-md"
+        showCloseButton
+      >
         <div className="px-6 pt-6 pb-2">
           <HeroDots done={done} warning={Boolean(aiWarning)} />
           <DialogTitle className="mt-4 text-center font-semibold text-2xl">

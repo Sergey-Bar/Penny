@@ -43,6 +43,10 @@ import { SyncBusyError, tryAcquireSync } from "@/server/sync/lock";
 import { getWorkspace } from "@/server/db/queries/workspaces";
 import { BANK_PROVIDERS, type BankProvider, type SyncKind } from "@/lib/types";
 import { cancelOtpRequest, registerOtpRequest } from "@/server/sync/otp-bridge";
+import {
+  listWorkspacePensionConnections,
+  syncWorkspacePensionsSequential,
+} from "@/server/pension/sync";
 import { markSyncEnd, markSyncHeartbeat, markSyncStart } from "@/server/sync/activity";
 import type { ScrapeResult } from "@/server/scrapers/types";
 import { SYNC_ERRORS } from "@/lib/sync-errors";
@@ -382,8 +386,10 @@ export async function syncWorkspace(
   const credsToSync: BankCredentialMeta[] = filterCredentialId
     ? allCreds.filter((c) => c.id === filterCredentialId)
     : allCreds;
+  const pensionConns =
+    filterCredentialId == null ? listWorkspacePensionConnections(workspaceId) : [];
 
-  if (credsToSync.length === 0) {
+  if (credsToSync.length === 0 && pensionConns.length === 0) {
     send("plan", {
       workspaceId,
       workspaceName,
@@ -409,114 +415,151 @@ export async function syncWorkspace(
   send("plan", {
     workspaceId,
     workspaceName,
-    providers: credsToSync.map((c) => c.provider),
-    total: credsToSync.length,
+    providers: [...credsToSync.map((c) => c.provider), ...pensionConns.map((c) => c.fundId)],
+    total: credsToSync.length + pensionConns.length,
   });
 
   const results: ProviderResult[] = [];
 
-  for (let i = 0; i < credsToSync.length; i++) {
-    const meta = credsToSync[i];
-    const provider = meta.provider as BankProvider;
+  const bankGroups = new Map<string, Array<{ meta: BankCredentialMeta; index: number }>>();
+  credsToSync.forEach((meta, index) => {
+    const list = bankGroups.get(meta.provider);
+    if (list) list.push({ meta, index });
+    else bankGroups.set(meta.provider, [{ meta, index }]);
+  });
 
-    send("provider-start", {
-      workspaceId,
-      workspaceName,
-      provider,
-      credentialId: meta.id,
-      label: meta.label,
-      index: i,
-      total: credsToSync.length,
-    });
-    markSyncHeartbeat();
+  const runBankGroup = async (group: Array<{ meta: BankCredentialMeta; index: number }>) => {
+    for (const { meta, index: i } of group) {
+      const provider = meta.provider as BankProvider;
 
-    const locked = isKeyLocked();
-    let credentials: Record<string, string> | null = null;
-    try {
-      credentials = locked ? null : getBankCredentials(workspaceId, meta.id);
-    } catch (err) {
-      // An unreadable credential fails this connection only; the next ones still sync.
-      logError("sync/credentials", err);
-    }
-    // Nobody is at the screen during a scheduled run to type a code or finish a login in the browser.
-    // Left out entirely: no failed run, no alert, for a bank the person always syncs by hand.
-    if (
-      credentials &&
-      !interactive &&
-      ((supportsProgrammaticTwoFactor(provider) && !credentials.otpLongTermToken) ||
-        getRequiresManualTwoFactor(workspaceId, meta.id))
-    )
-      continue;
-    if (!credentials) {
-      send("provider-done", {
+      send("provider-start", {
         workspaceId,
         workspaceName,
         provider,
         credentialId: meta.id,
         label: meta.label,
-        ok: false,
-        added: 0,
-        updated: 0,
-        errorMessage: locked ? APP_LOCKED_MESSAGE : `No credentials configured for ${meta.label}`,
+        index: i,
+        total: credsToSync.length,
       });
-      results.push({
-        provider,
-        credentialId: meta.id,
-        label: meta.label,
-        ok: false,
-        added: 0,
-        updated: 0,
-        errorMessage: locked ? APP_LOCKED_MESSAGE : "No credentials",
-      });
-      continue;
-    }
+      markSyncHeartbeat();
 
-    try {
-      const result = await syncOneCredential(
-        workspaceId,
-        workspaceName,
-        meta,
-        credentials,
-        startDate,
-        send,
-        mode,
-      );
-      results.push(result);
-      send("provider-done", {
-        workspaceId,
-        workspaceName,
-        provider,
-        credentialId: meta.id,
-        label: meta.label,
-        ok: result.ok,
-        added: result.added,
-        updated: result.updated,
-        errorMessage: result.errorMessage,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? redactError(err) : "Unknown scrape error";
-      results.push({
-        provider,
-        credentialId: meta.id,
-        label: meta.label,
-        ok: false,
-        added: 0,
-        updated: 0,
-        errorMessage: message,
-      });
-      send("provider-done", {
-        workspaceId,
-        workspaceName,
-        provider,
-        credentialId: meta.id,
-        label: meta.label,
-        ok: false,
-        added: 0,
-        updated: 0,
-        errorMessage: message,
-      });
+      const locked = isKeyLocked();
+      let credentials: Record<string, string> | null = null;
+      try {
+        credentials = locked ? null : getBankCredentials(workspaceId, meta.id);
+      } catch (err) {
+        logError("sync/credentials", err);
+      }
+      if (
+        credentials &&
+        !interactive &&
+        ((supportsProgrammaticTwoFactor(provider) && !credentials.otpLongTermToken) ||
+          getRequiresManualTwoFactor(workspaceId, meta.id))
+      )
+        continue;
+      if (!credentials) {
+        send("provider-done", {
+          workspaceId,
+          workspaceName,
+          provider,
+          credentialId: meta.id,
+          label: meta.label,
+          ok: false,
+          added: 0,
+          updated: 0,
+          errorMessage: locked ? APP_LOCKED_MESSAGE : `No credentials configured for ${meta.label}`,
+        });
+        results.push({
+          provider,
+          credentialId: meta.id,
+          label: meta.label,
+          ok: false,
+          added: 0,
+          updated: 0,
+          errorMessage: locked ? APP_LOCKED_MESSAGE : "No credentials",
+        });
+        continue;
+      }
+
+      try {
+        const result = await syncOneCredential(
+          workspaceId,
+          workspaceName,
+          meta,
+          credentials,
+          startDate,
+          send,
+          mode,
+        );
+        results.push(result);
+        send("provider-done", {
+          workspaceId,
+          workspaceName,
+          provider,
+          credentialId: meta.id,
+          label: meta.label,
+          ok: result.ok,
+          added: result.added,
+          updated: result.updated,
+          errorMessage: result.errorMessage,
+        });
+      } catch (err) {
+        const message = err instanceof Error ? redactError(err) : "Unknown scrape error";
+        results.push({
+          provider,
+          credentialId: meta.id,
+          label: meta.label,
+          ok: false,
+          added: 0,
+          updated: 0,
+          errorMessage: message,
+        });
+        send("provider-done", {
+          workspaceId,
+          workspaceName,
+          provider,
+          credentialId: meta.id,
+          label: meta.label,
+          ok: false,
+          added: 0,
+          updated: 0,
+          errorMessage: message,
+        });
+      }
     }
-  }
+  };
+
+  const pensionTask =
+    filterCredentialId == null && pensionConns.length > 0 && !isKeyLocked()
+      ? syncWorkspacePensionsSequential(workspaceId, {
+          onStart: (conn) => {
+            markSyncHeartbeat();
+            send("provider-start", {
+              workspaceId,
+              workspaceName,
+              provider: conn.fundId,
+              label: conn.label ?? conn.fundId,
+              kind: "pension",
+            });
+          },
+          onDone: (conn, res) => {
+            markSyncHeartbeat();
+            send("provider-done", {
+              workspaceId,
+              workspaceName,
+              provider: conn.fundId,
+              label: conn.label ?? conn.fundId,
+              kind: "pension",
+              ok: res.ok,
+              added: 0,
+              updated: 0,
+              errorMessage: res.errorMessage,
+            });
+          },
+        })
+      : Promise.resolve();
+
+  await Promise.all([...[...bankGroups.values()].map(runBankGroup), pensionTask]);
 
   const totalAdded = results.reduce((s, r) => s + r.added, 0);
   const totalUpdated = results.reduce((s, r) => s + r.updated, 0);

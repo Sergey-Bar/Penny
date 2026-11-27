@@ -67,28 +67,38 @@ export function SyncButton({ onComplete, autoStart = false, showLabel = true }: 
         setRows(list.map((p) => ({ provider: p, status: "idle", added: 0, updated: 0 })));
       } else if (event.type === "provider-start") {
         const provider = event.data.provider as string;
-        setRows((prev) =>
-          prev.map((r) => (r.provider === provider ? { ...r, status: "running" } : r)),
-        );
+        setRows((prev) => {
+          const idx = prev.findIndex((r) => r.provider === provider && r.status === "idle");
+          const target = idx >= 0 ? idx : prev.findIndex((r) => r.provider === provider);
+          return prev.map((r, i) => (i === target ? { ...r, status: "running" } : r));
+        });
       } else if (event.type === "provider-2fa-needed") {
         const provider = event.data.provider as string;
         const syncRunId = event.data.syncRunId as number;
         awaitingOtpRef.current.add(provider);
-        setRows((prev) =>
-          prev.map((r) =>
-            r.provider === provider ? { ...r, status: "awaiting-otp", syncRunId } : r,
-          ),
-        );
+        setRows((prev) => {
+          const idx = prev.findIndex((r) => r.provider === provider && r.status === "running");
+          const target = idx >= 0 ? idx : prev.findIndex((r) => r.provider === provider);
+          return prev.map((r, i) =>
+            i === target ? { ...r, status: "awaiting-otp", syncRunId } : r,
+          );
+        });
       } else if (event.type === "provider-2fa-submitted") {
         const provider = event.data.provider as string;
         awaitingOtpRef.current.delete(provider);
         setRows((prev) =>
-          prev.map((r) => (r.provider === provider ? { ...r, status: "running" } : r)),
+          prev.map((r) =>
+            r.provider === provider && r.status === "awaiting-otp"
+              ? { ...r, status: "running" }
+              : r,
+          ),
         );
       } else if (event.type === "provider-2fa-manual") {
         const provider = event.data.provider as string;
         setRows((prev) =>
-          prev.map((r) => (r.provider === provider ? { ...r, status: "manual-2fa" } : r)),
+          prev.map((r) =>
+            r.provider === provider && r.status === "running" ? { ...r, status: "manual-2fa" } : r,
+          ),
         );
       } else if (event.type === "provider-done") {
         const provider = event.data.provider as string;
@@ -97,9 +107,15 @@ export function SyncButton({ onComplete, autoStart = false, showLabel = true }: 
         const updated = (event.data.updated as number) ?? 0;
         const errorMessage = event.data.errorMessage as string | undefined;
         awaitingOtpRef.current.delete(provider);
-        setRows((prev) =>
-          prev.map((r) =>
-            r.provider === provider
+        setRows((prev) => {
+          const idx = prev.findIndex(
+            (r) =>
+              r.provider === provider &&
+              (r.status === "running" || r.status === "awaiting-otp" || r.status === "manual-2fa"),
+          );
+          const target = idx >= 0 ? idx : prev.findIndex((r) => r.provider === provider);
+          return prev.map((r, i) =>
+            i === target
               ? {
                   ...r,
                   status: ok ? "done" : "error",
@@ -108,8 +124,8 @@ export function SyncButton({ onComplete, autoStart = false, showLabel = true }: 
                   errorMessage,
                 }
               : r,
-          ),
-        );
+          );
+        });
         if (!ok && errorMessage) {
           toast.error(`${provider}: ${errorText(errorMessage).message}`, {
             duration: 8000,
@@ -167,8 +183,7 @@ export function SyncButton({ onComplete, autoStart = false, showLabel = true }: 
         label={syncing ? t("syncing") : t("syncAndCategorize")}
         variant={showLabel ? "default" : "ghost"}
         size="icon-sm"
-        onClick={handleSync}
-        disabled={syncing}
+        onClick={() => (syncing ? setDialogOpen(true) : handleSync())}
       >
         <RefreshCw className={`size-4 ${syncing ? "animate-spin" : ""}`} aria-hidden />
       </IconButton>

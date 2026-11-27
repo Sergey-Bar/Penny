@@ -21,6 +21,7 @@ import { pagePurposeKey } from "@/lib/orientation";
 import { MobileDock } from "./mobile-dock";
 import { PetMini } from "@/components/home/pet-card";
 import { PipLife } from "@/components/home/pip-life";
+import { GlobalOtpDialog } from "@/components/layout/global-otp-dialog";
 import { SectionTabs } from "./section-tabs";
 import { AnalyticsNav } from "@/components/analytics/analytics-nav";
 import { PipDock } from "@/components/pip/pip-dock";
@@ -87,6 +88,7 @@ export function PersistentShell({ children }: { children: ReactNode }) {
         <BottomBar />
         <PrivacyHotkey />
         <PipLife />
+        <GlobalOtpDialog />
       </SidebarInset>
       <SideRail />
       <MobileDock />

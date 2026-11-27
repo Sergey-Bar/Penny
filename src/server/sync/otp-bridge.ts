@@ -18,6 +18,7 @@ interface PendingOtp {
   timeoutHandle: NodeJS.Timeout;
   workspaceId: number;
   provider: string;
+  label?: string;
 }
 
 const pending = new Map<number, PendingOtp>();
@@ -31,6 +32,7 @@ export function registerOtpRequest(
   syncRunId: number,
   workspaceId: number,
   provider: string,
+  label?: string,
 ): OtpRequest {
   // If there was a stale entry for this id, blow it away.
   const stale = pending.get(syncRunId);
@@ -59,6 +61,7 @@ export function registerOtpRequest(
           timeoutHandle,
           workspaceId,
           provider,
+          label,
         });
       });
       return waitPromise;
@@ -93,4 +96,16 @@ export function cancelOtpRequest(syncRunId: number, reason?: string): void {
 
 export function hasPendingOtp(syncRunId: number): boolean {
   return pending.has(syncRunId);
+}
+
+export function listPendingOtps(
+  workspaceId: number,
+): Array<{ syncRunId: number; provider: string; label?: string }> {
+  const out: Array<{ syncRunId: number; provider: string; label?: string }> = [];
+  for (const [syncRunId, entry] of pending.entries()) {
+    if (entry.workspaceId === workspaceId) {
+      out.push({ syncRunId, provider: entry.provider, label: entry.label });
+    }
+  }
+  return out;
 }

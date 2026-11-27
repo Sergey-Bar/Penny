@@ -342,6 +342,82 @@ async function run(workspaceId: number, row: Row, logId: number) {
   status.set(row.id, { state: "done", message: String(outcome.accounts.length) });
 }
 
+export function listWorkspacePensionConnections(
+  workspaceId: number,
+): Array<{ id: number; fundId: PensionFund; label: string | null }> {
+  const rows = getDb()
+    .prepare(`SELECT id, fund_id FROM pension_connections WHERE workspace_id = ? ORDER BY id`)
+    .all(workspaceId) as Array<{ id: number; fund_id: PensionFund }>;
+  return rows.map((r) => ({ id: r.id, fundId: r.fund_id, label: null }));
+}
+
+/**
+ * Syncs all investment-house / pension connections for a workspace: distinct houses run in
+ * parallel while multiple connections of the same house run strictly sequentially so SMS codes
+ * never collide.
+ */
+export async function syncWorkspacePensionsSequential(
+  workspaceId: number,
+  callbacks?: {
+    onStart?: (conn: { id: number; fundId: PensionFund; label: string | null }) => void;
+    onDone?: (
+      conn: { id: number; fundId: PensionFund; label: string | null },
+      result: { ok: boolean; errorMessage?: string },
+    ) => void;
+  },
+): Promise<void> {
+  const db = getDb();
+  const rows = db
+    .prepare(
+      `SELECT id, fund_id, credentials_encrypted, iv, auth_tag FROM pension_connections WHERE workspace_id = ? ORDER BY id`,
+    )
+    .all(workspaceId) as Row[];
+
+  const groups = new Map<PensionFund, Row[]>();
+  for (const row of rows) {
+    const list = groups.get(row.fund_id);
+    if (list) list.push(row);
+    else groups.set(row.fund_id, [row]);
+  }
+
+  await Promise.all(
+    [...groups.values()].map(async (groupRows) => {
+      for (const row of groupRows) {
+        const conn = { id: row.id, fundId: row.fund_id, label: null };
+        const current = status.get(row.id)?.state;
+        if (current === "running" || current === "otp") {
+          while (status.get(row.id)?.state === "running" || status.get(row.id)?.state === "otp") {
+            await new Promise((r) => setTimeout(r, 500));
+          }
+          continue;
+        }
+
+        callbacks?.onStart?.(conn);
+        status.set(row.id, { state: "running" });
+        const logRow = db
+          .prepare(
+            `INSERT INTO pension_sync_logs (workspace_id, connection_id, fund_id, status)
+             VALUES (?, ?, ?, 'running') RETURNING id`,
+          )
+          .get(workspaceId, row.id, row.fund_id) as { id: number };
+        try {
+          await run(workspaceId, row, logRow.id);
+          const st = status.get(row.id);
+          if (st?.state === "error") {
+            callbacks?.onDone?.(conn, { ok: false, errorMessage: st.message });
+          } else {
+            callbacks?.onDone?.(conn, { ok: true });
+          }
+        } catch (err) {
+          const msg = redactError(err);
+          fail(row.id, msg, [], logRow.id);
+          callbacks?.onDone?.(conn, { ok: false, errorMessage: msg });
+        }
+      }
+    }),
+  );
+}
+
 /**
  * Makes this connection's assets match one complete scrape, in one transaction: each product is
  * upserted by the key in its note, and products the provider no longer shows are dropped. A dropped
