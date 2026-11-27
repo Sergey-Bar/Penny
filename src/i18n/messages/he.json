@@ -6697,5 +6697,27 @@
     "forget": "לשכוח",
     "noMemory": "לא נשמר דבר",
     "remember": "לזכור את זה"
+  },
+  "remoteAccess": {
+    "title": "גישה מרחוק",
+    "description": "להגיע ל-Penny מחוץ לבית דרך Cloudflare, עם נעילת האפליקציה ו-Cloudflare Access.",
+    "mode": "מצב",
+    "modeOff": "כבוי",
+    "modeQuick": "מנהרה מהירה (פיתוח)",
+    "modeNamed": "מנהרה קבועה עם Cloudflare Access",
+    "host": "שם מארח ציבורי",
+    "hostHint": "למשל penny.example.com",
+    "teamDomain": "דומיין הצוות ב-Access",
+    "teamDomainHint": "למשל yourteam.cloudflareaccess.com",
+    "aud": "תג Audience של אפליקציית Access",
+    "save": "שמירה",
+    "disable": "לכבות",
+    "saved": "נשמר",
+    "lockRequired": "יש להפעיל את נעילת האפליקציה לפני הפעלת גישה מרחוק.",
+    "envManaged": "ההגדרות מגיעות ממשתני סביבה ואי אפשר לשנות אותן כאן.",
+    "quickWarning": "מנהרות מהירות הן לפיתוח בלבד ודורשות PENNY_REMOTE_QUICK_ACK=1.",
+    "namedHelp": "צרו אפליקציית Cloudflare Access לשם המארח, והדביקו כאן את דומיין הצוות ואת תג ה-AUD.",
+    "active": "גישה מרחוק פעילה עבור {host}.",
+    "inactive": "גישה מרחוק כבויה."
   }
 }

@@ -6697,5 +6697,27 @@
     "forget": "Forget",
     "noMemory": "Nothing saved",
     "remember": "Remember this"
+  },
+  "remoteAccess": {
+    "title": "Remote access",
+    "description": "Reach Penny from outside your home through Cloudflare, with the app lock and Cloudflare Access.",
+    "mode": "Mode",
+    "modeOff": "Off",
+    "modeQuick": "Quick tunnel (development)",
+    "modeNamed": "Named tunnel with Cloudflare Access",
+    "host": "Public hostname",
+    "hostHint": "For example penny.example.com",
+    "teamDomain": "Access team domain",
+    "teamDomainHint": "For example yourteam.cloudflareaccess.com",
+    "aud": "Access application audience (AUD) tag",
+    "save": "Save",
+    "disable": "Turn off",
+    "saved": "Saved",
+    "lockRequired": "Turn on the app lock before enabling remote access.",
+    "envManaged": "These settings come from environment variables and cannot be changed here.",
+    "quickWarning": "Quick tunnels are for development only and require PENNY_REMOTE_QUICK_ACK=1.",
+    "namedHelp": "Create a Cloudflare Access application for this hostname, then paste its team domain and AUD tag.",
+    "active": "Remote access is on for {host}.",
+    "inactive": "Remote access is off."
   }
 }

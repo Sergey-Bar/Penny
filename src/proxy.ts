@@ -6,9 +6,11 @@ import {
   defaultWorkspace,
   allowedMemberRoute,
 } from "@/server/lib/user-access";
-import { isAllowedHost } from "@/lib/host-guard";
+import { isAllowedHost, allowedHostsFromEnv } from "@/lib/host-guard";
 import { isLockEnabled, SESSION_COOKIE, touchSession } from "@/server/lib/app-lock";
 import { isLanEnabled } from "@/server/lib/lan-access";
+import { getRemoteAccess } from "@/server/remote-access/config";
+import { remoteAccessCheck } from "@/server/remote-access";
 import { isMcpToken, MCP_TOKEN_HEADER } from "@/server/lib/mcp-token";
 import { DEMO_BLOCKED_MESSAGE, isHostedDemo } from "@/server/demo/mode";
 
@@ -28,7 +30,7 @@ const ORIGIN_CHECKED_GETS = new Set(["/api/ai/ollama/models"]);
 const QUICK_ADD = "/api/quick-add";
 
 const HOSTED_DEMO_BLOCKED =
-  /^\/api\/(lock|data|backup|access|profiles|workspaces|device-tokens|quick-add|lan|import\/folder|legacy|telegram|setup\/(bank|ai))(\/|$)/;
+  /^\/api\/(lock|data|backup|access|profiles|workspaces|device-tokens|quick-add|lan|remote-access|import\/folder|legacy|telegram|setup\/(bank|ai))(\/|$)/;
 
 export function proxy(request: NextRequest) {
   const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
@@ -38,8 +40,27 @@ export function proxy(request: NextRequest) {
   };
   // Every request, page or API, must be addressed to localhost (blocks DNS rebinding).
   // Phone access admits private LAN hosts, but only while the app lock guards every request.
-  if (!isAllowedHost(request.headers.get("host"), undefined, isLanEnabled() && isLockEnabled())) {
+  const remote = getRemoteAccess();
+  if (
+    !isAllowedHost(
+      request.headers.get("host"),
+      [...allowedHostsFromEnv(), ...(remote.host ? [remote.host] : [])],
+      isLanEnabled() && isLockEnabled(),
+    )
+  ) {
     return finish(new NextResponse("Forbidden: unexpected host", { status: 403 }));
+  }
+  const remoteCheck = remoteAccessCheck({
+    host: request.headers.get("host"),
+    jwt: request.headers.get("cf-access-jwt-assertion"),
+  });
+  if (!remoteCheck.ok) {
+    return finish(
+      NextResponse.json(
+        { error: remoteCheck.message, code: remoteCheck.code },
+        { status: remoteCheck.status },
+      ),
+    );
   }
   // The public demo is shared by every visitor: nothing may lock it, wipe it or change who can use it.
   if (

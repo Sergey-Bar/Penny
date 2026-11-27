@@ -29,7 +29,7 @@ Each gap is either closed in the current phase or explicitly deferred with a rea
 | G23 | Evaluation harness | Phase 1 planner and red-team suite | Add live provider smoke runs on a schedule |
 | G24 | Observability for agent runs | Phase 1 runs, tool calls, metrics and ops status | Add per-tool dashboards |
 | G25 | Cost visibility | Partial | Record provider cost when the provider exposes usage |
-| G26 | Remote access | Deferred to a separate PR | Land the held Cloudflare work with its own live Access smoke test and review |
+| G26 | Remote access | Phase 1 named and quick modes | Add device posture and session revocation at the edge |
 | G27 | Backup and restore | Covered by hourly local, portable and restore drill | Add a scheduled restore verification |
 | G28 | Export and wipe | Covered for Pip and existing data | Add a user-facing export of the full workspace |
 | G29 | Accessibility and RTL | Partial; contact channel is filled, keyboard e2e for the dock remains | Run the dock keyboard path in the browser suite |

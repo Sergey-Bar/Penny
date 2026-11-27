@@ -152,7 +152,7 @@ suggestions. `integrity.check` runs daily per enabled workspace.
 - `maintenance.cleanup` prunes messages after 90 days, expired or two-year-old memory, and agent runs after 180 days.
 - `GET /api/ops/status` exposes seven-day run, fallback and failure counts. `pip_agent_runs` and `pip_tool_calls` carry per-run latency and tool duration.
 - Consent is per workspace and provider. A non-local provider receives minimized facts only after consent; deterministic answers work without it.
-- Runbook: [docs/pip-operations.md](pip-operations.md).
+- Runbook: [docs/pip-operations.md](pip-operations.md). Remote access: [docs/remote-access.md](remote-access.md).
 
 ## Routine checks
 

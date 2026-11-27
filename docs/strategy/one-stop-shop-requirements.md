@@ -6,7 +6,7 @@ A household should be able to open Penny, connect what it uses, see today's posi
 
 ## Users
 
-- **Household owner:** owns the machine, sets the app lock and connects banks.
+- **Household owner:** owns the machine, sets the app lock, connects banks and decides about remote access.
 - **Household member:** sees and edits household data within their role, but cannot change security or workspace ownership.
 - **Solo business owner:** needs a separated business view and a tax reserve.
 - **New user:** has no connected data and needs a useful first session from imports or manual entry.
@@ -62,7 +62,12 @@ A household should be able to open Penny, connect what it uses, see today's posi
 
 ### Remote access
 
-Remote access is a separately reviewed follow-up. It is not part of this PR.
+- Off by default.
+- Named tunnel with Cloudflare Access verification.
+- App lock required.
+- No wildcard hosts.
+- Remote requests fail closed if the Access key set is unavailable.
+- Clear setup status and a one-click off switch.
 
 ## Non-functional requirements
 
@@ -81,6 +86,7 @@ Remote access is a separately reviewed follow-up. It is not part of this PR.
 - A new workspace can import a fixture, see a budget, ask Pip a spending question, open evidence and give feedback.
 - Turning `pip_v2` off restores the previous ask experience.
 - Turning `PENNY_PIP_KILL` on disables Pip chat and briefings without deleting data.
+- A remote request without a valid Access token is refused and logged without the token.
 - `npm run test:ops`, `npm run test:security` and the Pip suite pass.
 - The restore drill returns a database that passes integrity checks.
 

@@ -47,14 +47,14 @@ scope (`SKIP` lists each with its reason). Routes that leave the
 machine (bank scrapers, AI providers, market quotes) or need a real Next request scope are
 listed with the reason in the test's `SKIP` table.
 
-## Pip
+## Pip and remote access
 
 ```bash
 npm run test:pip
 npm run check:anonymity
 ```
 
-The Pip suite has ten files:
+The Pip suite has eleven files:
 
 - `pip-migration.test.ts` applies 083 to a real database and checks every table, foreign key, cascade and the briefing uniqueness.
 - `pip-calculators.test.ts` compares each whitelisted calculator with the shared library helper.
@@ -62,10 +62,13 @@ The Pip suite has ten files:
 - `pip-verifier.test.ts` proves that an invented amount or percentage is rejected and that dates and years are not mistaken for amounts.
 - `pip-tools.test.ts` checks the read/memory tool boundary, input/output schemas and citations.
 - `pip-answers.test.ts` checks the deterministic bilingual answer and briefing text.
+- `pip-remote-access.test.ts` generates an RSA key pair, builds JWTs and verifies issuer, audience, expiry and signature, plus config normalization.
 - `pip-messages.test.ts` checks Hebrew and English key parity.
 - `pip-integration.test.ts` runs a real agent turn against a real SQLite database, then checks memory, feedback, briefing, export, wipe and every read tool.
 - `pip-agent-provider.test.ts` mocks the provider: an invented amount is rejected and the deterministic answer is used; a verified amount is recorded with the provider.
 - `pip-route.test.ts` calls the chat handler with a real request and checks the SSE events, the thread list and the kill switch.
+
+The remote-access proxy path is also exercised by `tests/proxy.test.ts` and `tests/security-policy.test.ts`. The JWT verifier fails closed when its JWKS cache is empty.
 
 ## Running
 

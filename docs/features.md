@@ -8,7 +8,7 @@ Israeli banks have poor exports, global budgeting apps don't understand shekels,
 
 Penny runs on your laptop. It pulls transactions straight from your banks and credit cards, keeps them in one SQLite file you can copy and back up, and lets an AI of your choice sort them into categories, or none at all. Then it helps with the questions that actually matter in Israel: am I on track this month, do I have a safety net, am I paying too much in fees, and am I getting every tax benefit I'm owed.
 
-Nothing leaves your machine except the calls you choose: to your bank, and to an AI provider if you pick a cloud one.
+Nothing leaves your machine except the calls you choose: to your bank, to an AI provider if you pick a cloud one, and through the tunnel if you turn on remote access.
 
 ## Who it's for
 
@@ -58,6 +58,13 @@ Pip has two layers. The companion keeps its mood and care list. The assistant an
 - **Explicit memory.** A preference, goal or constraint is saved only when the user saves it, and can be read or deleted.
 - **Daily briefing.** A short in-app card ranks the few things worth attention. Telegram delivery is optional.
 - **Fail closed.** `PENNY_PIP_KILL=1` disables chat and briefings without deleting anything.
+
+## Remote access
+
+- **Off by default.** The app keeps listening locally.
+- **Named Cloudflare tunnel with Access:** the recommended way to reach Penny from a phone. The proxy verifies the Access JWT and still requires the app lock.
+- **Quick tunnel:** development only, explicitly acknowledged and never the default.
+- **No wildcard hosts.** A remote hostname is added to the host guard only after it is configured, and a failed token check refuses the request before any route runs.
 
 ## Household
 
@@ -152,6 +159,7 @@ flowchart LR
 |---|---|
 | Credentials at rest | AES-256-GCM; the key file must be mode `0600` or the server refuses to start |
 | Network exposure | Bound to `127.0.0.1` only. Phone access on your Wi-Fi is opt-in and protected by an access code |
+| Remote access | Off by default; named Cloudflare Access JWT verification plus the app lock, or an explicitly acknowledged development quick tunnel |
 | Browser CSRF | Origin / Referer checks on every request; destructive endpoints need an explicit confirmation |
 | App lock | Optional passcode lock with automatic timeout |
 | Bot detection | Chromium sandbox on by default (`PENNY_DISABLE_CHROMIUM_SANDBOX=1` to opt out) |
@@ -180,5 +188,6 @@ flowchart LR
 - [x] OFX export
 - [x] Automatic encrypted backup to a cloud folder, and a support file for bug reports
 - [x] Pip assistant with evidence, deterministic fallback, explicit memory and a daily briefing
+- [x] Remote access with Cloudflare Access and the app lock
 - [ ] Provider-chosen tools after the golden suite proves selection quality
 - [ ] Native mobile companion
