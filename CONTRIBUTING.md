@@ -69,6 +69,19 @@ Penny/
 - UI copy never names competitors.
 - Never commit real bank data, passwords, account numbers, or screenshots that show them.
 
+## Anonymity
+
+Research notes often come from named products, advisers, forums or paid reports. Do not copy names, prose or proprietary structures into the repository. Write the finding in your own words, cite the source only in the private research log, and keep the product name out of code, tests, comments, docs, UI copy and commit messages.
+
+The check reads hashed terms from `PENNY_ANON_TERM_HASHES` (or the legacy `PENNY_ANON_SOURCE_HASHES`) and optional plaintext terms from `PENNY_ANON_TERMS`. Hashes are SHA-256 of a normalized one-to-four-word phrase. CI can set the secret; without it the check reports that no source hashes are configured and passes.
+
+```bash
+npm run check:anonymity        # scan tracked files, or the tree when git is unavailable
+npm run check:anonymity:diff   # scan only added lines when a git diff exists
+```
+
+If the check finds a match, rewrite the line. Do not add an allowlist entry to silence a real source name.
+
 ## Security
 
 Found a vulnerability? Report it privately as described in [SECURITY.md](SECURITY.md), not in an issue.

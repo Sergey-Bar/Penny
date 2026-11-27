@@ -13,8 +13,11 @@ If the data cannot answer the question, say so plainly. Never give investment ad
 
 export type VisionMediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
-/** Whether the configured provider reads images. shortcut: Claude only; a vision Ollama model would need a model check. */
-export const aiSupportsImages = () => getGlobalSetting("ai_provider") === "claude";
+/** Whether the configured provider reads images. */
+export const aiSupportsImages = () => {
+  const p = getGlobalSetting("ai_provider");
+  return p === "claude" || p === "openai";
+};
 
 /** One answer from the user's chosen provider (Ollama, Claude or a CLI agent). Null when none is set up. */
 export async function completeAI(
@@ -81,6 +84,53 @@ export async function completeAI(
     });
     const block = res.content[0];
     return block?.type === "text" ? block.text.trim() || null : null;
+  }
+
+  if (provider === "openai") {
+    const encrypted = getGlobalSetting("ai_openai_key_encrypted");
+    const iv = getGlobalSetting("ai_openai_key_iv");
+    const authTag = getGlobalSetting("ai_openai_key_auth_tag");
+    if (!encrypted || !iv || !authTag || isKeyLocked()) return null;
+    const apiKey = decrypt({
+      encrypted: Buffer.from(encrypted, "hex"),
+      iv: Buffer.from(iv, "hex"),
+      authTag: Buffer.from(authTag, "hex"),
+    });
+    const res = await fetchExternal(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          max_tokens: maxTokens,
+          messages: [
+            { role: "system", content: system },
+            {
+              role: "user",
+              content: image
+                ? [
+                    {
+                      type: "image_url",
+                      image_url: { url: `data:${image.mediaType};base64,${image.base64}` },
+                    },
+                    { type: "text", text: user },
+                  ]
+                : user,
+            },
+          ],
+        }),
+      },
+      120_000,
+    );
+    if (!res.ok) throw new Error(`OpenAI request failed: ${res.status}`);
+    const data = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string | null } }>;
+    };
+    return data.choices?.[0]?.message?.content?.trim() || null;
   }
 
   if (isCliAgent(provider)) {

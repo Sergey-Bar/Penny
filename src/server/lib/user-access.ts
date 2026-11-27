@@ -126,8 +126,13 @@ export function allowedMemberRoute(path: string, method: string, role: "viewer" 
     path === "/api/preferences"
   )
     return true;
+  if (/^\/api\/pip(\/|$)/.test(path)) {
+    if (path === "/api/pip/data" && method === "DELETE") return false;
+    return true;
+  }
   const reads =
     /^\/api\/(home|summary|cash-ahead|balance-forecast|control|plan|assets|fi|overview|recap|resilience|wellbeing|suggestions|insights|periodic|budgets|categories|transactions|insurance|planned|notifications|pivot)(\/|$)/;
+  if (/^\/api\/import(\/|$)/.test(path)) return method === "GET" || role === "editor";
   if (method === "GET") return reads.test(path);
   if (role !== "editor") return false;
   return /^\/api\/(control|plan|periodic|budgets|categories|transactions|insurance|planned)(\/|$)/.test(

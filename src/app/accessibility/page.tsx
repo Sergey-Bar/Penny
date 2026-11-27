@@ -1,11 +1,9 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { AppShell, PageHeader } from "@/components/layout/app-shell";
 
-/** Required by the Equal Rights for Persons with Disabilities regulations. The owner fills in CONTACT. */
+/** Required by the Equal Rights for Persons with Disabilities regulations. */
 const CONTACT = {
-  name: "", // TODO(owner): accessibility coordinator's name
-  email: "", // TODO(owner): accessibility contact email
-  phone: "", // TODO(owner): accessibility contact phone
+  issueUrl: "https://github.com/Sergey-Bar/Penny/issues",
 };
 const REVIEWED = new Date("2026-11-14T12:00:00Z");
 
@@ -18,11 +16,6 @@ export default async function AccessibilityStatementPage() {
   // Grouped like Settings: the title sits above the card.
   const section = "[&>div]:rounded-2xl [&>div]:bg-card [&>div]:px-4 [&>div]:py-3";
   const h2 = "mb-2 px-4 text-sm font-semibold text-muted-foreground";
-  const todo = (
-    <span className="rounded bg-muted px-1.5 py-0.5 text-footnote font-medium">
-      TODO · {t("todo")}
-    </span>
-  );
   const date = new Intl.DateTimeFormat(locale === "he" ? "he-IL" : "en-IL", {
     dateStyle: "long",
     timeZone: "Asia/Jerusalem",
@@ -95,38 +88,18 @@ export default async function AccessibilityStatementPage() {
             <dl className="mt-3 divide-y divide-border border-t border-border text-base [&>div]:flex [&>div]:flex-wrap [&>div]:justify-between [&>div]:gap-x-4 [&>div]:py-2.5 [&>div:last-child]:pb-0">
               <div>
                 <dt className="font-medium">{t("contactName")}</dt>
-                <dd>{CONTACT.name || todo}</dd>
+                <dd>{t("contactNameValue")}</dd>
               </div>
               <div>
-                <dt className="font-medium">{t("contactEmail")}</dt>
+                <dt className="font-medium">{t("contactChannelValue")}</dt>
                 <dd>
-                  {CONTACT.email ? (
-                    <a
-                      href={`mailto:${CONTACT.email}`}
-                      dir="ltr"
-                      className="text-primary underline underline-offset-4"
-                    >
-                      {CONTACT.email}
-                    </a>
-                  ) : (
-                    todo
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="font-medium">{t("contactPhone")}</dt>
-                <dd>
-                  {CONTACT.phone ? (
-                    <a
-                      href={`tel:${CONTACT.phone}`}
-                      dir="ltr"
-                      className="text-primary underline underline-offset-4"
-                    >
-                      {CONTACT.phone}
-                    </a>
-                  ) : (
-                    todo
-                  )}
+                  <a
+                    href={CONTACT.issueUrl}
+                    dir="ltr"
+                    className="text-primary underline underline-offset-4"
+                  >
+                    {t("contactIssue")}
+                  </a>
                 </dd>
               </div>
             </dl>

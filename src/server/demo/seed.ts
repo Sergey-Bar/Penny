@@ -3,6 +3,7 @@ import "server-only";
 import type Database from "better-sqlite3";
 import { addDays, addMonths, israelToday, monthDate, monthKey } from "@/server/lib/date-utils";
 import { isDemoMode } from "./mode";
+import { normalizeMerchant } from "@/lib/merchant-normalize";
 
 /** Set once the demo rows are in, so a second request (or a restart) never seeds twice. */
 const MARKER = "demo_seeded";
@@ -132,8 +133,8 @@ function seed(db: Database.Database): void {
              workspace_id, account_number, date, processed_date, original_amount, original_currency,
              charged_amount, charged_currency, description, type, status, category_id, category_source,
              provider, credential_id, sync_run_id, dedup_hash, kind, needs_review, is_excluded, owner, business_share_pct,
-             installment_number, installment_total)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'ILS', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             installment_number, installment_total, merchant_key)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'ILS', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           ws,
@@ -159,6 +160,7 @@ function seed(db: Database.Database): void {
           options.businessShare ?? 0,
           options.installment?.number ?? null,
           options.installment?.total ?? null,
+          normalizeMerchant(description),
         ).lastInsertRowid,
     );
     return id;

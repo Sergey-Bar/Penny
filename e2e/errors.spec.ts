@@ -19,6 +19,9 @@ const HOME_API = /\/api\/home(\?|$)/;
 const FAILED = "המקטע לא נטען. נסו לרענן את העמוד."; // home.couldntLoad
 
 async function expectVisibleFailure(page: Page) {
+  // Home opens on Focus by default; this is about the detailed dashboard's tiles, so choose it first.
+  const base = `http://127.0.0.1:${process.env.PENNY_E2E_PORT ?? 3100}`;
+  await page.context().addCookies([{ name: "home_view", value: "detailed", url: base }]);
   await page.goto("/");
   // The page itself still renders: header and navigation are there.
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

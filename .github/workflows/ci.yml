@@ -27,11 +27,17 @@ jobs:
       - run: npx next typegen   # route types (PageProps) are generated, not committed
       - run: npx tsc --noEmit
       - run: npm run lint
+      - run: npm run check:anonymity
+        env:
+          PENNY_ANON_TERM_HASHES: ${{ secrets.PENNY_ANON_TERM_HASHES }}
       - run: npm run format:check
       # Dead files, exports and dependencies; fails the build.
       - run: npm run knip
       # Same suites plus the coverage floor; CI fails if logic or server coverage drops.
       - run: npm run test:coverage
+      # Nightly-style drills on every change: a restorable snapshot and indexed report queries.
+      - run: npm run restore:drill
+      - run: npm run bench:backend -- --rows 20000 --runs 5
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:

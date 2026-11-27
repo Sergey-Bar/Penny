@@ -31,7 +31,7 @@ import { DashboardBoard } from "./dashboard-board";
 import { QuickStartRail } from "./quick-start-rail";
 import { NextStep } from "./today-card";
 import { QuickActions } from "./quick-actions";
-import { PetHeroAside } from "./pet-card";
+import { HomeViewSwitch } from "./home-view-switch";
 import { usePlan } from "@/hooks/use-plan";
 import { CardError, CardSkeleton } from "./card-shell";
 import type { HomePayload, HomeSection } from "@/lib/types";
@@ -80,12 +80,7 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
   // Focus (/focus) is the one-page home; it is reached only from its own menu item.
   const simple = focus;
   const companion = plan.homeStyle === "companion";
-  // Pocket Pal sits in the purple card, at its end side (visual left in Hebrew).
-  // The intro invite rides with the pet instead of taking a block of its own.
-  const petAside =
-    loaded && plan.pet.enabled ? (
-      <PetHeroAside extra={<WelcomePrompt variant="pip" />} />
-    ) : undefined;
+  // Pip lives at the side (the rail on wide screens, the page header on phones), not inside Home's card.
   const nextStep = <NextStep home={data} homePending={isLoading} homeFailed={isError} />;
   const linkClass =
     "mx-auto flex min-h-11 w-fit items-center rounded-full px-4 text-footnote font-medium text-primary hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring";
@@ -94,7 +89,11 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
   if (!loaded) {
     return (
       <>
-        <PageHeader title={simple ? t("focusTitle") : t("pageTitle")} largeTitle={false} />
+        <PageHeader
+          title={simple ? t("focusTitle") : t("pageTitle")}
+          largeTitle={false}
+          titleSlot={<HomeViewSwitch current={simple ? "focus" : "detailed"} />}
+        />
         <div className="mx-auto w-full max-w-[1920px] px-4 pb-8 pt-3 md:px-6 lg:px-8">
           <SyncFailureBanner items={data?.bankHealth ?? null} className="mb-4 md:mb-5 lg:mb-6" />
           <Greeting name={settings?.displayName} />
@@ -110,7 +109,11 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
   if (!simple) {
     return (
       <>
-        <PageHeader title={simple ? t("focusTitle") : t("pageTitle")} largeTitle={false} />
+        <PageHeader
+          title={simple ? t("focusTitle") : t("pageTitle")}
+          largeTitle={false}
+          titleSlot={<HomeViewSwitch current={simple ? "focus" : "detailed"} />}
+        />
         <div className="mx-auto w-full max-w-[1920px] space-y-5 px-4 py-6 md:px-8">
           <SyncFailureBanner items={data?.bankHealth ?? null} />
           {/* The board, with Quick start beside it on wide screens and above it on narrow ones. */}
@@ -137,7 +140,11 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
   if (companion && !detail) {
     return (
       <>
-        <PageHeader title={simple ? t("focusTitle") : t("pageTitle")} largeTitle={false} />
+        <PageHeader
+          title={simple ? t("focusTitle") : t("pageTitle")}
+          largeTitle={false}
+          titleSlot={<HomeViewSwitch current={simple ? "focus" : "detailed"} />}
+        />
         <div className="mx-auto w-full max-w-[1920px] px-4 pb-8 pt-3 md:px-6 lg:px-8">
           <SyncFailureBanner items={data?.bankHealth ?? null} className="mb-4 md:mb-5 lg:mb-6" />
           {/* Simple mode keeps the page quiet: adding and importing live in the card's own menu row. */}
@@ -147,20 +154,15 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
             </div>
           )}
           {simple ? (
-            <SimpleHome name={settings?.displayName} extra={nextStep} heroAside={petAside} />
+            <SimpleHome name={settings?.displayName} extra={nextStep} />
           ) : (
             <>
               <Greeting name={settings?.displayName} />
-              <SimpleHome
-                name={settings?.displayName}
-                cardOnly
-                extra={nextStep}
-                heroAside={petAside}
-              />
+              <SimpleHome name={settings?.displayName} cardOnly extra={nextStep} />
               <MoneyMap />
             </>
           )}
-          {!petAside && <WelcomePrompt />}
+          <WelcomePrompt />
           {!simple && (
             <Link href="/?view=detail" className={linkClass}>
               {t("detailLink")}
@@ -174,7 +176,11 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
   return (
     <>
       {/* The view is chosen in the sidebar menu, not by a toggle on the page. */}
-      <PageHeader title={simple ? t("focusTitle") : t("pageTitle")} largeTitle={false} />
+      <PageHeader
+        title={simple ? t("focusTitle") : t("pageTitle")}
+        largeTitle={false}
+        titleSlot={<HomeViewSwitch current={simple ? "focus" : "detailed"} />}
+      />
       {/* The detail view of the Companion style always offers the way back. */}
       {companion && (
         <div className="mx-auto w-full max-w-[1920px] px-4 pt-3 md:px-6 lg:px-8">
@@ -193,18 +199,18 @@ export function HomePage({ focus = false }: { focus?: boolean } = {}) {
       )}
       {simple ? (
         <div className="px-4 pb-8 pt-3">
-          <SimpleHome name={settings?.displayName} extra={nextStep} heroAside={petAside} />
+          <SimpleHome name={settings?.displayName} extra={nextStep} />
         </div>
       ) : (
         <div className="mx-auto w-full max-w-[1920px] px-4 pb-8 pt-3 md:px-6 lg:px-8">
           <SyncFailureBanner items={data?.bankHealth ?? null} className="mb-4 md:mb-5 lg:mb-6" />
           <Greeting name={settings?.displayName} />
           {/* The same forecast card as Simple mode: forecast, rings, legend and the month so far. */}
-          <SimpleHome name={settings?.displayName} cardOnly extra={nextStep} heroAside={petAside} />
+          <SimpleHome name={settings?.displayName} cardOnly extra={nextStep} />
           <SuggestionsTipsCard />
           <HealthCard />
           <MonthCelebration />
-          {!petAside && <WelcomePrompt />}
+          <WelcomePrompt />
           <PersonalGrid
             render={(id) => {
               if (id === "goals") return <GoalFocus />;

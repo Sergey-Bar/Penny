@@ -751,7 +751,7 @@ export function FinancialControl() {
               {tr("totalChange")}
               {money(data.drivers.reduce((s, d) => s + d.delta, 0))}
             </p>
-            <div className="overflow-x-auto">
+            <div className="relative overflow-x-auto">
               <table className="w-full text-start text-sm">
                 <thead>
                   <tr>

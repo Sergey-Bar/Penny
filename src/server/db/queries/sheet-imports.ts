@@ -3,6 +3,7 @@ import "server-only";
 import { getDb } from "../index";
 import { computeDedupHash } from "../../lib/dedup";
 import { roundCents } from "@/lib/money";
+import { normalizeMerchant } from "@/lib/merchant-normalize";
 import { recordMerchantCategory } from "@/server/lib/merchant-memory";
 import type { CategoryKind } from "@/lib/types";
 
@@ -62,9 +63,9 @@ export function insertSheetRows(
     const insert = db.prepare(
       `INSERT INTO transactions (workspace_id, account_number, date, processed_date, original_amount, original_currency,
          charged_amount, charged_currency, description, memo, type, status, provider, credential_id, sync_run_id, dedup_hash, dedup_sequence,
-         kind, category_id, category_source, needs_review, owner, business_share_pct)
+         kind, category_id, category_source, needs_review, owner, business_share_pct, merchant_key)
        VALUES (@workspaceId, @account, @date, @date, @amount, 'ILS', @amount, 'ILS', @description, @memo, 'normal', 'completed', 'file',
-         @credentialId, @batchId, @hash, @seq, @kind, @categoryId, @categorySource, @needsReview, @owner, @businessSharePct)
+         @credentialId, @batchId, @hash, @seq, @kind, @categoryId, @categorySource, @needsReview, @owner, @businessSharePct, @merchantKey)
        ON CONFLICT(workspace_id, dedup_hash, dedup_sequence) DO NOTHING`,
     );
     // A manual row on a real account would double-count against the bank: these are statement rows.
@@ -110,6 +111,7 @@ export function insertSheetRows(
         needsReview: r.categoryId == null ? 1 : 0,
         owner: r.owner,
         businessSharePct: r.businessSharePct,
+        merchantKey: normalizeMerchant(r.description),
       });
       flags.push(res.changes > 0);
       if (res.changes === 0) continue;

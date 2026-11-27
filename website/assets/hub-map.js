@@ -1,4 +1,5 @@
-// The hero map: Penny as a hub on an isometric grid, with an island for every part of the app.
+// The map: Penny as a board in the spirit of a property board game. Every part of the app is a lot on the ring,
+// with a colour strip along its outer edge and something built on it; Penny itself stands in the middle.
 // Islands come from the chips in the page (id, grid cell, icon, colour, short label), so the chips and cards
 // work on their own without this script. Plain SVG in a true 30° isometric projection, no library.
 const hub = document.querySelector("[data-hub]");
@@ -6,7 +7,6 @@ const hub = document.querySelector("[data-hub]");
 if (hub) {
   const rtl = document.documentElement.dir === "rtl";
   const he = document.documentElement.lang.startsWith("he");
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const chips = [...hub.querySelectorAll("[data-island]")];
   const scene = hub.querySelector(".hub-scene");
 
@@ -273,6 +273,7 @@ if (hub) {
       soon: chip.classList.contains("soon"),
       icon: chip.dataset.icon,
       short: chip.dataset.short,
+      c: chip.dataset.c,
       chip,
     };
   });
@@ -280,12 +281,26 @@ if (hub) {
   const mat = (x, y, z = 0) => at(...M(x, y), z); // a point given in English-layout plane coordinates
   const mbox = (x, y, z, w, d, h, c) => (rtl ? box(y, x, z, d, w, h, c) : box(x, y, z, w, d, h, c));
 
+  // The strip along a lot's outer edge, in the lot's own colour: what makes a ring of squares read as a board.
+  const strip = (it) => {
+    const w = 13,
+      m = 7;
+    const r =
+      it.gy >= 2
+        ? [-H + m, H - m - w, 2 * (H - m), w]
+        : it.gx >= 2
+          ? [H - m - w, -H + m, w, 2 * (H - m)]
+          : it.gy <= -2
+            ? [-H + m, -H + m, 2 * (H - m), w]
+            : [-H + m, -H + m, w, 2 * (H - m)];
+    return `<rect class="strip" style="fill:var(${it.c})" x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="5" transform="${ISO}"/>`;
+  };
   const islandSvg = (it) => {
     const label = planeText(-H + 14, H - 16, 0, "lbl", it.short);
     return (
       `<g class="isl${it.soon ? " soon" : ""}" data-id="${it.id}" transform="translate(${it.sx} ${it.sy})">` +
       `<ellipse class="shadow" cx="0" cy="${DEPTH + 26}" rx="120" ry="54"/>` +
-      `<g class="lift">${slab(H, it.soon ? 0 : DEPTH, it.soon ? "soon" : "isl")}` +
+      `<g class="lift">${slab(H, it.soon ? 0 : DEPTH, it.soon ? "soon" : "isl")}${it.soon ? "" : strip(it)}` +
       `<g transform="${at(-4, -12)}">${(ICONS[it.icon] || (() => ""))()}</g>${label}` +
       (it.soon
         ? `<g transform="${mat(H - 6, -H + 6)}"><rect class="badge-bg" x="${he ? -23 : -26}" y="-30" width="${he ? 46 : 52}" height="22" rx="11"/><text class="badge-t" y="-15" text-anchor="middle">${he ? "בקרוב" : "SOON"}</text></g>`
@@ -329,31 +344,51 @@ if (hub) {
   const order = (a) => a.sort((p, q) => p.gx + p.gy - (q.gx + q.gy));
 
   const links = islands
-    .map((it, i) => {
+    .map((it) => {
       const d = `M${it.sx} ${it.sy}L0 0`;
-      const flow =
-        it.soon || reduce
-          ? ""
-          : `<circle class="flow" r="3.2"><animateMotion dur="${(3.2 + (i % 5) * 0.45).toFixed(2)}s" begin="${(i * 0.37).toFixed(2)}s" repeatCount="indefinite" path="${d}"/></circle>`;
       const [mx, my] = [r1(it.sx * 0.55), r1(it.sy * 0.55)];
-      return `<path class="link${it.soon ? " soon" : ""}" d="${d}"/><circle class="node" cx="${mx}" cy="${my}" r="3.5"/>${flow}`;
+      return `<path class="link${it.soon ? " soon" : ""}" d="${d}"/><circle class="node" cx="${mx}" cy="${my}" r="3.5"/>`;
     })
     .join("");
 
+  // The board itself: one plate under the whole ring.
+  const E = 2 * G + H + 26,
+    PLATE = 18;
+  const plate =
+    poly("board-l", [
+      [-E, E, -DEPTH - 8],
+      [E, E, -DEPTH - 8],
+      [E, E, -DEPTH - 8 - PLATE],
+      [-E, E, -DEPTH - 8 - PLATE],
+    ]) +
+    poly("board-r", [
+      [E, -E, -DEPTH - 8],
+      [E, E, -DEPTH - 8],
+      [E, E, -DEPTH - 8 - PLATE],
+      [E, -E, -DEPTH - 8 - PLATE],
+    ]) +
+    poly("board-t", [
+      [-E, -E, -DEPTH - 8],
+      [E, -E, -DEPTH - 8],
+      [E, E, -DEPTH - 8],
+      [-E, E, -DEPTH - 8],
+    ]);
+
   scene.innerHTML =
-    `<svg viewBox="-690 -480 1380 920" role="presentation" focusable="false">` +
+    `<svg viewBox="-760 -480 1520 960" role="presentation" focusable="false">` +
     `<defs>` +
     `<pattern id="hub-grid" width="50" height="50" patternUnits="userSpaceOnUse" patternTransform="${ISO}"><path d="M50 0H0V50" class="grid"/></pattern>` +
     `<radialGradient id="hub-fade"><stop offset="0.35" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>` +
-    `<mask id="hub-mask"><rect x="-690" y="-480" width="1380" height="920" fill="url(#hub-fade)"/></mask>` +
+    `<mask id="hub-mask"><rect x="-760" y="-480" width="1520" height="960" fill="url(#hub-fade)"/></mask>` +
     `<radialGradient id="hub-glow"><stop offset="0" class="glow-in"/><stop offset="1" class="glow-out"/></radialGradient>` +
     `<radialGradient id="isl-shadow"><stop offset="0" class="sh-in"/><stop offset="1" class="sh-out"/></radialGradient>` +
     `<linearGradient id="side-isl" x1="0" y1="1" x2="1" y2="0"><stop offset=".5" class="s-l"/><stop offset=".5" class="s-r"/></linearGradient>` +
     `<linearGradient id="side-hub" x1="0" y1="1" x2="1" y2="0"><stop offset=".5" class="s-l"/><stop offset=".5" class="s-r"/></linearGradient>` +
     `<linearGradient id="side-mark" x1="0" y1="1" x2="1" y2="0"><stop offset=".5" class="m-l"/><stop offset=".5" class="m-r"/></linearGradient>` +
     `</defs>` +
-    `<rect x="-690" y="-480" width="1380" height="920" fill="url(#hub-grid)" mask="url(#hub-mask)"/>` +
+    `<rect x="-760" y="-480" width="1520" height="960" fill="url(#hub-grid)" mask="url(#hub-mask)"/>` +
     `<ellipse class="glow" cx="0" cy="40" rx="460" ry="250" fill="url(#hub-glow)"/>` +
+    plate +
     `<g class="links">${links}</g>` +
     order(back)
       .map((it) => islandSvg(it))
