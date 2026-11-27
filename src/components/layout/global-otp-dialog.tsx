@@ -53,7 +53,8 @@ export function GlobalOtpDialog() {
 
   const pending = data?.pending ?? [];
   const hasSyncDialogOpen =
-    typeof document !== "undefined" && Boolean(document.querySelector("[data-sync-progress-dialog]"));
+    typeof document !== "undefined" &&
+    Boolean(document.querySelector("[data-sync-progress-dialog]"));
 
   // SyncProgressDialog handles positive bank syncRunIds inline when it is open;
   // pension OTPs (negative syncRunId) or any OTP when on another screen use this global dialog.

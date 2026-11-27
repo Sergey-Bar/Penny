@@ -88,7 +88,9 @@ export function SyncButton({ onComplete, autoStart = false, showLabel = true }: 
         awaitingOtpRef.current.delete(provider);
         setRows((prev) =>
           prev.map((r) =>
-            r.provider === provider && r.status === "awaiting-otp" ? { ...r, status: "running" } : r,
+            r.provider === provider && r.status === "awaiting-otp"
+              ? { ...r, status: "running" }
+              : r,
           ),
         );
       } else if (event.type === "provider-2fa-manual") {
