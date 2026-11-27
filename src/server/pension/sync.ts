@@ -394,8 +394,14 @@ export async function syncWorkspacePensionsSequential(
 
         callbacks?.onStart?.(conn);
         status.set(row.id, { state: "running" });
+        const logRow = db
+          .prepare(
+            `INSERT INTO pension_sync_logs (workspace_id, connection_id, fund_id, status)
+             VALUES (?, ?, ?, 'running') RETURNING id`,
+          )
+          .get(workspaceId, row.id, row.fund_id) as { id: number };
         try {
-          await run(workspaceId, row);
+          await run(workspaceId, row, logRow.id);
           const st = status.get(row.id);
           if (st?.state === "error") {
             callbacks?.onDone?.(conn, { ok: false, errorMessage: st.message });
@@ -404,7 +410,7 @@ export async function syncWorkspacePensionsSequential(
           }
         } catch (err) {
           const msg = redactError(err);
-          fail(row.id, msg);
+          fail(row.id, msg, [], logRow.id);
           callbacks?.onDone?.(conn, { ok: false, errorMessage: msg });
         }
       }
