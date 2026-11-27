@@ -6,6 +6,7 @@ const root = document.documentElement;
 const settle = () => root.classList.remove("reveal-pending");
 
 if (stage) {
+  settle(); // nothing waits for the scene any more
   const canvas = stage.querySelector(".stage-canvas");
   const replay = stage.querySelector(".stage-replay");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
@@ -32,18 +33,8 @@ if (stage) {
       stage.classList.add("is-live");
       if (reduced.matches) coin.rest();
       else {
-        // Hold on the opening frame until the stage is actually on screen (on a phone it starts below the
-        // download buttons), then play once. Someone who has already scrolled past gets the resting frame.
-        coin.seek(0);
-        if (stage.getBoundingClientRect().bottom < 0) coin.rest();
-        else {
-          const io = new IntersectionObserver(([e]) => {
-            if (!e.isIntersecting) return;
-            io.disconnect();
-            coin?.play();
-          }, { threshold: 0.45 });
-          io.observe(stage);
-        }
+        // The page opens on the resting picture, so the product is on screen at once. The reveal plays on request.
+        coin.rest();
         replay.hidden = false;
       }
       settle();
