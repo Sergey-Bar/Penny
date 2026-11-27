@@ -3,6 +3,7 @@ import {
   cancelOtpRequest,
   deliverOtp,
   hasPendingOtp,
+  listPendingOtps,
   registerOtpRequest,
 } from "@/server/sync/otp-bridge";
 
@@ -88,5 +89,17 @@ describe("otp bridge", () => {
     expect(hasPendingOtp(9)).toBe(true);
     deliverOtp(9, 10, "x");
     await expect(fresh).resolves.toBe("x");
+  });
+
+  it("lists only the pending requests for one workspace, with their labels", async () => {
+    const a = registerOtpRequest(20, 10, "oneZero", "One Zero").wait();
+    const b = registerOtpRequest(21, 11, "hapoalim", "Bank Hapoalim").wait();
+    expect(listPendingOtps(10)).toEqual([
+      { syncRunId: 20, provider: "oneZero", label: "One Zero" },
+    ]);
+    expect(listPendingOtps(12)).toEqual([]);
+    deliverOtp(20, 10, "1");
+    deliverOtp(21, 11, "2");
+    await Promise.all([a, b]);
   });
 });

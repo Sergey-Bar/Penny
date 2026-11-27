@@ -58,6 +58,20 @@ vi.mock("@/server/bot/index", () => ({
     fake.bot.alerts.push(providers);
   },
 }));
+vi.mock("@/server/pension/sync", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/pension/sync")>();
+  return {
+    ...actual,
+    syncWorkspacePensionsSequential: async (
+      _workspaceId: number,
+      callbacks?: Parameters<typeof actual.syncWorkspacePensionsSequential>[1],
+    ) => {
+      const conn = { id: 1, fundId: "excellence" as const, label: "Excellence" };
+      callbacks?.onStart?.(conn);
+      callbacks?.onDone?.(conn, { ok: true });
+    },
+  };
+});
 
 type Orchestrator = typeof import("@/server/sync/orchestrator");
 let orch: Orchestrator;
@@ -82,6 +96,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   db.prepare("DELETE FROM bank_credentials").run();
+  db.prepare("DELETE FROM pension_connections").run();
   fake.scrapeBank = fake.oneZeroFirst = fake.oneZeroToken = fake.openBanking = null;
   fake.calls.length = 0;
   fake.ai = null;
@@ -135,6 +150,20 @@ describe("syncWorkspace", () => {
     ]);
     expect(s).toMatchObject({ providers: [], added: 0, updated: 0, categorized: 0 });
     expect(s.aiWarning).toBeNull();
+  });
+
+  it("announces pension connections in the plan and forwards their callbacks", async () => {
+    db.prepare(
+      `INSERT INTO pension_connections
+        (workspace_id, fund_id, label, credentials_encrypted, iv, auth_tag)
+       VALUES (?, 'excellence', 'Excellence', ?, ?, ?)`,
+    ).run(ws, Buffer.from("x"), Buffer.from("x"), Buffer.from("x"));
+    const ev = events();
+    const s = await sync(undefined, ev);
+    expect(ev.of("plan")[0].providers).toContain("excellence");
+    expect(ev.of("provider-start").some((row) => row.kind === "pension")).toBe(true);
+    expect(ev.of("provider-done").some((row) => row.kind === "pension")).toBe(true);
+    expect(s.providers).toEqual([]);
   });
 
   it("saves a bank's transactions and balance, and closes the run as completed", async () => {
@@ -347,6 +376,7 @@ describe("One Zero", () => {
     });
 
     db.prepare("DELETE FROM bank_credentials").run();
+    db.prepare("DELETE FROM pension_connections").run();
     creds.saveBankCredentials(ws, "oneZero", { email: "e", password: "p" });
     [r] = (await sync()).providers;
     expect(r).toMatchObject({
