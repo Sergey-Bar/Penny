@@ -45,7 +45,16 @@ export function PipLife() {
         if (active !== syncing) {
           syncing = active;
           pip({ kind: "waiting", on: active });
-          if (!active) pip({ kind: "play", action: "success" });
+          if (!active) {
+            pip({ kind: "play", action: "success" });
+            void qc.invalidateQueries({ queryKey: ["integrations"] });
+            void qc.invalidateQueries({ queryKey: ["assets"] });
+            void qc.invalidateQueries({ queryKey: ["asset-history"] });
+            void qc.invalidateQueries({ queryKey: ["home"] });
+            void qc.invalidateQueries({ queryKey: ["transactions"] });
+            void qc.invalidateQueries({ queryKey: ["summary"] });
+            void qc.invalidateQueries({ queryKey: ["sync-logs"] });
+          }
         }
         return;
       }
@@ -63,7 +72,7 @@ export function PipLife() {
     let typing = false;
     let stop: ReturnType<typeof setTimeout> | undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (!isField(e.target) || e.ctrlKey || e.metaKey || e.key.length !== 1) return;
+      if (!isField(e.target) || e.ctrlKey || e.metaKey || e.key?.length !== 1) return;
       if (!typing) {
         typing = true;
         pip({ kind: "typing", on: true });
