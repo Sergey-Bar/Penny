@@ -5,13 +5,13 @@ import path from "node:path";
 import type Database from "better-sqlite3";
 import { getDb } from "@/server/db";
 import { dataDir } from "@/server/lib/data-dir";
+import { getWorkspaceSetting, setWorkspaceSetting } from "@/server/db/queries/settings";
 import { encrypt, decrypt } from "@/server/lib/encryption";
 import { redact, redactError, redactKnownSecrets } from "@/server/lib/redact";
 import { registerOtpRequest } from "@/server/sync/otp-bridge";
 import { withDeadline } from "@/lib/sync-schedule";
 import { SYNC_ERRORS } from "@/lib/sync-errors";
 import { assetKey, savingsType, type PensionCredentials, type PensionFund } from "@/lib/pension";
-import { fxRate, getQuotes } from "@/server/markets/quotes";
 import type { ScrapeArgs } from "./custom-scrapers";
 import type { ScrapedAccount, ScrapeOutcome } from "./parsers";
 
@@ -178,19 +178,101 @@ export function startPensionSync(workspaceId: number, id: number): boolean {
   const now = status.get(id)?.state;
   if (!row || now === "running" || now === "otp") return false;
   status.set(id, { state: "running" });
-  void run(workspaceId, row).catch((err) => fail(id, redactError(err)));
+  const logRow = getDb()
+    .prepare(
+      `INSERT INTO pension_sync_logs (workspace_id, connection_id, fund_id, status) VALUES (?, ?, ?, 'running') RETURNING id`,
+    )
+    .get(workspaceId, id, row.fund_id) as { id: number };
+  void run(workspaceId, row, logRow.id).catch((err) => fail(id, redactError(err), [], logRow.id));
   return true;
 }
 
 /** Records a failed sync. The assets keep their last good values. */
-function fail(id: number, message: string, secrets: string[] = []) {
+function fail(id: number, message: string, secrets: string[] = [], logId?: number) {
   const safe = redactKnownSecrets(redact(message), secrets);
   console.error(`[pension] connection ${id} failed: ${safe}`);
   status.set(id, { state: "error", message: safe });
-  getDb().prepare(`UPDATE pension_connections SET last_error = ? WHERE id = ?`).run(safe, id);
+  const db = getDb();
+  db.prepare(`UPDATE pension_connections SET last_error = ? WHERE id = ?`).run(safe, id);
+  if (logId) {
+    db.prepare(
+      `UPDATE pension_sync_logs SET status = 'error', message = ?, completed_at = datetime('now') WHERE id = ?`,
+    ).run(safe, logId);
+  }
 }
 
-async function run(workspaceId: number, row: Row) {
+export interface SyncLogEntry {
+  id: string;
+  kind: "bank" | "investment";
+  provider: string;
+  status: string;
+  message: string | null;
+  count: number | null;
+  startedAt: string;
+  completedAt: string | null;
+}
+
+/** Recent bank and investment-house sync runs for this workspace, newest first. */
+export function listAllSyncLogs(workspaceId: number, limit = 60): SyncLogEntry[] {
+  const db = getDb();
+  const clearedAt = getWorkspaceSetting(workspaceId, "logs_cleared_at");
+  const bankRows = db
+    .prepare(
+      `SELECT provider, status, error_message as message, transactions_added as count, started_at as startedAt, completed_at as completedAt
+       FROM sync_runs WHERE workspace_id = ? AND (? IS NULL OR started_at > ?) ORDER BY id DESC LIMIT ?`,
+    )
+    .all(workspaceId, clearedAt, clearedAt, limit) as Omit<SyncLogEntry, "id" | "kind">[];
+  const pensionRows = db
+    .prepare(
+      `SELECT id, fund_id as provider, status, message, accounts_count as count, started_at as startedAt, completed_at as completedAt
+       FROM pension_sync_logs WHERE workspace_id = ? AND (? IS NULL OR started_at > ?) ORDER BY id DESC LIMIT ?`,
+    )
+    .all(workspaceId, clearedAt, clearedAt, limit) as (Omit<SyncLogEntry, "id" | "kind"> & {
+    id: number;
+  })[];
+
+  const combined: SyncLogEntry[] = [
+    ...bankRows.map((r, idx) => ({
+      ...r,
+      id: `bank-${idx}-${r.startedAt}`,
+      kind: "bank" as const,
+    })),
+    ...pensionRows.map((r) => ({
+      id: `inv-${r.id}`,
+      kind: "investment" as const,
+      provider: r.provider,
+      status: r.status,
+      message: r.message,
+      count: r.count,
+      startedAt: r.startedAt,
+      completedAt: r.completedAt,
+    })),
+  ];
+  return combined.sort((a, b) => b.startedAt.localeCompare(a.startedAt)).slice(0, limit);
+}
+
+/** Clears all recorded sync/activity logs for this workspace without breaking transaction foreign keys. */
+export function clearAllSyncLogs(workspaceId: number): number {
+  const db = getDb();
+  const nowSql = new Date().toISOString().replace("T", " ").slice(0, 19);
+  let removed = 0;
+  db.transaction(() => {
+    removed += db
+      .prepare(`DELETE FROM pension_sync_logs WHERE workspace_id = ?`)
+      .run(workspaceId).changes;
+    removed += db
+      .prepare(
+        `DELETE FROM sync_runs
+         WHERE workspace_id = ?
+           AND id NOT IN (SELECT DISTINCT sync_run_id FROM transactions WHERE workspace_id = ?)`,
+      )
+      .run(workspaceId, workspaceId).changes;
+  })();
+  setWorkspaceSetting(workspaceId, "logs_cleared_at", nowSql);
+  return removed;
+}
+
+async function run(workspaceId: number, row: Row, logId: number) {
   const db = getDb();
   const credentials = JSON.parse(
     decrypt({ encrypted: row.credentials_encrypted, iv: row.iv, authTag: row.auth_tag }),
@@ -226,9 +308,16 @@ async function run(workspaceId: number, row: Row) {
         session,
         onProgress: (message: string) => {
           status.set(row.id, { state: "running", message });
+          db.prepare(
+            `UPDATE pension_sync_logs SET status = 'running', message = ? WHERE id = ?`,
+          ).run(message, logId);
         },
         onOtpNeeded: () => {
           status.set(row.id, { state: "otp" });
+          db.prepare(`UPDATE pension_sync_logs SET status = 'otp', message = ? WHERE id = ?`).run(
+            "otp",
+            logId,
+          );
           return registerOtpRequest(otpKey(row.id), workspaceId, row.fund_id)
             .wait()
             .finally(() => status.set(row.id, { state: "running" }));
@@ -238,27 +327,18 @@ async function run(workspaceId: number, row: Row) {
       () => ({ success: false, accounts: [], errorMessage: SYNC_ERRORS.timeout }),
     );
   } catch (err) {
-    return fail(row.id, `${SYNC_ERRORS.pensionUnexpected} (${redactError(err)})`, secrets);
+    return fail(row.id, `${SYNC_ERRORS.pensionUnexpected} (${redactError(err)})`, secrets, logId);
   }
   if (!outcome.success)
-    return fail(row.id, outcome.errorMessage ?? outcome.errorType ?? "Sync failed", secrets);
+    return fail(row.id, outcome.errorMessage ?? outcome.errorType ?? "Sync failed", secrets, logId);
   // A "successful" scrape with nothing in it would wipe every product; treat it as a failure.
   if (!outcome.accounts.some((a) => a.balance != null))
-    return fail(row.id, SYNC_ERRORS.pensionNoData, secrets);
+    return fail(row.id, SYNC_ERRORS.pensionNoData, secrets, logId);
 
-  const currencies = [
-    ...new Set(outcome.accounts.map((a) => a.currency || "ILS").filter((c) => c !== "ILS")),
-  ];
-  const fxRates: Record<string, number> = { ILS: 1 };
-  if (currencies.length > 0) {
-    const quotes = await getQuotes(currencies.map((c) => `${c}ILS=X`)).catch(() => new Map());
-    for (const c of currencies) {
-      const rate = fxRate(c, quotes);
-      if (rate != null) fxRates[c] = rate;
-    }
-  }
-
-  replacePensionAssets(db, workspaceId, row.id, outcome.accounts, { fxRates });
+  replacePensionAssets(db, workspaceId, row.id, outcome.accounts);
+  db.prepare(
+    `UPDATE pension_sync_logs SET status = 'done', message = NULL, accounts_count = ?, completed_at = datetime('now') WHERE id = ?`,
+  ).run(outcome.accounts.length, logId);
   status.set(row.id, { state: "done", message: String(outcome.accounts.length) });
 }
 

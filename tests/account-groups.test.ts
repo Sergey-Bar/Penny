@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { accountGroupOf, groupAccounts } from "@/lib/account-groups";
+import {
+  accountGroupOf,
+  assetProviderKey,
+  groupAccounts,
+  groupItemsByProvider,
+} from "@/lib/account-groups";
 import type { Asset } from "@/lib/types";
 
 const a = (id: number, type: string, valueIls: number | null, extra: Partial<Asset> = {}) =>
@@ -37,5 +42,28 @@ describe("account groups", () => {
       ["investments", [1]],
       ["liabilities", [3]],
     ]);
+  });
+
+  it("extracts provider key and groups multi-holding providers", () => {
+    expect(assetProviderKey({ note: "pension:excellence:123", name: "Stock A" })).toBe(
+      "excellence",
+    );
+    expect(assetProviderKey({ note: "pension:5:123", name: "Fund B" })).toBeNull();
+    expect(assetProviderKey({ note: null, name: "Fund", provider: "harel" })).toBe("harel");
+
+    const items = [
+      { id: 1, name: "Stock A", value: 300, providerKey: "excellence" },
+      { id: 2, name: "Stock B", value: 200, providerKey: "excellence" },
+      { id: 3, name: "Solo Fund", value: 400, providerKey: "altshuler" },
+      { id: 4, name: "Manual", value: 100, providerKey: null },
+    ];
+    const grouped = groupItemsByProvider(items);
+    expect(grouped.map((x) => x.kind)).toEqual(["provider", "item", "item"]);
+    expect(grouped[0]).toEqual({
+      kind: "provider",
+      providerKey: "excellence",
+      total: 500,
+      items: [items[0], items[1]],
+    });
   });
 });

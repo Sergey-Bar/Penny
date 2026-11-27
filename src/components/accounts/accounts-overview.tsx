@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, Landmark, Link2, Plus } from "lucide-react";
 import { getAssets, getHome } from "@/lib/api";
-import { groupAccounts } from "@/lib/account-groups";
+import { groupAccounts, groupItemsByProvider } from "@/lib/account-groups";
+import { INVESTMENT_HOUSES } from "@/lib/investment-houses";
 import { accountLabel, translateProviderName } from "@/lib/i18n-data";
 import { useSidebarAccountsPref } from "@/components/layout/sidebar-accounts";
 import { shekels } from "@/lib/money";
@@ -122,44 +123,130 @@ export function AccountsOverview() {
                   </bdi>
                 </summary>
                 <ul className="border-t border-border/60 bg-background/30">
-                  {g.items.map((a) => {
-                    const full = assets.data!.assets.find((x) => x.id === a.id);
-                    return (
-                      <li key={a.id}>
-                        <Link
-                          href={`/accounts/${a.id}`}
-                          className="flex min-h-14 items-center gap-3 ps-12 pe-4 hover:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
-                        >
-                          <span
-                            className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground"
-                            aria-hidden
+                  {groupItemsByProvider(g.items).map((entry) => {
+                    if (entry.kind === "item") {
+                      const a = entry.item;
+                      const full = assets.data!.assets.find((x) => x.id === a.id);
+                      return (
+                        <li key={a.id}>
+                          <Link
+                            href={`/accounts/${a.id}`}
+                            className="flex min-h-14 items-center gap-3 ps-12 pe-4 hover:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                           >
-                            {(() => {
-                              const Icon = TYPE_ICON[a.type];
-                              return <Icon className="size-4" />;
-                            })()}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-medium" title={a.name}>
-                              {a.name}
+                            <span
+                              className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground"
+                              aria-hidden
+                            >
+                              {(() => {
+                                const Icon = TYPE_ICON[a.type];
+                                return <Icon className="size-4" />;
+                              })()}
                             </span>
-                            {full && (
-                              <span className="block truncate text-xs text-muted-foreground">
-                                {tInv(`type_${full.type}`)} · {full.currency}
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium" title={a.name}>
+                                {a.name}
                               </span>
-                            )}
-                          </span>
-                          <bdi
-                            data-money
-                            className={`text-sm font-semibold tabular-nums ${a.value < 0 ? "text-expense" : ""}`}
-                          >
-                            {money(a.value)}
-                          </bdi>
-                          <ChevronDown
-                            className="size-4 text-muted-foreground ltr:-rotate-90 rtl:rotate-90"
-                            aria-hidden
-                          />
-                        </Link>
+                              {full && (
+                                <span className="block truncate text-xs text-muted-foreground">
+                                  {tInv(`type_${full.type}`)} · {full.currency}
+                                </span>
+                              )}
+                            </span>
+                            <bdi
+                              data-money
+                              className={`text-sm font-semibold tabular-nums ${a.value < 0 ? "text-expense" : ""}`}
+                            >
+                              {money(a.value)}
+                            </bdi>
+                            <ChevronDown
+                              className="size-4 text-muted-foreground ltr:-rotate-90 rtl:rotate-90"
+                              aria-hidden
+                            />
+                          </Link>
+                        </li>
+                      );
+                    }
+                    const house = INVESTMENT_HOUSES.find((h) => h.id === entry.providerKey);
+                    const houseName =
+                      house?.name[locale === "he" ? "he" : "en"] ?? entry.providerKey;
+                    const stripPrefix = (n: string) =>
+                      n
+                        .replace(/^אקסלנס\s*-\s*/, "")
+                        .replace(new RegExp(`^${houseName}\\s*-\\s*`), "");
+                    return (
+                      <li key={`provider:${entry.providerKey}`}>
+                        <details className="group/prov">
+                          <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 ps-10 pe-4 hover:bg-accent/50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                            <ChevronDown
+                              className="size-4 shrink-0 text-muted-foreground transition-transform group-open/prov:rotate-0 ltr:-rotate-90 rtl:rotate-90 motion-reduce:transition-none"
+                              aria-hidden
+                            />
+                            <span
+                              className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground"
+                              aria-hidden
+                            >
+                              <Landmark className="size-4" />
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                              {houseName}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {t("accountsCount", { count: entry.items.length })}
+                            </span>
+                            <bdi
+                              data-money
+                              className={`text-sm font-semibold tabular-nums ${entry.total < 0 ? "text-expense" : ""}`}
+                            >
+                              {money(entry.total)}
+                            </bdi>
+                          </summary>
+                          <ul className="border-t border-border/40 bg-background/50">
+                            {entry.items.map((a) => {
+                              const full = assets.data!.assets.find((x) => x.id === a.id);
+                              return (
+                                <li key={a.id}>
+                                  <Link
+                                    href={`/accounts/${a.id}`}
+                                    className="flex min-h-13 items-center gap-3 ps-18 pe-4 hover:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                                  >
+                                    <span
+                                      className="grid size-7 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground"
+                                      aria-hidden
+                                    >
+                                      {(() => {
+                                        const Icon = TYPE_ICON[a.type];
+                                        return <Icon className="size-3.5" />;
+                                      })()}
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                      <span
+                                        className="block truncate text-sm font-medium"
+                                        title={a.name}
+                                      >
+                                        {stripPrefix(a.name)}
+                                      </span>
+                                      {full && (
+                                        <span className="block truncate text-xs text-muted-foreground">
+                                          {tInv(`type_${full.type}`)} · {full.currency}
+                                        </span>
+                                      )}
+                                    </span>
+                                    <bdi
+                                      data-money
+                                      className={`text-sm font-semibold tabular-nums ${a.value < 0 ? "text-expense" : ""}`}
+                                    >
+                                      {money(a.value)}
+                                    </bdi>
+                                    <ChevronDown
+                                      className="size-4 text-muted-foreground ltr:-rotate-90 rtl:rotate-90"
+                                      aria-hidden
+                                    />
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </details>
                       </li>
                     );
                   })}
