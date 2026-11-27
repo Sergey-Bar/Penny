@@ -896,7 +896,7 @@ function WhoSpent() {
                 </span>
                 <span className="block h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
                   <span
-                    className="block h-full rounded-full bg-primary"
+                    className="block h-full rounded-full bg-[var(--chart-1)]"
                     style={{ width: `${(r.spent / max) * 100}%` }}
                   />
                 </span>

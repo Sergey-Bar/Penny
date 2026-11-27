@@ -180,7 +180,7 @@ function ModelStatusInner({
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full bg-primary transition-[width,opacity,background-color,color,transform]"
+            className="h-full bg-[var(--chart-1)] transition-[width,opacity,background-color,color,transform]"
             style={{ width: `${percent}%` }}
           />
         </div>
