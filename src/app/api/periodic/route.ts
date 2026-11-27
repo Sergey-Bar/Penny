@@ -10,15 +10,21 @@ import {
 import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
 import { israelToday } from "@/server/lib/date-utils";
 import type { PeriodicPayload } from "@/lib/periodic";
+import { assertCanonicalAmount } from "@/lib/money-contract";
 
 export const dynamic = "force-dynamic";
 
 const bad = (error: string) => NextResponse.json({ error }, { status: 400 });
 const text = (v: unknown, max: number) =>
   typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null;
-const amount = (v: unknown) => {
-  const n = Number(v);
-  return v !== "" && v != null && Number.isFinite(n) && n >= 0 && n < 1e10 ? n : null;
+const amount = (v: unknown): number | null => {
+  if (v === "" || v == null) return null;
+  try {
+    const n = assertCanonicalAmount(v);
+    return n >= 0 ? n : null;
+  } catch {
+    return null;
+  }
 };
 
 export const GET = handle("periodic", async (request: Request) => {

@@ -4,6 +4,7 @@
  */
 export const ERROR_CODES = [
   "bad_json",
+  "bad_money",
   "locked",
   "sync-running",
   "db_busy",

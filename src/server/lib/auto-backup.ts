@@ -8,6 +8,7 @@ import { getGlobalSetting, setGlobalSetting } from "@/server/db/queries/settings
 import { decrypt, encrypt, isKeyLocked } from "@/server/lib/encryption";
 import { createBackup, MIN_PASSPHRASE } from "@/server/lib/portable-backup";
 import { validateDir } from "@/server/lib/legacy-export";
+import { isBackendActive } from "@/server/lib/backend-mode";
 
 /**
  * Off-computer safety: an encrypted .pennybak written on a schedule into a folder the person picks, typically one
@@ -175,6 +176,8 @@ export function initAutoBackupSchedule() {
   if (globalThis.__autoBackupTimer) clearInterval(globalThis.__autoBackupTimer);
   const tick = () => {
     try {
+      // Durable mode: the hourly backup.check job owns local snapshots and portable backups.
+      if (isBackendActive()) return;
       const c = getAutoBackupConfig();
       if (c.enabled && backupDue(c.status === "ok" ? c.lastAt : null, c.frequency)) runAutoBackup();
     } catch (e) {

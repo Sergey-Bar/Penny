@@ -27,9 +27,77 @@ export default defineConfig({
         // The core that must not lose money or data gets its own floor per file, set to the
         // measured value rounded down (a ratchet). The target is 90 lines / 85 branches.
         "src/lib/money.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
+        "src/lib/money-contract.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
+        "src/lib/merchant-normalize.ts": {
+          statements: 100,
+          branches: 83,
+          functions: 100,
+          lines: 100,
+        },
         "src/server/lib/dedup.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
         "src/lib/sync-schedule.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
-        "src/server/sync/**": { statements: 97, branches: 92, functions: 100, lines: 97 },
+        // Sync was one 97/92/100/97 group before the durable backend added jobs, provider health and
+        // post-processing to it. The group floor is now a per-file ratchet at measured values, so a
+        // large new file cannot hide behind a well-covered small one.
+        "src/server/sync/activity.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
+        "src/server/sync/categorize-local.ts": {
+          statements: 96,
+          branches: 93,
+          functions: 100,
+          lines: 100,
+        },
+        "src/server/sync/lock.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
+        "src/server/sync/orchestrator.ts": {
+          statements: 95,
+          branches: 85,
+          functions: 96,
+          lines: 96,
+        },
+        "src/server/sync/otp-bridge.ts": {
+          statements: 100,
+          branches: 92,
+          functions: 100,
+          lines: 100,
+        },
+        "src/server/sync/post-process.ts": {
+          statements: 96,
+          branches: 87,
+          functions: 100,
+          lines: 96,
+        },
+        "src/server/sync/provider-health.ts": {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100,
+        },
+        "src/server/sync/scheduler.ts": {
+          statements: 98,
+          branches: 90,
+          functions: 94,
+          lines: 100,
+        },
+        "src/server/sync/ai-categorize.ts": {
+          statements: 93,
+          branches: 72,
+          functions: 100,
+          lines: 97,
+        },
+        // Import v2: the pure engine is deterministic and must stay well covered. Floors are the
+        // measured ratchet for the new suite; raise them as tests grow (target 100/90).
+        "src/lib/import/**": { statements: 82, branches: 75, functions: 85, lines: 85 },
+        "src/lib/import/classify.ts": { statements: 83, branches: 81, functions: 100, lines: 82 },
+        "src/lib/import/categorize.ts": { statements: 77, branches: 71, functions: 73, lines: 82 },
+        "src/lib/import/dedupe.ts": { statements: 90, branches: 80, functions: 100, lines: 96 },
+        "src/lib/import/normalize.ts": { statements: 84, branches: 78, functions: 100, lines: 88 },
+        "src/lib/import/validate.ts": { statements: 90, branches: 92, functions: 100, lines: 90 },
+        "src/lib/category-keys.ts": { statements: 100, branches: 60, functions: 100, lines: 100 },
+        "src/lib/merchant-dictionary.ts": {
+          statements: 95,
+          branches: 90,
+          functions: 100,
+          lines: 95,
+        },
         "src/server/db/migrate.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },
         // Measured 100 on some runs and 95/87 on most: one branch depends on test timing.
         "src/server/db/backup.ts": { statements: 95, branches: 87, functions: 100, lines: 100 },

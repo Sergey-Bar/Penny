@@ -91,7 +91,6 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.useRealTimers();
-  globalThis.__pennySyncLock = undefined;
 });
 
 const events = () => {

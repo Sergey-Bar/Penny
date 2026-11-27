@@ -90,13 +90,21 @@ describe("withDeadline", () => {
 });
 
 const runs = vi.hoisted(() => ({
-  calls: [] as (number | undefined)[],
-  result: [] as { providers: { ok: boolean; retryable?: boolean; credentialId: number }[] }[],
+  calls: [] as number[],
 }));
 vi.mock("@/server/sync/orchestrator", () => ({
-  runAllWorkspaces: async (credentialId?: number) => {
-    runs.calls.push(credentialId);
-    return runs.result;
+  syncWorkspace: async (workspaceId: number) => {
+    runs.calls.push(workspaceId);
+    return {
+      workspaceId,
+      workspaceName: "Default",
+      providers: [],
+      added: 0,
+      updated: 0,
+      categorized: 0,
+      aiWarning: null,
+      postProcessJobs: [],
+    };
   },
 }));
 
@@ -113,9 +121,9 @@ describe("scheduler", () => {
   });
   beforeEach(() => {
     runs.calls.length = 0;
-    runs.result = [];
     for (const key of ["auto_sync_last_attempt", "auto_sync_retry_ids", "auto_sync_retries"])
       db.getDb().prepare("DELETE FROM settings WHERE key = ?").run(key);
+    db.getDb().prepare("DELETE FROM jobs").run();
   });
 
   it("after an upgrade, waits for the usual time instead of syncing right away", async () => {
@@ -128,31 +136,27 @@ describe("scheduler", () => {
     settings.setGlobalSetting("auto_sync_last_attempt", String(Date.now() - 3 * 24 * HOUR));
     await scheduler.runSchedulerTick();
     await scheduler.runSchedulerTick();
-    expect(runs.calls).toEqual([undefined]);
+    const ws = (db.getDb().prepare("SELECT id FROM workspaces LIMIT 1").get() as { id: number }).id;
+    expect(runs.calls).toEqual([ws]);
   });
 
-  it("retries only the connections that failed transiently", async () => {
+  it("durable mode enqueues jobs instead of running inline", async () => {
     settings.setGlobalSetting("auto_sync_last_attempt", String(Date.now() - 3 * 24 * HOUR));
-    runs.result = [
-      {
-        providers: [
-          { ok: true, credentialId: 1 },
-          { ok: false, retryable: true, credentialId: 2 },
-          { ok: false, credentialId: 3 }, // a wrong password is not tried again
-        ],
-      },
-    ];
+    const ws = (db.getDb().prepare("SELECT id FROM workspaces LIMIT 1").get() as { id: number }).id;
+    settings.setWorkspaceSetting(ws, "backend_v2", "on");
+    db.getDb()
+      .prepare(
+        `INSERT INTO bank_credentials
+           (workspace_id, provider, label, credentials_encrypted, iv, auth_tag)
+         VALUES (?, 'leumi', 'Leumi', X'00', X'00', X'00')`,
+      )
+      .run(ws);
     await scheduler.runSchedulerTick();
-    expect(settings.getGlobalSetting("auto_sync_retry_ids")).toBe("[2]");
-
-    // 16 minutes later the first retry is due.
-    const last = Number(settings.getGlobalSetting("auto_sync_last_attempt"));
-    settings.setGlobalSetting("auto_sync_last_attempt", String(last - 16 * MIN));
-    runs.result = [{ providers: [{ ok: true, credentialId: 2 }] }];
-    await scheduler.runSchedulerTick();
-    expect(runs.calls).toEqual([undefined, 2]);
-    expect(settings.getGlobalSetting("auto_sync_retry_ids")).toBe("[]");
-    expect(settings.getGlobalSetting("auto_sync_retries")).toBe("1");
+    expect(runs.calls).toEqual([]);
+    const job = db.getDb().prepare("SELECT type FROM jobs").get() as { type: string };
+    expect(job.type).toBe("sync.run");
+    settings.setWorkspaceSetting(ws, "backend_v2", "off");
+    db.getDb().prepare("DELETE FROM bank_credentials").run();
   });
 
   it("does nothing when automatic sync is off", async () => {

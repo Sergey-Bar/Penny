@@ -1,4 +1,5 @@
 import { ASSET_TYPES, LIABILITY_TYPES, type AssetInput } from "./types";
+import { assertCanonicalAmount } from "./money-contract";
 
 const TYPES: readonly string[] = [...ASSET_TYPES, ...LIABILITY_TYPES];
 const num = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
@@ -51,6 +52,16 @@ export function parseAssetInput(raw: unknown): AssetInput | string {
                 : null,
           }
         : {};
+  const MONEY_FIELDS = new Set([
+    "manualValue",
+    "costBasis",
+    "costFx",
+    "feeDeposit",
+    "feeBalance",
+    "monthlyDeposit",
+    "monthlyPayment",
+    "purchasePrice",
+  ]);
   for (const [k, v] of Object.entries({
     quantity,
     manualValue,
@@ -62,6 +73,13 @@ export function parseAssetInput(raw: unknown): AssetInput | string {
     if (typeof v === "string") continue;
     if (v !== null && (!Number.isFinite(v) || v < 0))
       return `${k} must be a positive number for ${name}`;
+    if (typeof v === "number" && MONEY_FIELDS.has(k)) {
+      try {
+        assertCanonicalAmount(v);
+      } catch {
+        return `${k} must have at most two decimals for ${name}`;
+      }
+    }
   }
   if (
     (extra.feeDeposit ?? 0) > 10 ||
