@@ -46,6 +46,7 @@ Retention is applied by `maintenance.cleanup`:
 | DELETE | `/api/pip/data` | wipe Pip data with the confirmation phrase |
 | POST | `/api/pip/eval` | admin planner and red-team suite |
 | GET/POST | `/api/pip/kill` | admin kill switch |
+| GET/PUT/DELETE | `/api/remote-access` | remote access settings |
 
 Chat is read-only. A write tool is not registered in Phase 1, and the golden suite fails if a write tool is ever planned.
 
@@ -77,6 +78,7 @@ The suite includes:
 - red-team prompts that must not plan a write;
 - numeric verifier tests;
 - tool schema tests;
+- remote access JWT and normalization tests;
 - translation parity.
 
 `POST /api/pip/eval` runs the planner suite in the current workspace and stores the report. It requires an ops admin.

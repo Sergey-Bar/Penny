@@ -40,7 +40,7 @@
     "test:jobs": "vitest run tests/jobs-queue.test.ts tests/sync-post-process.test.ts tests/scheduler-core.test.ts tests/sync-lock.test.ts tests/sync-schedule.test.ts",
     "test:intelligence": "vitest run tests/intelligence-gate.test.ts tests/merchant-normalize-v2.test.ts",
     "test:ops": "vitest run tests/backend-v2-migration.test.ts tests/integrity.test.ts tests/idempotency.test.ts tests/money-contract.test.ts tests/hourly-backup.test.ts",
-    "test:pip": "vitest run tests/pip-migration.test.ts tests/pip-calculators.test.ts tests/pip-planner.test.ts tests/pip-verifier.test.ts tests/pip-tools.test.ts tests/pip-answers.test.ts tests/pip-messages.test.ts tests/pip-integration.test.ts tests/pip-agent-provider.test.ts tests/pip-route.test.ts",
+    "test:pip": "vitest run tests/pip-migration.test.ts tests/pip-calculators.test.ts tests/pip-planner.test.ts tests/pip-verifier.test.ts tests/pip-tools.test.ts tests/pip-answers.test.ts tests/pip-messages.test.ts tests/pip-integration.test.ts tests/pip-agent-provider.test.ts tests/pip-route.test.ts tests/pip-remote-access.test.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:mutation": "stryker run",

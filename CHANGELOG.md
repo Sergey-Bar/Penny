@@ -22,7 +22,7 @@ One additive database migration (`082_backend_jobs`): durable jobs/attempts, run
 - Shadow mode audits intended post-processing without applying child jobs; rollback is a workspace setting or env change.
 - The hourly snapshot and metric writer never reopen a database that a wipe/restore just closed.
 
-### Pip v2
+### Pip v2 and remote access
 
 One additive migration (`083_pip`): threads, messages, tool calls, explicit memory, provider consent, feedback, briefings, agent runs, approvals and evaluation runs.
 
@@ -31,7 +31,8 @@ One additive migration (`083_pip`): threads, messages, tool calls, explicit memo
 - **Knowledge and calculators** are seeded, versioned and cited. Gross-net, emergency fund, compound growth, loan payoff, mortgage payment, retirement gap and savings-goal calculators are whitelisted.
 - **Proactive briefing** runs daily per enabled workspace, stores an in-app card and sends Telegram when linked. It ranks cash, budget, recurring, fee, anomaly, sync, categorization, pension, insurance and planned facts, and records helpful/not-helpful feedback.
 - **Operations**: agent runs and tool calls are recorded, `/api/ops/status` shows seven-day runs and fallbacks, `/api/pip/eval` runs the planner and red-team suite, and `PENNY_PIP_KILL=1` disables chat and briefings without deleting data.
-- **Docs and guardrails**: strategy docs, the Pip ADR, the Pip runbook, an anonymity check (`npm run check:anonymity`) and a bilingual test suite (`npm run test:pip`).
+- **Remote access** is opt-in: named Cloudflare tunnel with Access JWT verification, or a development-only quick tunnel. Both require the app lock; remote requests fail closed without a valid token.
+- **Docs and guardrails**: strategy docs, ADRs, Pip and remote-access runbooks, an anonymity check (`npm run check:anonymity`) and a bilingual test suite (`npm run test:pip`).
 
 ## [0.6.0] - 2026-11-26
 

@@ -18,6 +18,7 @@ export async function register() {
     folderImport: async () =>
       (await import("@/server/lib/folder-import")).initFolderImportSchedule(),
     autoBackup: async () => (await import("@/server/lib/auto-backup")).initAutoBackupSchedule(),
+    remoteAccess: async () => (await import("@/server/remote-access")).initRemoteAccess(),
     bot: async () => (await import("@/server/bot")).startBot(),
   });
 }

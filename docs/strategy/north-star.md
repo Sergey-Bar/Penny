@@ -11,7 +11,7 @@ Most tools solve the fragmentation by taking custody of the data. Penny takes th
 ## Product principles
 
 1. **Truth before fluency.** A number shown anywhere must come from stored facts. An answer that cannot be traced to a row, a calculation or a cited guide is not an answer.
-2. **Local-first, not local-only.** The core works without an internet connection. Remote access, when added, must be opt-in, authenticated and separately reviewed.
+2. **Local-first, not local-only.** The core works without an internet connection. Remote access is opt-in, authenticated and bounded.
 3. **Calm over engagement.** Penny does not gamify spending, shame the user or manufacture urgency. It shows the next useful action and gets out of the way.
 4. **One place for the whole picture.** Cash flow, budget, goals, assets, pension, insurance, planned items and rights live in one workspace.
 5. **Explain the number.** Every insight has a source, an as-of date, a formula or a citation.
@@ -26,6 +26,7 @@ Most tools solve the fragmentation by taking custody of the data. Penny takes th
 - A question about spending, fees, renewals or affordability has an evidence card, not just a sentence.
 - A bank connection failure is visible before it silently breaks the monthly picture.
 - A user can export everything and delete everything without asking support.
+- Remote access works from a phone without exposing the database to the public internet.
 
 ## Non-goals for the current phase
 
