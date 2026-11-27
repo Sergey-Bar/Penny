@@ -511,16 +511,16 @@ pre, .code { background: var(--code); color: var(--code-ink); border-radius: var
 
 /* Footer */
 footer { border-top: 1px solid var(--line); padding: 56px 0 48px; font-size: 0.92rem; color: var(--ink-2); }
-footer .wrap { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 3fr); gap: 40px 56px; }
+footer .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 4fr); gap: 40px 48px; }
 .foot-brand p { margin: 14px 0 12px; max-width: 22rem; }
-.foot-cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px 24px; }
+.foot-cols { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 32px 24px; }
 .foot-cols h2 { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; color: var(--ink-strong); margin: 0 0 12px; }
 :lang(en) .foot-cols h2 { text-transform: uppercase; }
 .foot-cols ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .foot-cols a { display: inline-flex; align-items: center; min-height: 32px; text-decoration: none; }
 @media (hover: hover) { .foot-cols a:hover { text-decoration: underline; } }
 footer .disclaimer { grid-column: 1 / -1; padding-top: 24px; border-top: 1px solid var(--line); }
-@media (max-width: 900px) { footer .wrap { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) { footer .wrap { grid-template-columns: 1fr; } .foot-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 footer a { color: var(--ink-2); }
 footer a:hover { color: var(--ink); }
@@ -604,3 +604,9 @@ a.feat { display: block; color: inherit; text-decoration: none; }
 .people small { align-self: start; color: var(--ink-2); font-size: 0.86rem; }
 @media (hover: hover) { .people a:hover { border-color: var(--line-strong); } }
 @media (max-width: 560px) { .people a { min-width: 0; width: 100%; } .people li { width: 100%; } }
+
+/* Guides, comparisons and help: cards that are links, and a two-product table */
+a.feat h3 { color: var(--ink-strong); }
+.compare.vs table { min-width: 620px; }
+.compare.vs tbody th { width: 26%; }
+.more-links a + a { margin-inline-start: 0; }
