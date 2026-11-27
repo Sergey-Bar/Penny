@@ -51,5 +51,5 @@ export function savingsType(label: string): SavingsType {
 }
 
 /** The marker kept in the asset's note so a re-sync updates the same asset instead of adding a new one. */
-export const assetKey = (connectionId: number, accountNumber: string) =>
-  `pension:${connectionId}:${accountNumber}`;
+export const assetKey = (fundOrConnectionId: PensionFund | number, accountNumber: string) =>
+  `pension:${fundOrConnectionId}:${accountNumber}`;

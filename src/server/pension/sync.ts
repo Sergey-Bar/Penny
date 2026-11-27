@@ -1,7 +1,10 @@
 import "server-only";
 
+import fs from "node:fs";
+import path from "node:path";
 import type Database from "better-sqlite3";
 import { getDb } from "@/server/db";
+import { dataDir } from "@/server/lib/data-dir";
 import { getWorkspaceSetting, setWorkspaceSetting } from "@/server/db/queries/settings";
 import { encrypt, decrypt } from "@/server/lib/encryption";
 import { redact, redactError, redactKnownSecrets } from "@/server/lib/redact";
@@ -40,17 +43,23 @@ const DEADLINE_MS = 10 * 60_000;
 
 type Scrape = (args: ScrapeArgs) => Promise<ScrapeOutcome>;
 // israeli-pension-scrapers 0.1.0 takes only id/phone and returns plain accounts (no rich fields).
-const library: Scrape = async (args) =>
-  (await import("israeli-pension-scrapers")).scrapePension(args);
+const library: Scrape = async (args) => {
+  const dir = path.join(dataDir(), "pension-debug");
+  fs.mkdirSync(dir, { recursive: true });
+  return (await import("israeli-pension-scrapers")).scrapePension({
+    ...args,
+    screenshotPath: path.join(dir, `${args.fundId}-error.png`),
+  });
+};
 const custom =
-  (fund: "altshuler" | "phoenix" | "excellence"): Scrape =>
+  (fund: "altshuler" | "phoenix" | "excellence" | "harel"): Scrape =>
   async (args) =>
     (await import("./custom-scrapers")).scrapeCustom(fund, args);
 
 /** Which scraper reads each fund. */
 const SCRAPERS: Record<PensionFund, Scrape> = {
   meitav: library,
-  harel: library,
+  harel: custom("harel"),
   migdal: library,
   clal: library,
   menora: library,
@@ -63,37 +72,101 @@ export function savePensionConnection(
   workspaceId: number,
   fundId: PensionFund,
   credentials: PensionCredentials,
-) {
+  options: { id?: number; label?: string } = {},
+): { id: number } {
   const e = encrypt(JSON.stringify(credentials));
-  return getDb()
+  const label = (options.label ?? "").trim();
+  const db = getDb();
+  if (options.id != null) {
+    const res = db
+      .prepare(
+        `UPDATE pension_connections
+         SET label = ?, credentials_encrypted = ?, iv = ?, auth_tag = ?, last_error = NULL,
+             session_encrypted = NULL, session_iv = NULL, session_auth_tag = NULL
+         WHERE id = ? AND workspace_id = ?`,
+      )
+      .run(label, e.encrypted, e.iv, e.authTag, options.id, workspaceId);
+    if (res.changes > 0) return { id: options.id };
+  }
+  return db
     .prepare(
-      `INSERT INTO pension_connections (workspace_id, fund_id, credentials_encrypted, iv, auth_tag) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(workspace_id, fund_id) DO UPDATE SET credentials_encrypted = excluded.credentials_encrypted, iv = excluded.iv, auth_tag = excluded.auth_tag,
-         session_encrypted = NULL, session_iv = NULL, session_auth_tag = NULL
+      `INSERT INTO pension_connections (workspace_id, fund_id, label, credentials_encrypted, iv, auth_tag)
+       VALUES (?, ?, ?, ?, ?, ?)
        RETURNING id`,
     )
-    .get(workspaceId, fundId, e.encrypted, e.iv, e.authTag) as { id: number };
+    .get(workspaceId, fundId, label, e.encrypted, e.iv, e.authTag) as { id: number };
 }
 
 export function listPensionConnections(workspaceId: number) {
   return (
     getDb()
       .prepare(
-        `SELECT id, fund_id as fundId, last_sync_at as lastSyncAt, last_error as lastError FROM pension_connections WHERE workspace_id = ?`,
+        `SELECT id, fund_id as fundId, label, last_sync_at as lastSyncAt, last_error as lastError
+         FROM pension_connections WHERE workspace_id = ? ORDER BY id`,
       )
       .all(workspaceId) as {
       id: number;
       fundId: PensionFund;
+      label: string;
       lastSyncAt: string | null;
       lastError: string | null;
     }[]
   ).map((c) => ({ ...c, ...pensionStatus(c.id) }));
 }
 
-export function deletePensionConnection(workspaceId: number, id: number) {
-  getDb()
-    .prepare(`DELETE FROM pension_connections WHERE id = ? AND workspace_id = ?`)
-    .run(id, workspaceId);
+export function getPensionCredentials(
+  workspaceId: number,
+  id: number,
+): { id: number; fundId: PensionFund; label: string; credentials: PensionCredentials } | null {
+  const row = getDb()
+    .prepare(
+      `SELECT id, fund_id, label, credentials_encrypted, iv, auth_tag
+       FROM pension_connections WHERE id = ? AND workspace_id = ?`,
+    )
+    .get(id, workspaceId) as
+    | (Pick<Row, "id" | "fund_id" | "credentials_encrypted" | "iv" | "auth_tag"> & {
+        label: string;
+      })
+    | undefined;
+  if (!row) return null;
+  const credentials = JSON.parse(
+    decrypt({ encrypted: row.credentials_encrypted, iv: row.iv, authTag: row.auth_tag }),
+  ) as PensionCredentials;
+  return { id: row.id, fundId: row.fund_id, label: row.label, credentials };
+}
+
+export function deletePensionConnection(
+  workspaceId: number,
+  id: number,
+  options: { deleteAssets?: boolean } = {},
+) {
+  const db = getDb();
+  const existing = db
+    .prepare(`SELECT fund_id FROM pension_connections WHERE id = ? AND workspace_id = ?`)
+    .get(id, workspaceId) as { fund_id: PensionFund } | undefined;
+  db.prepare(`DELETE FROM pension_connections WHERE id = ? AND workspace_id = ?`).run(
+    id,
+    workspaceId,
+  );
+  if (options.deleteAssets && existing) {
+    const remaining = (
+      db
+        .prepare(
+          `SELECT COUNT(*) AS n FROM pension_connections WHERE workspace_id = ? AND fund_id = ?`,
+        )
+        .get(workspaceId, existing.fund_id) as { n: number }
+    ).n;
+    db.prepare(`DELETE FROM assets WHERE workspace_id = ? AND (note LIKE ? OR note LIKE ?)`).run(
+      workspaceId,
+      `pension:${existing.fund_id}:${id}:%`,
+      `pension:${id}:%`,
+    );
+    if (remaining === 0) {
+      db.prepare(
+        `DELETE FROM assets WHERE workspace_id = ? AND note LIKE ? AND note NOT GLOB ?`,
+      ).run(workspaceId, `pension:${existing.fund_id}:%`, `pension:${existing.fund_id}:[0-9]*:*`);
+    }
+  }
   status.delete(id);
 }
 
@@ -280,11 +353,28 @@ export function replacePensionAssets(
   workspaceId: number,
   connectionId: number,
   accounts: ScrapedAccount[],
+  _options: { snapshotDate?: string; fxRates?: Record<string, number> } = {},
 ) {
+  const conn = db
+    .prepare(`SELECT fund_id FROM pension_connections WHERE id = ?`)
+    .get(connectionId) as { fund_id: PensionFund } | undefined;
+  const siblingCount = conn
+    ? (
+        db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM pension_connections WHERE workspace_id = ? AND fund_id = ?`,
+          )
+          .get(workspaceId, conn.fund_id) as { n: number }
+      ).n
+    : 1;
+  // When a fund has multiple connections (e.g. family accounts), isolate keys by connectionId too
+  // so one account's sync never overwrites or zeroes another account's holdings.
+  const keyScope: string | number =
+    conn && siblingCount > 1 ? `${conn.fund_id}:${connectionId}` : (conn?.fund_id ?? connectionId);
   const find = db.prepare(`SELECT id FROM assets WHERE workspace_id = ? AND note = ?`);
   // COALESCE keeps what the user typed when a scraper does not provide a field.
   const update = db.prepare(
-    `UPDATE assets SET manual_value = ?, name = ?, currency = ?,
+    `UPDATE assets SET manual_value = ?, name = ?, currency = ?, note = ?,
        quantity = COALESCE(?, quantity),
        cost_basis = COALESCE(?, cost_basis),
        fee_deposit = COALESCE(?, fee_deposit),
@@ -297,7 +387,8 @@ export function replacePensionAssets(
     `INSERT INTO assets (workspace_id, name, type, currency, manual_value, quantity, cost_basis, liquid, is_liability, note, fee_deposit, fee_balance, monthly_deposit, details)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)`,
   );
-  const prefix = assetKey(connectionId, "");
+  const prefix = `pension:${keyScope}:`;
+  const legacyPrefix = conn?.fund_id ? assetKey(connectionId, "") : null;
   const stale = db.prepare(
     `SELECT id, note, EXISTS (SELECT 1 FROM asset_snapshots s WHERE s.asset_id = assets.id) AS hasHistory
      FROM assets WHERE workspace_id = ? AND substr(note, 1, ?) = ?`,
@@ -308,19 +399,25 @@ export function replacePensionAssets(
   db.transaction(() => {
     const keep = new Set<string>();
     for (const a of accounts) {
-      const key = assetKey(connectionId, a.accountNumber);
+      const key = `pension:${keyScope}:${a.accountNumber}`;
       keep.add(key);
       // The library may list a product without a balance: keep it, leave its value as it was.
       if (a.balance == null) continue;
       const name = a.label ?? a.accountNumber;
       const currency = a.currency || "ILS";
       const details = a.details ? JSON.stringify(a.details) : null;
-      const existing = find.get(workspaceId, key) as { id: number } | undefined;
+      const existing =
+        (find.get(workspaceId, key) as { id: number } | undefined) ??
+        (conn?.fund_id
+          ? (find.get(workspaceId, assetKey(connectionId, a.accountNumber)) as
+              { id: number } | undefined)
+          : undefined);
       if (existing) {
         update.run(
           a.balance,
           name,
           currency,
+          key,
           a.quantity ?? null,
           a.costBasis ?? null,
           a.feeDeposit ?? null,
@@ -347,11 +444,20 @@ export function replacePensionAssets(
         );
       }
     }
-    const old = stale.all(workspaceId, prefix.length, prefix) as {
-      id: number;
-      note: string;
-      hasHistory: number;
-    }[];
+    const old = [
+      ...(stale.all(workspaceId, prefix.length, prefix) as {
+        id: number;
+        note: string;
+        hasHistory: number;
+      }[]),
+      ...(legacyPrefix
+        ? (stale.all(workspaceId, legacyPrefix.length, legacyPrefix) as {
+            id: number;
+            note: string;
+            hasHistory: number;
+          }[])
+        : []),
+    ];
     for (const o of old) {
       if (keep.has(o.note)) continue;
       if (o.hasHistory) zero.run(o.id);

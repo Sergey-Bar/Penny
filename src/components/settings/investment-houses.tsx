@@ -4,7 +4,16 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { ExternalLink, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { InfoTip } from "@/components/ui/info-tip";
 import { InstitutionGrid, InstitutionTile } from "@/components/settings/institution-grid";
@@ -17,7 +26,13 @@ import {
   type PensionFund,
 } from "@/lib/pension";
 import { parseSyncError } from "@/lib/sync-errors";
-import { deletePension, listPension, pensionAction, type PensionConnection } from "@/lib/api";
+import {
+  deletePension,
+  getPensionCredentials,
+  listPension,
+  pensionAction,
+  type PensionConnection,
+} from "@/lib/api";
 import { PensionReportImport } from "./pension-report-import";
 
 function formatSyncTime(ts: string, locale: string): string {
@@ -54,7 +69,7 @@ const STEPS: Partial<
 };
 
 /** Investment houses: the wired funds connect and sync balances into assets; the rest are listed as coming soon. */
-export function InvestmentHouses() {
+export function InvestmentHouses({ mode = "all" }: { mode?: "all" | "connected" | "catalog" }) {
   const t = useTranslations("settings.bank");
   const tError = useTranslations("syncErrors");
   // Known sync errors are stored in English; show them in the user's language.
@@ -73,10 +88,17 @@ export function InvestmentHouses() {
         ? 2000
         : false,
   });
-  const [form, setForm] = useState<({ fundId: PensionFund } & Record<LoginField, string>) | null>(
-    null,
-  );
+  const [form, setForm] = useState<
+    | ({
+        connectionId?: number;
+        fundId: PensionFund;
+        label: string;
+        isChild?: boolean;
+      } & Record<LoginField, string>)
+    | null
+  >(null);
   const [codes, setCodes] = useState<Record<number, string>>({});
+  const [confirmDisconnectId, setConfirmDisconnectId] = useState<number | null>(null);
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["pension"] });
     void qc.invalidateQueries({ queryKey: ["assets"] });
@@ -89,9 +111,36 @@ export function InvestmentHouses() {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("pensionFailed")),
   });
-  const byFund = new Map((list.data?.connections ?? []).map((c) => [c.fundId, c]));
-  const otpConnection = (list.data?.connections ?? []).find((c) => c.state === "otp");
+  const connections = list.data?.connections ?? [];
   const editingHouse = form ? INVESTMENT_HOUSES.find((h) => h.id === form.fundId) : null;
+
+  const openEdit = async (c: PensionConnection) => {
+    if (!isPensionFund(c.fundId)) return;
+    try {
+      const res = await getPensionCredentials(c.id);
+      const creds = res.connection.credentials;
+      setForm({
+        connectionId: c.id,
+        fundId: c.fundId,
+        label: res.connection.label ?? "",
+        id: creds.id ?? "",
+        phone: creds.phone ?? "",
+        username: creds.username ?? "",
+        password: creds.password ?? "",
+      });
+    } catch {
+      setForm({
+        connectionId: c.id,
+        fundId: c.fundId,
+        label: c.label ?? "",
+        id: "",
+        phone: "",
+        username: "",
+        password: "",
+      });
+      toast.error(t("pensionFailed"));
+    }
+  };
 
   const runningLine = (step: (typeof STEPS)[string]) =>
     step ? `${t("pensionRunning")} (${t(step)})` : t("pensionRunning");
@@ -104,143 +153,284 @@ export function InvestmentHouses() {
           ? t("lastSync", { time: formatSyncTime(c.lastSyncAt, locale) })
           : t("statusNeverSynced");
 
-  return (
-    <section aria-labelledby="investment-houses" className="space-y-3">
-      <div className="mb-2 flex items-center gap-1 px-4">
-        <h3 id="investment-houses" className="text-sm font-semibold text-muted-foreground">
-          {t("groupInvestment")}
-        </h3>
-        <InfoTip text={t("investmentNote")} />
-      </div>
+  const showConnected = mode === "all" || mode === "connected";
+  const showCatalog = mode === "all" || mode === "catalog";
 
-      <InstitutionGrid>
-        {[...INVESTMENT_HOUSES]
-          .sort((x, y) =>
-            locale === "he"
-              ? x.name.he.localeCompare(y.name.he, "he")
-              : x.name.en.localeCompare(y.name.en, "en"),
-          )
-          .map((h) => {
-            const name = locale === "he" ? h.name.he : h.name.en;
-            const wired = isPensionFund(h.id);
-            const c = byFund.get(h.id);
-            return (
-              <InstitutionTile
-                key={h.id}
-                label={name}
-                color={h.color}
-                domain={h.domain}
-                subline={c ? <span role="status">{statusLine(c)}</span> : undefined}
-              >
-                {!wired ? (
-                  <span className="self-start rounded-full bg-muted px-2.5 py-1 text-caption text-muted-foreground">
-                    {t("comingSoon")}
-                  </span>
-                ) : c ? (
-                  <div className="flex flex-wrap gap-1">
+  if (mode === "connected" && connections.length === 0) return null;
+
+  return (
+    <section
+      aria-labelledby={showCatalog ? "investment-houses" : "investment-houses-connected"}
+      className="space-y-3"
+    >
+      {showCatalog && (
+        <div className="mb-2 flex items-center gap-1 px-4">
+          <h3 id="investment-houses" className="text-sm font-semibold text-muted-foreground">
+            {t("groupInvestment")}
+          </h3>
+          <InfoTip text={t("investmentNote")} />
+        </div>
+      )}
+
+      {showConnected && connections.length > 0 && (
+        <div className="space-y-2">
+          <h3
+            id={showCatalog ? undefined : "investment-houses-connected"}
+            className="px-4 text-sm font-semibold text-muted-foreground"
+          >
+            {locale === "he"
+              ? `בתי השקעות מחוברים · ${connections.length}`
+              : `Connected investment houses · ${connections.length}`}
+          </h3>
+          <InstitutionGrid>
+            {connections.map((c) => {
+              const h = INVESTMENT_HOUSES.find((x) => x.id === c.fundId);
+              if (!h) return null;
+              const houseName = locale === "he" ? h.name.he : h.name.en;
+              const title = c.label ? `${houseName} · ${c.label}` : houseName;
+              return (
+                <InstitutionTile
+                  key={c.id}
+                  label={title}
+                  color={h.color}
+                  domain={h.domain}
+                  subline={<span role="status">{statusLine(c)}</span>}
+                >
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={c.state === "running" || c.state === "otp"}
+                        onClick={() => act.mutate({ sync: c.id })}
+                      >
+                        {t("syncShort")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label={`${t("connect")} · ${title}`}
+                        onClick={() => void openEdit(c)}
+                      >
+                        <Pencil className="size-3.5" aria-hidden />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setConfirmDisconnectId((prev) => (prev === c.id ? null : c.id))
+                        }
+                      >
+                        {t("pensionDisconnect")}
+                      </Button>
+                    </div>
+                    {confirmDisconnectId === c.id && (
+                      <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted/60 p-2 text-xs">
+                        <span className="basis-full text-muted-foreground">
+                          {locale === "he"
+                            ? "למחוק גם את הנכסים המסונכרנים?"
+                            : "Delete synced assets too?"}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => {
+                            setConfirmDisconnectId(null);
+                            void deletePension(c.id, true).then(refresh);
+                          }}
+                        >
+                          {locale === "he" ? "נתק ומחק נכסים" : "Disconnect & delete"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => {
+                            setConfirmDisconnectId(null);
+                            void deletePension(c.id, false).then(refresh);
+                          }}
+                        >
+                          {locale === "he" ? "שמור נכסים" : "Keep assets"}
+                        </Button>
+                      </div>
+                    )}
+                    {c.state === "otp" && (
+                      <form
+                        className="flex items-center gap-1.5"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          act.mutate({ otp: c.id, code: codes[c.id] ?? "" });
+                        }}
+                      >
+                        <Input
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          autoFocus
+                          placeholder={t("pensionCode")}
+                          aria-label={t("pensionCode")}
+                          value={codes[c.id] ?? ""}
+                          onChange={(e) => setCodes({ ...codes, [c.id]: e.target.value })}
+                          required
+                          className="h-8 min-w-0 flex-1 text-xs"
+                        />
+                        <Button type="submit" size="sm" className="h-8 shrink-0 px-2.5 text-xs">
+                          {t("pensionSend")}
+                        </Button>
+                      </form>
+                    )}
+                  </div>
+                </InstitutionTile>
+              );
+            })}
+          </InstitutionGrid>
+        </div>
+      )}
+
+      {showCatalog && (
+        <InstitutionGrid>
+          {[...INVESTMENT_HOUSES]
+            .sort((x, y) =>
+              locale === "he"
+                ? x.name.he.localeCompare(y.name.he, "he")
+                : x.name.en.localeCompare(y.name.en, "en"),
+            )
+            .map((h) => {
+              const name = locale === "he" ? h.name.he : h.name.en;
+              const wired = isPensionFund(h.id);
+              const count = connections.filter((c) => c.fundId === h.id).length;
+              return (
+                <InstitutionTile key={h.id} label={name} color={h.color} domain={h.domain}>
+                  {!wired ? (
+                    <span className="self-start rounded-full bg-muted px-2.5 py-1 text-caption text-muted-foreground">
+                      {t("comingSoon")}
+                    </span>
+                  ) : (
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={c.state === "running" || c.state === "otp"}
-                      onClick={() => act.mutate({ sync: c.id })}
+                      aria-label={`${t("connect")} · ${name}`}
+                      onClick={() => {
+                        if (isPensionFund(h.id)) {
+                          setForm({
+                            fundId: h.id,
+                            label: count > 0 ? `#${count + 1}` : "",
+                            id: "",
+                            phone: "",
+                            username: "",
+                            password: "",
+                          });
+                        }
+                      }}
                     >
-                      {t("syncShort")}
+                      <Plus className="size-3.5" aria-hidden />
+                      {t("connect")}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => void deletePension(c.id).then(refresh)}
-                    >
-                      {t("pensionDisconnect")}
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    aria-label={`${t("connect")} · ${name}`}
-                    onClick={() => {
-                      if (isPensionFund(h.id))
-                        setForm({ fundId: h.id, id: "", phone: "", username: "", password: "" });
-                    }}
+                  )}
+                </InstitutionTile>
+              );
+            })}
+        </InstitutionGrid>
+      )}
+
+      <Dialog
+        open={Boolean(form && editingHouse)}
+        onOpenChange={(open) => {
+          if (!open) setForm(null);
+        }}
+      >
+        {form && editingHouse && (
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {t("connect")} · {locale === "he" ? editingHouse.name.he : editingHouse.name.en}
+              </DialogTitle>
+              <DialogDescription className="flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  {LOGIN_FIELDS[form.fundId].includes("password")
+                    ? t("pensionPasswordHint")
+                    : INTERACTIVE[form.fundId]
+                      ? t("pensionInteractive")
+                      : t("pensionOtpHint")}
+                </span>
+                {editingHouse.domain && (
+                  <a
+                    href={`https://${editingHouse.domain}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    dir="ltr"
                   >
-                    {t("connect")}
-                  </Button>
+                    {editingHouse.domain}
+                    <ExternalLink className="size-3" aria-hidden />
+                  </a>
                 )}
-              </InstitutionTile>
-            );
-          })}
-      </InstitutionGrid>
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              className="grid gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const trimmed = form.label.trim();
+                const finalLabel =
+                  form.isChild && !trimmed.includes("ילד") && !trimmed.toLowerCase().includes("kid")
+                    ? trimmed
+                      ? `${trimmed} (${locale === "he" ? "ילד" : "Child"})`
+                      : locale === "he"
+                        ? "חשבון ילד"
+                        : "Child account"
+                    : trimmed;
+                act.mutate({
+                  ...(form.connectionId != null ? { connectionId: form.connectionId } : {}),
+                  fundId: form.fundId,
+                  label: finalLabel,
+                  ...Object.fromEntries(LOGIN_FIELDS[form.fundId].map((f) => [f, form[f]])),
+                });
+              }}
+            >
+              <label className="grid gap-1 text-xs font-medium">
+                {locale === "he" ? "תווית (אופציונלי)" : "Label (optional)"}
+                <Input
+                  type="text"
+                  placeholder={locale === "he" ? "למשל: שלי / ילד 1" : "e.g. Mine / Kid 1"}
+                  value={form.label}
+                  onChange={(e) => setForm({ ...form, label: e.target.value })}
+                />
+              </label>
+              <label className="flex items-center gap-2 text-xs font-medium">
+                <input
+                  type="checkbox"
+                  checked={Boolean(form.isChild)}
+                  onChange={(e) => setForm({ ...form, isChild: e.target.checked })}
+                  className="size-4 rounded border-border accent-primary"
+                />
+                {locale === "he" ? "חשבון של ילד" : "Child's account"}
+              </label>
+              {LOGIN_FIELDS[form.fundId].map((f) => (
+                <label key={f} className="grid gap-1 text-xs font-medium">
+                  {t(FIELD_INPUTS[f].label)}
+                  <Input
+                    {...FIELD_INPUTS[f].props}
+                    value={form[f]}
+                    onChange={(e) => setForm({ ...form, [f]: e.target.value })}
+                    required
+                  />
+                </label>
+              ))}
+              <DialogFooter className="mt-2">
+                <Button type="button" variant="ghost" onClick={() => setForm(null)}>
+                  {t("pensionCancel")}
+                </Button>
+                <Button type="submit" disabled={act.isPending}>
+                  {t("connect")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        )}
+      </Dialog>
 
-      {/* The login form lives under the grid so the tiles stay one shape. */}
-      {form && editingHouse && (
-        <form
-          className="flex flex-wrap items-end gap-2 rounded-2xl bg-card px-4 py-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            act.mutate({
-              fundId: form.fundId,
-              ...Object.fromEntries(LOGIN_FIELDS[form.fundId].map((f) => [f, form[f]])),
-            });
-          }}
-        >
-          <p className="basis-full text-sm font-medium">
-            {t("connect")} · {locale === "he" ? editingHouse.name.he : editingHouse.name.en}
-          </p>
-          {LOGIN_FIELDS[form.fundId].map((f) => (
-            <label key={f} className="grid gap-1 text-xs">
-              {t(FIELD_INPUTS[f].label)}
-              <Input
-                {...FIELD_INPUTS[f].props}
-                value={form[f]}
-                onChange={(e) => setForm({ ...form, [f]: e.target.value })}
-                required
-                className="w-40"
-              />
-            </label>
-          ))}
-          <Button type="submit" size="sm" disabled={act.isPending}>
-            {t("connect")}
-          </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={() => setForm(null)}>
-            {t("pensionCancel")}
-          </Button>
-          <p className="basis-full text-caption text-muted-foreground">
-            {LOGIN_FIELDS[form.fundId].includes("password")
-              ? t("pensionPasswordHint")
-              : INTERACTIVE[form.fundId]
-                ? t("pensionInteractive")
-                : t("pensionOtpHint")}
-          </p>
-        </form>
-      )}
-
-      {otpConnection && (
-        <form
-          className="flex flex-wrap items-end gap-2 rounded-2xl bg-card px-4 py-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            act.mutate({ otp: otpConnection.id, code: codes[otpConnection.id] ?? "" });
-          }}
-        >
-          <label className="grid gap-1 text-xs">
-            {t("pensionCode")}
-            <Input
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              autoFocus
-              value={codes[otpConnection.id] ?? ""}
-              onChange={(e) => setCodes({ ...codes, [otpConnection.id]: e.target.value })}
-              required
-              className="w-32"
-            />
-          </label>
-          <Button type="submit" size="sm">
-            {t("pensionSend")}
-          </Button>
-        </form>
-      )}
-      <PensionReportImport />
+      {showCatalog && <PensionReportImport />}
     </section>
   );
 }

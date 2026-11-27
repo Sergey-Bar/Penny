@@ -151,14 +151,25 @@ export function AccountDetail({ id }: { id: number }) {
             </p>
           </div>
           {!synced && (
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("edit")}
-              onClick={() => setEditing(true)}
-            >
-              <Pencil aria-hidden />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("edit")}
+                onClick={() => setEditing(true)}
+              >
+                <Pencil aria-hidden />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("delete")}
+                disabled={remove.isPending}
+                onClick={() => remove.mutate()}
+              >
+                <Trash2 aria-hidden />
+              </Button>
+            </div>
           )}
         </header>
         <div

@@ -25,6 +25,23 @@ export const failed = (errorMessage: string): ScrapeOutcome => ({
   errorMessage,
 });
 
+export function parseHarelCards(cards: { name: string; amount: string }[]): ScrapeOutcome {
+  const accounts: ScrapedAccount[] = [];
+  for (const c of cards) {
+    const parsed = parseMoney(c.amount);
+    if (!parsed || parsed.amount <= 0) continue;
+    const name = c.name.trim() || "הראל";
+    accounts.push({
+      accountNumber: name,
+      label: `הראל - ${name}`,
+      balance: parsed.amount,
+      currency: parsed.currency,
+      transactions: [],
+    });
+  }
+  return accounts.length > 0 ? { success: true, accounts } : failed(SYNC_ERRORS.pensionNoData);
+}
+
 /** `₪ 1,234.50`, `-$500`, `(500 ₪)` -> amount and currency, or null when there is no number. */
 export function parseMoney(text: string): { amount: number; currency: string } | null {
   const amount = parseAmount(text);

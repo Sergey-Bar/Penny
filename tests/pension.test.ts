@@ -6,6 +6,7 @@ import {
   parseAltshulerCards,
   parseExcellenceCash,
   parseExcellenceRows,
+  parseHarelCards,
   parseMoney,
   parsePhoenixCards,
 } from "@/server/pension/parsers";
@@ -29,6 +30,7 @@ describe("pension helpers", () => {
     expect(INTERACTIVE.excellence).toBe(false);
   });
   it("builds a stable asset key", () => {
+    expect(assetKey("excellence", "123")).toBe("pension:excellence:123");
     expect(assetKey(3, "123")).toBe("pension:3:123");
   });
 });
@@ -223,5 +225,15 @@ describe("Excellence Trade export", () => {
   it("reads the cash balance from the top bar", () => {
     expect(parseExcellenceCash("שווי תיק ₪ 100,000.50 יתרה לפעילות ₪ 1,500.25")).toBe(1500.25);
     expect(parseExcellenceCash("שווי תיק ₪ 100")).toBeNull();
+  });
+  it("parses Harel pension and study-fund tiles", () => {
+    const out = parseHarelCards([
+      { name: "קרנות פנסיה", amount: "₪ 100,000" },
+      { name: "השתלמות", amount: "₪ 20,000" },
+    ]);
+    expect(out.success).toBe(true);
+    expect(out.accounts).toHaveLength(2);
+    expect(out.accounts[0]).toMatchObject({ label: "הראל - קרנות פנסיה", balance: 100000 });
+    expect(out.accounts[1]).toMatchObject({ label: "הראל - השתלמות", balance: 20000 });
   });
 });
