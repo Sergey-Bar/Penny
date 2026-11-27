@@ -7,8 +7,9 @@ import {
   CompanyTypes as ForkCompanyTypes,
   createScraper as createForkScraper,
 } from "@sergienko4/israeli-bank-scrapers";
-import type { ScrapeResult } from "./types";
-import { toScrapeResult } from "./result";
+import type { ScrapeResult, ScrapedSecurity } from "./types";
+import { toScrapeResult, type RawScrapeResult } from "./result";
+import { scrapeHapoalimSecurities } from "./hapoalim-securities";
 import { usesScraperFork } from "./select";
 import { preparePage } from "./user-agent";
 import { SYNC_ERRORS } from "@/lib/sync-errors";
@@ -133,7 +134,7 @@ async function runScrape(
   if (pennyEnv("DISABLE_CHROMIUM_SANDBOX") === "1") {
     chromiumArgs.push("--no-sandbox");
   }
-  // Egress allowlist (docker/egress/compose.yml): the browser reaches the internet only through the proxy.
+  // Egress allowlist (docker-compose.egress.yml): the browser reaches the internet only through the proxy.
   const proxy = process.env.HTTPS_PROXY ?? process.env.https_proxy;
   if (proxy) chromiumArgs.push(`--proxy-server=${proxy}`);
 
@@ -151,23 +152,42 @@ async function runScrape(
 
   // The fork is browserless and drives the bank APIs directly, so it has no browser
   // or installments options; it takes a whole-run deadline instead of a page timeout.
-  const result = forkCompany
-    ? await createForkScraper({
-        companyId: forkCompany,
-        startDate,
-        deadlineMs: 60000,
-      }).scrape(credentials as never)
-    : await createScraper({
-        companyId,
-        startDate,
-        combineInstallments: false,
-        showBrowser,
-        // Verbose logs include URLs and posted payloads (incl. credentials), so never enable them.
-        verbose: false,
-        timeout: 60000,
-        args: chromiumArgs,
-        preparePage,
-      }).scrape(credentials as never);
+  let securities: ScrapedSecurity[] | undefined;
+  let result;
+  if (forkCompany) {
+    result = await createForkScraper({
+      companyId: forkCompany,
+      startDate,
+      deadlineMs: 60000,
+    }).scrape(credentials as never);
+  } else {
+    const scraper = createScraper({
+      companyId,
+      startDate,
+      combineInstallments: false,
+      showBrowser,
+      // Verbose logs include URLs and posted payloads (incl. credentials), so never enable them.
+      verbose: false,
+      timeout: 60000,
+      args: chromiumArgs,
+      preparePage,
+    });
+    if (provider === "hapoalim") {
+      const s = scraper as unknown as {
+        page?: Parameters<typeof scrapeHapoalimSecurities>[0];
+        fetchData: () => Promise<RawScrapeResult>;
+      };
+      const origFetchData = s.fetchData.bind(s);
+      s.fetchData = async () => {
+        const res = await origFetchData();
+        if (res.success && s.page) {
+          securities = await scrapeHapoalimSecurities(s.page);
+        }
+        return res;
+      };
+    }
+    result = await scraper.scrape(credentials as never);
+  }
 
   if (!result.success) {
     const errorType = result.errorType ?? "GENERIC";
@@ -183,6 +203,7 @@ async function runScrape(
   }
 
   const mapped = toScrapeResult(result);
+  if (securities) mapped.securities = securities;
   const txnCount = mapped.accounts.reduce((sum, a) => sum + a.transactions.length, 0);
   console.log(
     `[scraper] ${mapped.success ? "success" : "rejected"}: ${mapped.accounts.length} account(s), ${txnCount} transaction(s)`,
