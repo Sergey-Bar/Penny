@@ -88,7 +88,13 @@ describe("proxy: remote access", () => {
 
   it("refuses a tampered token", () => {
     const valid = token();
-    const tampered = `${valid.slice(0, -2)}aa`;
+    const [header, payload, signature] = valid.split(".");
+    const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as Record<
+      string,
+      unknown
+    >;
+    claims.sub = "tampered";
+    const tampered = `${header}.${Buffer.from(JSON.stringify(claims)).toString("base64url")}.${signature}`;
     expect(proxy(remoteReq({ "cf-access-jwt-assertion": tampered })).status).toBe(403);
   });
 

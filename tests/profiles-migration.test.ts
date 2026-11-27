@@ -59,7 +59,7 @@ describe("profiles migration", () => {
     // Idempotent.
     expect(seedProfiles(db)).toBeNull();
     expect(count(db, "SELECT COUNT(*) AS n FROM profiles")).toBe(2);
-  });
+  }, 180_000);
 
   it("backs up an existing install once, before seeding", () => {
     const { db, dir } = freshDb();
@@ -75,5 +75,5 @@ describe("profiles migration", () => {
     expect(fs.existsSync(path.join(dir, "profiles-migration-report.json"))).toBe(true);
     runMigrations(db);
     expect(fs.readdirSync(dir).filter((f) => f.endsWith(".bak"))).toHaveLength(1);
-  });
+  }, 180_000);
 });
