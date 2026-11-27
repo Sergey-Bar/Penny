@@ -81,7 +81,8 @@ const saveLang = (v) => {
 };
 const markLang = (v) => {
   for (const b of document.querySelectorAll("[data-lang-control] [data-lang]"))
-    b.dataset.lang === v ? b.setAttribute("aria-current", "true") : b.removeAttribute("aria-current");
+    if (b.dataset.lang === v) b.setAttribute("aria-current", "true");
+    else b.removeAttribute("aria-current");
 };
 let savedLang = null;
 try { savedLang = localStorage.getItem(LANG); } catch {}

@@ -2,7 +2,7 @@
 // browser isn't set to this page's language is sent to the same page in the other one. site.js wires the control.
 (function () {
   var here = document.documentElement.lang, pick = null;
-  try { pick = localStorage.getItem("penny.site.lang"); } catch (e) {}
+  try { pick = localStorage.getItem("penny.site.lang"); } catch (_e) { /* storage blocked: fall through to Auto */ }
   if (pick !== "he" && pick !== "en") {
     if (/bot|crawl|spider|lighthouse|preview/i.test(navigator.userAgent)) return; // crawlers index each language as served
     pick = (navigator.languages || [navigator.language || ""]).some(function (l) { return /^(he|iw)\b/i.test(l); }) ? "he" : "en";
