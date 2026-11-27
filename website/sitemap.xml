@@ -38,4 +38,64 @@
   </url>
   <url><loc>https://sergey-bar.github.io/Penny/demo/</loc></url>
   <url><loc>https://sergey-bar.github.io/Penny/en/demo/</loc></url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-bank-sync.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-bank-sync.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-bank-sync.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-bank-sync.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-bank-sync.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-bank-sync.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-import-files.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-import-files.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-import-files.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-import-files.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-import-files.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-import-files.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-budgeting.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-budgeting.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-budgeting.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-budgeting.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-budgeting.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-budgeting.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-pension-savings.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-pension-savings.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-pension-savings.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-pension-savings.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-pension-savings.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-pension-savings.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-telegram-bot.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-telegram-bot.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-telegram-bot.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-telegram-bot.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-telegram-bot.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-telegram-bot.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/feature-privacy-security.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-privacy-security.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-privacy-security.html"/>
+  </url>
+  <url>
+    <loc>https://sergey-bar.github.io/Penny/en/feature-privacy-security.html</loc>
+    <xhtml:link rel="alternate" hreflang="he" href="https://sergey-bar.github.io/Penny/feature-privacy-security.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sergey-bar.github.io/Penny/en/feature-privacy-security.html"/>
+  </url>
 </urlset>

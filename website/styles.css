@@ -580,3 +580,27 @@ footer .disclaimer { flex-basis: 100%; font-size: 0.84rem; margin: 0; }
 /* Install page */
 .reqs { margin-top: 44px; }
 .closing.tint { border-block-end: 0; }
+
+/* ---------- A single feature page: numbered sections, good to know, questions, related ---------- */
+.crumbs { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.9rem; color: var(--ink-2); margin-bottom: 18px; }
+.crumbs a { color: var(--ink-2); }
+.step { padding: 80px 0; }
+.num { display: block; font-size: 0.9rem; font-weight: 650; letter-spacing: 0.08em; color: var(--link); margin-bottom: 10px; }
+.narrow > * { max-width: 46rem; }
+.narrow h2 { font-size: clamp(1.9rem, 3.6vw, 2.8rem); line-height: 1.12; letter-spacing: -0.02em; font-weight: 680; margin: 0 0 14px; }
+.narrow .copy > p { color: var(--ink-2); font-size: 1.1rem; margin: 0; }
+.step .chips, .step .houses { margin-top: 24px; }
+.tint .chips li { background: var(--paper); }
+.feat-more { display: inline-flex; gap: 6px; margin-top: 18px; font-weight: 500; color: var(--link); text-decoration: none; }
+a.feat { display: block; color: inherit; text-decoration: none; }
+@media (hover: hover) { .feat-more:hover { text-decoration: underline; } a.feat:hover { border-color: var(--line-strong); } }
+@media (max-width: 760px) { .step { padding: 56px 0; } }
+
+/* ---------- Contributors: the people behind the project, read live from GitHub ---------- */
+.people { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px; }
+.people a { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 14px; min-width: 240px; padding: 14px 20px 14px 14px; border-radius: var(--radius-m); background: var(--surface); border: 1px solid var(--line); color: inherit; text-decoration: none; }
+.people img { grid-row: span 2; width: 64px; height: 64px; border-radius: 50%; background: var(--accent-soft); }
+.people b { align-self: end; font-weight: 620; color: var(--ink-strong); }
+.people small { align-self: start; color: var(--ink-2); font-size: 0.86rem; }
+@media (hover: hover) { .people a:hover { border-color: var(--line-strong); } }
+@media (max-width: 560px) { .people a { min-width: 0; width: 100%; } .people li { width: 100%; } }
