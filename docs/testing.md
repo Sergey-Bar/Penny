@@ -47,6 +47,26 @@ scope (`SKIP` lists each with its reason). Routes that leave the
 machine (bank scrapers, AI providers, market quotes) or need a real Next request scope are
 listed with the reason in the test's `SKIP` table.
 
+## Pip
+
+```bash
+npm run test:pip
+npm run check:anonymity
+```
+
+The Pip suite has ten files:
+
+- `pip-migration.test.ts` applies 083 to a real database and checks every table, foreign key, cascade and the briefing uniqueness.
+- `pip-calculators.test.ts` compares each whitelisted calculator with the shared library helper.
+- `pip-planner.test.ts` runs the bilingual golden set and the red-team prompts; a planned write fails the suite.
+- `pip-verifier.test.ts` proves that an invented amount or percentage is rejected and that dates and years are not mistaken for amounts.
+- `pip-tools.test.ts` checks the read/memory tool boundary, input/output schemas and citations.
+- `pip-answers.test.ts` checks the deterministic bilingual answer and briefing text.
+- `pip-messages.test.ts` checks Hebrew and English key parity.
+- `pip-integration.test.ts` runs a real agent turn against a real SQLite database, then checks memory, feedback, briefing, export, wipe and every read tool.
+- `pip-agent-provider.test.ts` mocks the provider: an invented amount is rejected and the deterministic answer is used; a verified amount is recorded with the provider.
+- `pip-route.test.ts` calls the chat handler with a real request and checks the SSE events, the thread list and the kill switch.
+
 ## Running
 
 ```bash

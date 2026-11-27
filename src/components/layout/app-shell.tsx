@@ -23,6 +23,7 @@ import { PetMini } from "@/components/home/pet-card";
 import { PipLife } from "@/components/home/pip-life";
 import { SectionTabs } from "./section-tabs";
 import { AnalyticsNav } from "@/components/analytics/analytics-nav";
+import { PipDock } from "@/components/pip/pip-dock";
 
 /** Lives in the root layout so the collapsed state survives page changes. */
 export function SidebarRoot({
@@ -82,6 +83,7 @@ export function PersistentShell({ children }: { children: ReactNode }) {
           <PageWheelNav />
         </Suspense>
         <AlertNotifier />
+        <PipDock />
         <BottomBar />
         <PrivacyHotkey />
         <PipLife />

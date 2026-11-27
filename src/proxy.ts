@@ -31,10 +31,15 @@ const HOSTED_DEMO_BLOCKED =
   /^\/api\/(lock|data|backup|access|profiles|workspaces|device-tokens|quick-add|lan|import\/folder|legacy|telegram|setup\/(bank|ai))(\/|$)/;
 
 export function proxy(request: NextRequest) {
+  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
+  const finish = (response: NextResponse): NextResponse => {
+    response.headers.set("X-Request-Id", requestId);
+    return response;
+  };
   // Every request, page or API, must be addressed to localhost (blocks DNS rebinding).
   // Phone access admits private LAN hosts, but only while the app lock guards every request.
   if (!isAllowedHost(request.headers.get("host"), undefined, isLanEnabled() && isLockEnabled())) {
-    return new NextResponse("Forbidden: unexpected host", { status: 403 });
+    return finish(new NextResponse("Forbidden: unexpected host", { status: 403 }));
   }
   // The public demo is shared by every visitor: nothing may lock it, wipe it or change who can use it.
   if (
@@ -42,7 +47,7 @@ export function proxy(request: NextRequest) {
     request.method !== "GET" &&
     HOSTED_DEMO_BLOCKED.test(request.nextUrl.pathname)
   )
-    return NextResponse.json({ error: DEMO_BLOCKED_MESSAGE }, { status: 403 });
+    return finish(NextResponse.json({ error: DEMO_BLOCKED_MESSAGE }, { status: 403 }));
 
   // Phone quick-add: a bearer device token (checked by the route) replaces the session cookie and Origin.
   // A browser cannot attach that header cross-origin without a CORS preflight, which is never answered.
@@ -54,7 +59,7 @@ export function proxy(request: NextRequest) {
       fetchSite === "cross-site" ||
       fetchSite === "same-site"
     )
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+      return finish(NextResponse.json({ error: "unauthorized" }, { status: 401 }));
     const headers = new Headers(request.headers);
     headers.delete("x-workspace-id"); // the token decides the workspace
     headers.delete("cookie");
@@ -62,9 +67,10 @@ export function proxy(request: NextRequest) {
   }
 
   const locked = lockGate(request);
-  if (locked) return locked;
+  if (locked) return finish(locked);
 
   const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
   const path = request.nextUrl.pathname;
   const staticAsset =
     !path.startsWith("/api/") && (path.startsWith("/_next/") || /\.[a-z0-9]+$/i.test(path));
@@ -75,13 +81,14 @@ export function proxy(request: NextRequest) {
     path !== "/lock" &&
     path !== "/api/lock/unlock" &&
     path !== "/api/health" &&
+    path !== "/api/health/ready" &&
     // Last, so /api/health answers even when the database cannot open.
     accessEnabled()
   ) {
     const user = currentUser(request);
     if (!user)
       return path.startsWith("/api/")
-        ? NextResponse.json({ error: "sign-in-required" }, { status: 401 })
+        ? finish(NextResponse.json({ error: "sign-in-required" }, { status: 401 }))
         : NextResponse.redirect(new URL("/access", request.url));
     if (path.startsWith("/api/")) {
       const raw = request.headers.get("x-workspace-id");
@@ -92,26 +99,26 @@ export function proxy(request: NextRequest) {
         path !== "/api/workspaces" &&
         (!role || !allowedMemberRoute(path, request.method, role))
       )
-        return NextResponse.json({ error: "workspace-access-denied" }, { status: 403 });
+        return finish(NextResponse.json({ error: "workspace-access-denied" }, { status: 403 }));
       if (!user.isAdmin && path === "/api/workspaces" && request.method !== "GET")
-        return NextResponse.json({ error: "owner-required" }, { status: 403 });
+        return finish(NextResponse.json({ error: "owner-required" }, { status: 403 }));
       if (ws) requestHeaders.set("x-workspace-id", String(ws));
     }
   }
 
   if (!request.nextUrl.pathname.startsWith("/api/")) {
-    return NextResponse.next({ request: { headers: requestHeaders } });
+    return finish(NextResponse.next({ request: { headers: requestHeaders } }));
   }
 
   // Browsers mark requests from other sites; no API call, read or write, should come from one.
   // ("same-site" covers sibling hosts such as other *.localhost apps.)
   const fetchSite = request.headers.get("sec-fetch-site");
   if (fetchSite === "cross-site" || fetchSite === "same-site") {
-    return new NextResponse("Forbidden: cross-site request blocked", { status: 403 });
+    return finish(new NextResponse("Forbidden: cross-site request blocked", { status: 403 }));
   }
 
   if (!MUTATING_METHODS.has(request.method) && !ORIGIN_CHECKED_GETS.has(request.nextUrl.pathname)) {
-    return NextResponse.next({ request: { headers: requestHeaders } });
+    return finish(NextResponse.next({ request: { headers: requestHeaders } }));
   }
 
   // SSE streams use POST too (sync), but they're still subject to the
@@ -125,9 +132,11 @@ export function proxy(request: NextRequest) {
   // Reject requests with no origin AND no referer (suspicious for a
   // mutating call from a browser context).
   if (!origin && !referer) {
-    return new NextResponse("Forbidden: missing origin/referer", {
-      status: 403,
-    });
+    return finish(
+      new NextResponse("Forbidden: missing origin/referer", {
+        status: 403,
+      }),
+    );
   }
 
   const allowed = (value: string | null): boolean => {
@@ -141,21 +150,25 @@ export function proxy(request: NextRequest) {
   };
 
   if (origin && !allowed(origin)) {
-    return new NextResponse("Forbidden: cross-origin request blocked", {
-      status: 403,
-    });
+    return finish(
+      new NextResponse("Forbidden: cross-origin request blocked", {
+        status: 403,
+      }),
+    );
   }
   if (!origin && referer && !allowed(referer)) {
-    return new NextResponse("Forbidden: cross-origin referer", {
-      status: 403,
-    });
+    return finish(
+      new NextResponse("Forbidden: cross-origin referer", {
+        status: 403,
+      }),
+    );
   }
 
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  return finish(NextResponse.next({ request: { headers: requestHeaders } }));
 }
 
 // Reachable without a session: the lock screen, its API, the health probe, and static files.
-const LOCK_OPEN = new Set(["/lock", "/api/lock/unlock", "/api/health"]);
+const LOCK_OPEN = new Set(["/lock", "/api/lock/unlock", "/api/health", "/api/health/ready"]);
 const isStatic = (p: string) =>
   !p.startsWith("/api/") && (p.startsWith("/_next/") || /\.[a-z0-9]+$/i.test(p));
 

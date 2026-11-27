@@ -17,7 +17,7 @@ Nothing leaves your machine except the calls you choose: to your bank, and to an
 - **Couples and families** who share money, each with their own profile.
 - **Hebrew speakers first** (full right-to-left), with a complete English interface too.
 
-It is a poor fit if you want a cloud service you can reach from anywhere, or bookkeeping for a business.
+It is a poor fit if you want a fully hosted multi-tenant service, or bookkeeping for a business.
 
 ## Everyday money
 
@@ -46,6 +46,18 @@ More than 25 calculators and guided tools, ordered by life stage, each marked wi
 | Everyday | Bank fee audit against the basic track, debt payoff, loan cost, savings goals, vacation budget, kids' investing |
 
 Plus a **knowledge center** of short original guides in Hebrew and English, and daily tips.
+
+## Pip, the household assistant
+
+Pip has two layers. The companion keeps its mood and care list. The assistant answers questions from the household's own data, and is off until `pip_v2` is enabled.
+
+- **Ask in plain words** from the global dock or `/ask`: affordability, spending changes, subscriptions, fees, pension, insurance, income stability, planned charges, syncing and what-if calculations.
+- **Every answer has evidence.** The panel shows the tools used, the as-of date, the source ids and a "what Pip sees" disclosure. Knowledge answers carry a version and a citation.
+- **Deterministic by default.** Without a model, Pip answers from the tool results. A configured provider can phrase the answer only after consent and only if every number matches the evidence.
+- **Read-only.** Chat cannot change a transaction, move money or send an email. The tool registry has no write action.
+- **Explicit memory.** A preference, goal or constraint is saved only when the user saves it, and can be read or deleted.
+- **Daily briefing.** A short in-app card ranks the few things worth attention. Telegram delivery is optional.
+- **Fail closed.** `PENNY_PIP_KILL=1` disables chat and briefings without deleting anything.
 
 ## Household
 
@@ -167,4 +179,6 @@ flowchart LR
 - [x] Windows self-update, and a clickable demo on the website
 - [x] OFX export
 - [x] Automatic encrypted backup to a cloud folder, and a support file for bug reports
+- [x] Pip assistant with evidence, deterministic fallback, explicit memory and a daily briefing
+- [ ] Provider-chosen tools after the golden suite proves selection quality
 - [ ] Native mobile companion

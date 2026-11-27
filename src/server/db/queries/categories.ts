@@ -6,7 +6,7 @@ import { getDb } from "../index";
 import type { Category, CategoryKind, CostType, NeedType } from "@/lib/types";
 
 const CATEGORY_COLUMNS =
-  "id, parent_id as parentId, name, color, icon, kind, budget_mode as budgetMode, description, need_type as needType, cost_type as costType";
+  "id, parent_id as parentId, name, key, color, icon, kind, budget_mode as budgetMode, description, need_type as needType, cost_type as costType";
 
 export function getAllCategories(
   workspaceId: number,
@@ -265,6 +265,7 @@ export function createParentCategory(
     id: Number(result.lastInsertRowid),
     parentId,
     name: trimmed,
+    key: null,
     color,
     icon,
     kind: input.kind,
@@ -360,6 +361,7 @@ export function ensureCategory(
     id: Number(result.lastInsertRowid),
     parentId,
     name: trimmed,
+    key: null,
     color,
     icon,
     kind,

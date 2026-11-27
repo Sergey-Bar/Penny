@@ -18,15 +18,35 @@ export function createSyncRun(
   return Number(result.lastInsertRowid);
 }
 
-export function completeSyncRun(id: number, added: number, updated: number): void {
+export function completeSyncRun(
+  id: number,
+  added: number,
+  updated: number,
+  postProcessing: "pending" | "completed" = "completed",
+): void {
   getDb()
     .prepare(
       `UPDATE sync_runs
        SET status = 'completed', completed_at = datetime('now'),
-           transactions_added = ?, transactions_updated = ?
+           transactions_added = ?, transactions_updated = ?,
+           post_processing_status = ?
        WHERE id = ?`,
     )
-    .run(added, updated, id);
+    .run(added, updated, postProcessing, id);
+}
+
+export function markSyncPostProcessing(
+  id: number,
+  status: "pending" | "running" | "completed" | "failed",
+  errorCode?: string | null,
+): void {
+  getDb()
+    .prepare(
+      `UPDATE sync_runs
+       SET post_processing_status = ?, post_processing_error_code = ?
+       WHERE id = ?`,
+    )
+    .run(status, errorCode ?? null, id);
 }
 
 export function failSyncRun(id: number, errorMessage: string): void {

@@ -1,12 +1,17 @@
 import "server-only";
 
-import { runAllWorkspaces, type WorkspaceSummary } from "@/server/sync/orchestrator";
+import { syncWorkspace, type WorkspaceSummary } from "@/server/sync/orchestrator";
 import { SyncBusyError, tryAcquireSync } from "@/server/sync/lock";
 import { getGlobalSetting, setGlobalSetting } from "@/server/db/queries/settings";
 import { failInterruptedSyncRuns, latestSyncStartMs } from "@/server/db/queries/sync-runs";
+import { listBankCredentials } from "@/server/db/queries/bank-credentials";
 import { redactError } from "@/server/lib/redact";
 import { isKeyLocked } from "@/server/lib/encryption";
 import { isDemoMode } from "@/server/demo/mode";
+import { getBackendMode } from "@/server/lib/backend-mode";
+import { enqueueJob } from "@/server/jobs/queue";
+import { listAllWorkspaceIds } from "@/server/lib/workspace-context";
+import { israelToday } from "@/server/lib/date-utils";
 import { dueRun, msUntilNextSlot, type ScheduleState } from "@/lib/sync-schedule";
 
 interface SchedulerState {
@@ -51,26 +56,17 @@ function readSettings(): { enabled: boolean; time: string } {
   return { enabled, time: safeTime };
 }
 
-function retryIds(): number[] {
-  try {
-    const ids: unknown = JSON.parse(getGlobalSetting(RETRY_IDS) ?? "[]");
-    return Array.isArray(ids) ? ids.filter((id): id is number => Number.isInteger(id)) : [];
-  } catch {
-    // An unreadable list means nothing to retry; the next daily run covers every connection anyway.
-    return [];
-  }
-}
-
 function readSchedule(): ScheduleState {
   const last = Number(getGlobalSetting(LAST_ATTEMPT));
+  // Jobs own retries now; there is no scheduler retry pass.
   return {
     lastAttemptMs: Number.isFinite(last) && last > 0 ? last : null,
-    retryPending: retryIds().length > 0,
-    retries: Number(getGlobalSetting(RETRIES)) || 0,
+    retryPending: false,
+    retries: 0,
   };
 }
 
-/** Connections that failed for a reason worth trying again today (network, a slow site), not a wrong password. */
+/** Kept for callers/tests that classify provider failures; the scheduler no longer stores retry ids. */
 export function retryableFailures(summaries: WorkspaceSummary[]): number[] {
   return summaries.flatMap((w) =>
     w.providers.filter((p) => !p.ok && p.retryable).map((p) => p.credentialId),
@@ -96,29 +92,49 @@ async function tick(): Promise<void> {
 
   state.running = true;
   const startedAt = Date.now();
-  const ids = due === "retry" ? retryIds() : [];
   console.log(`[scheduler] running (${due})`);
   try {
-    const summaries: WorkspaceSummary[] = [];
-    if (due === "full")
-      summaries.push(...(await runAllWorkspaces(undefined, undefined, "scheduled")));
-    // A retry logs in only to the connections that failed, not to the ones that already synced today.
-    else {
-      // One lock for the whole pass, so a manual sync cannot slip in between and the pass counts once.
+    const workspaceIds = listAllWorkspaceIds();
+    const inlineWorkspaces: number[] = [];
+    let enqueued = 0;
+
+    for (const workspaceId of workspaceIds) {
+      const mode = getBackendMode(workspaceId);
+      if (mode === "on") {
+        // Durable mode: one job per credential; the jobs own their retries and post-processing.
+        for (const credential of listBankCredentials(workspaceId)) {
+          enqueueJob({
+            workspaceId,
+            type: "sync.run",
+            payload: { workspaceId, credentialId: credential.id },
+            idempotencyKey: `sync.run:${credential.id}:${israelToday()}`,
+          });
+          enqueued++;
+        }
+      } else {
+        inlineWorkspaces.push(workspaceId);
+      }
+    }
+
+    if (inlineWorkspaces.length > 0) {
       const release = tryAcquireSync("scheduled");
       if (!release) throw new SyncBusyError();
       try {
-        for (const id of ids)
-          summaries.push(
-            ...(await runAllWorkspaces(id, undefined, "scheduled", { lockHeld: true })),
-          );
+        for (const workspaceId of inlineWorkspaces) {
+          const mode = getBackendMode(workspaceId);
+          await syncWorkspace(workspaceId, undefined, () => {}, false, {
+            mode: mode === "shadow" ? "shadow" : "inline",
+          });
+        }
       } finally {
         release();
       }
     }
+
     setGlobalSetting(LAST_ATTEMPT, String(startedAt));
-    setGlobalSetting(RETRY_IDS, JSON.stringify(retryableFailures(summaries)));
-    setGlobalSetting(RETRIES, due === "full" ? "0" : String(readSchedule().retries + 1));
+    setGlobalSetting(RETRY_IDS, "[]");
+    setGlobalSetting(RETRIES, "0");
+    if (enqueued > 0) console.log(`[scheduler] enqueued ${enqueued} sync job(s)`);
     console.log("[scheduler] done");
   } catch (err) {
     // A manual sync is running: nothing is recorded, so the next tick tries again.
@@ -129,6 +145,7 @@ async function tick(): Promise<void> {
       // Recorded as an attempt, or a failure that repeats would retry every minute.
       setGlobalSetting(LAST_ATTEMPT, String(startedAt));
       setGlobalSetting(RETRY_IDS, "[]");
+      setGlobalSetting(RETRIES, "0");
     }
   } finally {
     state.running = false;
