@@ -6,7 +6,7 @@ import { runAllWorkspaces, syncWorkspace, type WorkspaceSummary } from "@/server
 import { getWorkspaceIdFromRequest, hasWorkspaceHeader } from "@/server/lib/workspace-context";
 import { cancelOtpRequest } from "@/server/sync/otp-bridge";
 import { markSyncEnd, markSyncStart } from "@/server/sync/activity";
-import { tryAcquireSync } from "@/server/sync/lock";
+import { tryAcquireCredentialSync, tryAcquireSync } from "@/server/sync/lock";
 import { DEMO_BLOCKED_MESSAGE, isDemoMode } from "@/server/demo/mode";
 import { getBackendMode } from "@/server/lib/backend-mode";
 import { executeLeasedJob } from "@/server/jobs/worker";
@@ -35,20 +35,23 @@ export const POST = handle("sync", async (request: Request) => {
     });
   }
 
-  // One sync at a time: two scrapes of the same bank at once can trip account lockout or send 2FA twice.
-  const releaseSync = tryAcquireSync("manual");
+  const body = (await request.json().catch(() => ({}))) as {
+    credentialId?: number;
+  };
+  const filterCredentialId =
+    body.credentialId != null && Number.isFinite(body.credentialId) ? body.credentialId : undefined;
+
+  // Per-credential syncs can run in parallel across different providers; full syncs stay exclusive.
+  const releaseSync =
+    filterCredentialId != null
+      ? tryAcquireCredentialSync(filterCredentialId, "manual")
+      : tryAcquireSync("manual");
   if (!releaseSync) {
     return NextResponse.json(
       { error: "sync-running", message: "A sync is already running. Wait for it to finish." },
       { status: 409 },
     );
   }
-
-  const body = (await request.json().catch(() => ({}))) as {
-    credentialId?: number;
-  };
-  const filterCredentialId =
-    body.credentialId != null && Number.isFinite(body.credentialId) ? body.credentialId : undefined;
 
   // When the request includes X-Workspace-ID we sync only that workspace
   // (the in-app "Sync now" button). When it's absent we treat it as a

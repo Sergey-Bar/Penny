@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { getDb } from "@/server/db";
-import { isSyncRunning, SyncBusyError, tryAcquireSync } from "@/server/sync/lock";
+import {
+  isSyncRunning,
+  SyncBusyError,
+  tryAcquireCredentialSync,
+  tryAcquireSync,
+} from "@/server/sync/lock";
 import { sqlTime, sqlTimeAfter } from "@/server/jobs/locks";
 
 beforeEach(() => {
-  getDb().prepare("DELETE FROM runtime_locks WHERE name = 'sync'").run();
+  getDb()
+    .prepare("DELETE FROM runtime_locks WHERE name = 'sync' OR name LIKE 'sync:credential:%'")
+    .run();
 });
 
 describe("sync lock", () => {
@@ -55,5 +62,35 @@ describe("sync lock", () => {
 
   it("carries a recognisable name for callers that cannot import the class", () => {
     expect(new SyncBusyError().name).toBe("SyncBusyError");
+  });
+
+  it("allows different credentials to sync in parallel while blocking duplicates and full syncs", () => {
+    const r1 = tryAcquireCredentialSync(1);
+    const r2 = tryAcquireCredentialSync(2);
+    expect(r1).not.toBeNull();
+    expect(r2).not.toBeNull();
+    expect(tryAcquireCredentialSync(1)).toBeNull();
+    expect(tryAcquireSync("manual")).toBeNull();
+    expect(isSyncRunning()).toBe(true);
+    r1?.();
+    expect(isSyncRunning()).toBe(true);
+    r2?.();
+    expect(isSyncRunning()).toBe(false);
+    const full = tryAcquireSync("manual");
+    expect(full).not.toBeNull();
+    expect(tryAcquireCredentialSync(3)).toBeNull();
+    full?.();
+  });
+
+  it("heartbeats and releases a credential lease once", () => {
+    const lease = tryAcquireCredentialSync(7, "manual", 60)!;
+    expect(lease.heartbeat()).toBe(true);
+    const row = getDb()
+      .prepare("SELECT expires_at FROM runtime_locks WHERE name = 'sync:credential:7'")
+      .get() as { expires_at: string };
+    expect(row.expires_at >= sqlTimeAfter(30)).toBe(true);
+    lease();
+    lease();
+    expect(isSyncRunning()).toBe(false);
   });
 });
