@@ -20,12 +20,9 @@ export async function initRemoteAccess(): Promise<void> {
   }, REFRESH_MS).unref();
 }
 
-export interface RemoteRequestCheck {
-  ok: boolean;
-  status?: number;
-  code?: string;
-  message?: string;
-}
+export type RemoteRequestCheck =
+  | { ok: true }
+  | { ok: false; status: number; code: string; message: string };
 
 export function remoteAccessCheck(input: {
   host: string | null;

@@ -57,8 +57,8 @@ export function proxy(request: NextRequest) {
   if (!remoteCheck.ok) {
     return finish(
       NextResponse.json(
-        { error: remoteCheck.message ?? "Forbidden", code: remoteCheck.code },
-        { status: remoteCheck.status ?? 403 },
+        { error: remoteCheck.message, code: remoteCheck.code },
+        { status: remoteCheck.status },
       ),
     );
   }

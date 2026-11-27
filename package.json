@@ -34,7 +34,7 @@
     "service:open": "node scripts/service/install.mjs open",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"e2e/**/*.ts\" \"scripts/**/*.mjs\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"e2e/**/*.ts\" \"scripts/**/*.mjs\"",
-    "test:security": "vitest run tests/security-headers.test.ts tests/security-policy.test.ts tests/proxy.test.ts tests/host-guard.test.ts tests/lan-access.test.ts tests/user-access.test.ts tests/access-route.test.ts tests/privacy.test.ts",
+    "test:security": "vitest run tests/security-headers.test.ts tests/security-policy.test.ts tests/proxy.test.ts tests/proxy-remote.test.ts tests/host-guard.test.ts tests/lan-access.test.ts tests/user-access.test.ts tests/access-route.test.ts tests/privacy.test.ts",
     "test:contract": "vitest run tests/api-contract.test.ts",
     "test:import": "vitest run tests/import-*.test.ts tests/merchant-dictionary.test.ts tests/merchant-normalize-v2.test.ts",
     "test:jobs": "vitest run tests/jobs-queue.test.ts tests/sync-post-process.test.ts tests/scheduler-core.test.ts tests/sync-lock.test.ts tests/sync-schedule.test.ts",
