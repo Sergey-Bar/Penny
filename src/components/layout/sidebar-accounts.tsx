@@ -135,7 +135,10 @@ export function SidebarAccounts({ onNavigate }: { onNavigate: () => void }) {
                         <span className="flex-1 truncate" title={a.name}>
                           {a.name}
                         </span>
-                        <bdi data-money className={`tabular-nums ${a.value < 0 ? "text-expense" : ""}`}>
+                        <bdi
+                          data-money
+                          className={`tabular-nums ${a.value < 0 ? "text-expense" : ""}`}
+                        >
                           {compact(a.value)}
                         </bdi>
                       </Link>
@@ -143,8 +146,7 @@ export function SidebarAccounts({ onNavigate }: { onNavigate: () => void }) {
                   );
                 }
                 const house = INVESTMENT_HOUSES.find((h) => h.id === entry.providerKey);
-                const houseName =
-                  house?.name[locale === "he" ? "he" : "en"] ?? entry.providerKey;
+                const houseName = house?.name[locale === "he" ? "he" : "en"] ?? entry.providerKey;
                 const stripPrefix = (n: string) =>
                   n.replace(/^אקסלנס\s*-\s*/, "").replace(new RegExp(`^${houseName}\\s*-\\s*`), "");
                 return (

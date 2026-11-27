@@ -66,8 +66,7 @@ export function groupAccounts(assets: Asset[], moves: Record<number, AccountGrou
 }
 
 export type GroupedSidebarEntry<T extends { value: number; providerKey: string | null }> =
-  | { kind: "item"; item: T }
-  | { kind: "provider"; providerKey: string; total: number; items: T[] };
+  { kind: "item"; item: T } | { kind: "provider"; providerKey: string; total: number; items: T[] };
 
 /** Collapses items sharing a providerKey into a subgroup when 2+ items belong to that provider. */
 export function groupItemsByProvider<T extends { value: number; providerKey: string | null }>(
