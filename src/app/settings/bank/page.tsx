@@ -241,6 +241,7 @@ export default function BankSettingsPage() {
                 </InstitutionGrid>
               </section>
             )}
+            <InvestmentHouses mode="connected" />
             {/* Every provider we can read, connected or not, so nothing is hidden in a menu. */}
             {!isPending &&
               !isError &&
@@ -319,7 +320,7 @@ export default function BankSettingsPage() {
                   )
                 );
               })()}
-            <InvestmentHouses />
+            <InvestmentHouses mode="catalog" />
           </>
         )}
 

@@ -48,15 +48,35 @@ export function useBankSync() {
             ...prev,
             [credentialId]: { syncing: true, stage: t("solve2fa") },
           }));
-        } else if (event.type === "stage") {
-          const s = event.data.stage as string;
+        } else if (event.type === "provider-done") {
           setState((prev) => ({
             ...prev,
-            [credentialId]: {
-              syncing: true,
-              stage: s === "categorizing" ? t("categorizing") : t("working"),
-            },
+            [credentialId]: { syncing: false, stage: "" },
           }));
+          const ok = event.data.ok as boolean | undefined;
+          const errorMessage = event.data.errorMessage as string | undefined;
+          if (ok === false && errorMessage) {
+            toast.error(errorMessage, { duration: Infinity, closeButton: true });
+          }
+          void queryClient.invalidateQueries({ queryKey: ["integrations"] });
+          void queryClient.invalidateQueries({ queryKey: ["assets"] });
+          void queryClient.invalidateQueries({ queryKey: ["asset-history"] });
+          void queryClient.invalidateQueries({ queryKey: ["home"] });
+          void queryClient.invalidateQueries({ queryKey: ["activity"] });
+          void queryClient.invalidateQueries({ queryKey: ["sync-logs"] });
+        } else if (event.type === "stage") {
+          const s = event.data.stage as string;
+          setState((prev) =>
+            prev[credentialId]?.syncing
+              ? {
+                  ...prev,
+                  [credentialId]: {
+                    syncing: true,
+                    stage: s === "categorizing" ? t("categorizing") : t("working"),
+                  },
+                }
+              : prev,
+          );
         } else if (event.type === "complete") {
           setState((prev) => ({
             ...prev,
@@ -71,11 +91,18 @@ export function useBankSync() {
           void queryClient.invalidateQueries({ queryKey: ["integrations"] });
           void queryClient.invalidateQueries({ queryKey: ["summary"] });
           void queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          void queryClient.invalidateQueries({ queryKey: ["assets"] });
+          void queryClient.invalidateQueries({ queryKey: ["asset-history"] });
+          void queryClient.invalidateQueries({ queryKey: ["home"] });
+          void queryClient.invalidateQueries({ queryKey: ["activity"] });
+          void queryClient.invalidateQueries({ queryKey: ["sync-logs"] });
         } else if (event.type === "error") {
           setState((prev) => ({
             ...prev,
             [credentialId]: { syncing: false, stage: "" },
           }));
+          void queryClient.invalidateQueries({ queryKey: ["activity"] });
+          void queryClient.invalidateQueries({ queryKey: ["integrations"] });
           toast.error((event.data.message as string) ?? t("failed"), {
             duration: Infinity,
             closeButton: true,

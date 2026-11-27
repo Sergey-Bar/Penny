@@ -32,10 +32,15 @@ describe("POST /api/pension connect", () => {
 
     const ok = await post({ fundId: "excellence", username: " me ", password: "pw", id: "123456" });
     expect(ok.status).toBe(200);
-    expect(sync.savePensionConnection).toHaveBeenCalledWith(1, "excellence", {
-      username: "me",
-      password: "pw",
-    });
+    expect(sync.savePensionConnection).toHaveBeenCalledWith(
+      1,
+      "excellence",
+      {
+        username: "me",
+        password: "pw",
+      },
+      { id: undefined, label: "" },
+    );
   });
 
   it("still needs an ID and phone for the SMS funds", async () => {
@@ -43,9 +48,14 @@ describe("POST /api/pension connect", () => {
     expect((await post({ fundId: "phoenix", id: "123456789", phone: "123" })).status).toBe(400);
     const ok = await post({ fundId: "phoenix", id: "12345678", phone: "050-1234567" });
     expect(ok.status).toBe(200);
-    expect(sync.savePensionConnection).toHaveBeenCalledWith(1, "phoenix", {
-      id: "012345678",
-      phone: "0501234567",
-    });
+    expect(sync.savePensionConnection).toHaveBeenCalledWith(
+      1,
+      "phoenix",
+      {
+        id: "012345678",
+        phone: "0501234567",
+      },
+      { id: undefined, label: "" },
+    );
   });
 });

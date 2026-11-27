@@ -4,11 +4,17 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { compactShekels } from "@/lib/money";
 import { useLocale, useTranslations } from "next-intl";
-import { ChevronDown, Plus, Settings } from "lucide-react";
+import { ChevronDown, Landmark, Plus, Settings } from "lucide-react";
 import { GROUP_ICON, TYPE_ICON } from "@/components/accounts/account-icons";
 import { getAssets } from "@/lib/api";
 import { accountLabel } from "@/lib/i18n-data";
-import { ACCOUNT_GROUPS, groupAccounts, type AccountGroupKey } from "@/lib/account-groups";
+import {
+  ACCOUNT_GROUPS,
+  groupAccounts,
+  groupItemsByProvider,
+  type AccountGroupKey,
+} from "@/lib/account-groups";
+import { INVESTMENT_HOUSES } from "@/lib/investment-houses";
 import { loadPreference } from "@/lib/preference-sync";
 
 const isGroup = (k: unknown): k is AccountGroupKey =>
@@ -112,26 +118,98 @@ export function SidebarAccounts({ onNavigate }: { onNavigate: () => void }) {
               </bdi>
             </summary>
             <ul className="mb-1">
-              {g.items.map((a) => (
-                <li key={a.id}>
-                  <Link
-                    href={`/accounts/${a.id}`}
-                    onClick={onNavigate}
-                    className="flex min-h-8 items-center gap-2 rounded-md ps-8 pe-2 text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
-                  >
-                    {(() => {
-                      const Icon = TYPE_ICON[a.type];
-                      return <Icon className="size-3.5 shrink-0 opacity-70" aria-hidden />;
-                    })()}
-                    <span className="flex-1 truncate" title={a.name}>
-                      {a.name}
-                    </span>
-                    <bdi data-money className={`tabular-nums ${a.value < 0 ? "text-expense" : ""}`}>
-                      {compact(a.value)}
-                    </bdi>
-                  </Link>
-                </li>
-              ))}
+              {groupItemsByProvider(g.items).map((entry) => {
+                if (entry.kind === "item") {
+                  const a = entry.item;
+                  return (
+                    <li key={a.id}>
+                      <Link
+                        href={`/accounts/${a.id}`}
+                        onClick={onNavigate}
+                        className="flex min-h-8 items-center gap-2 rounded-md ps-8 pe-2 text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+                      >
+                        {(() => {
+                          const Icon = TYPE_ICON[a.type];
+                          return <Icon className="size-3.5 shrink-0 opacity-70" aria-hidden />;
+                        })()}
+                        <span className="flex-1 truncate" title={a.name}>
+                          {a.name}
+                        </span>
+                        <bdi
+                          data-money
+                          className={`tabular-nums ${a.value < 0 ? "text-expense" : ""}`}
+                        >
+                          {compact(a.value)}
+                        </bdi>
+                      </Link>
+                    </li>
+                  );
+                }
+                const house = INVESTMENT_HOUSES.find((h) => h.id === entry.providerKey);
+                const houseName = house?.name[locale === "he" ? "he" : "en"] ?? entry.providerKey;
+                const stripPrefix = (n: string) =>
+                  n.replace(/^אקסלנס\s*-\s*/, "").replace(new RegExp(`^${houseName}\\s*-\\s*`), "");
+                return (
+                  <li key={`provider:${entry.providerKey}`}>
+                    <details className="group/prov">
+                      <summary className="flex min-h-8 cursor-pointer list-none items-center gap-2 rounded-md ps-6 pe-2 text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                        <ChevronDown
+                          className="size-3 shrink-0 text-muted-foreground transition-transform -rotate-90 rtl:rotate-90 group-open/prov:rotate-0 motion-reduce:transition-none"
+                          aria-hidden
+                        />
+                        <Landmark className="size-3.5 shrink-0 opacity-70" aria-hidden />
+                        <Link
+                          href={`/investments?provider=${encodeURIComponent(entry.providerKey)}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigate();
+                          }}
+                          className="min-w-0 flex-1 truncate font-medium hover:underline"
+                          title={houseName}
+                        >
+                          {houseName}
+                        </Link>
+                        <bdi
+                          data-money
+                          className={`shrink-0 tabular-nums ${entry.total < 0 ? "text-expense" : ""}`}
+                        >
+                          {compact(entry.total)}
+                        </bdi>
+                      </summary>
+                      <ul>
+                        {entry.items.map((a) => {
+                          const displayName = stripPrefix(a.name);
+                          return (
+                            <li key={a.id}>
+                              <Link
+                                href={`/accounts/${a.id}`}
+                                onClick={onNavigate}
+                                className="flex min-h-7 items-center gap-2 rounded-md ps-12 pe-2 text-[12px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+                              >
+                                {(() => {
+                                  const Icon = TYPE_ICON[a.type];
+                                  return (
+                                    <Icon className="size-3 shrink-0 opacity-70" aria-hidden />
+                                  );
+                                })()}
+                                <span className="flex-1 truncate" title={a.name}>
+                                  {displayName}
+                                </span>
+                                <bdi
+                                  data-money
+                                  className={`tabular-nums ${a.value < 0 ? "text-expense" : ""}`}
+                                >
+                                  {compact(a.value)}
+                                </bdi>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </details>
+                  </li>
+                );
+              })}
             </ul>
           </details>
         ))
