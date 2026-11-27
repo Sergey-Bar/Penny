@@ -71,7 +71,7 @@ export function LifeStages() {
           </div>
           <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted" aria-hidden>
             <div
-              className="h-full rounded-full bg-primary transition-[width] duration-300"
+              className="h-full rounded-full bg-[var(--chart-1)] transition-[width] duration-300"
               style={{ width: `${s.items.length ? (done / s.items.length) * 100 : 0}%` }}
             />
           </div>

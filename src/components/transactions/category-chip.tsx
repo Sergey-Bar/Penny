@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * A category as a tinted pill: dot in the category color, ~18% tint behind, and the label in the
+ * A category as a tinted pill: dot in the category color, a faint 12% tint behind, and the label in the
  * category color pulled toward --foreground so it stays >=4.5:1 in light and dark (checked for every seeded color).
  * No color (uncategorized) falls back to the muted neutral pill.
  */
@@ -20,7 +20,7 @@ export function CategoryChip({
   const style = color
     ? ({
         "--cat": color,
-        backgroundColor: "color-mix(in oklch, var(--cat) 18%, transparent)",
+        backgroundColor: "color-mix(in oklch, var(--cat) 12%, transparent)",
         color: "color-mix(in oklch, var(--cat) 42%, var(--foreground))",
       } as CSSProperties)
     : undefined;

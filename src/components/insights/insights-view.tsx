@@ -198,7 +198,7 @@ function OpenInstallments({
               >
                 <span className="flex w-full flex-1 items-end" aria-hidden>
                   <span
-                    className="w-full rounded-t-sm bg-primary/70"
+                    className="w-full rounded-t-sm bg-[var(--chart-1)]"
                     style={{ height: `${(m.total / peak) * 100}%` }}
                   />
                 </span>

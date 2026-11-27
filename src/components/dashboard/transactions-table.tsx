@@ -44,8 +44,11 @@ import {
   Tags,
   EyeOff,
   Eye,
+  Trash2,
   X,
   Plus,
+  ArrowUpDown,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { signedShekels } from "@/lib/money";
@@ -63,10 +66,7 @@ import {
 import { normalizeTag } from "@/lib/tags";
 import { toast } from "sonner";
 import { translateCategoryName, translateProviderName } from "@/lib/i18n-data";
-import {
-  getAccountDisplayLabel,
-  TransactionSourceCell,
-} from "@/components/transactions/transaction-source-cell";
+import { getAccountDisplayLabel } from "@/components/transactions/transaction-source-cell";
 import {
   TransactionMultiFilter,
   MultiFilterOption,
@@ -157,6 +157,7 @@ export function TransactionsTable({
 }: TransactionsTableProps) {
   const catBrowser = useCategoryBrowser(categories);
   const catListId = useId();
+  const filtersId = useId();
   const tManual = useTranslations("manualTxn");
   const tTags = useTranslations("tags");
   const t = useTranslations("transactions");
@@ -392,6 +393,9 @@ export function TransactionsTable({
   );
 
   const hasActiveFilters = categoryFilter.length > 0 || accountFilter.length > 0;
+  // The filters fold behind one button at every width: search and the list are what the screen is for, and the
+  // filters are one tap away; open from the start if one is already set.
+  const [filtersOpen, setFiltersOpen] = useState(hasActiveFilters);
 
   const bcp = he ? "he-IL" : "en-IL";
   const dayFmt = new Intl.DateTimeFormat(bcp, { weekday: "short", timeZone: "UTC" });
@@ -472,68 +476,105 @@ export function TransactionsTable({
                 onSearchChange(e.target.value);
                 onPageChange(0);
               }}
-              className="h-8 w-[200px] max-w-full max-sm:w-full"
+              className="h-9 w-[280px] max-w-full rounded-full ps-4 max-sm:h-11 max-sm:min-w-0 max-sm:flex-1"
             />
-            {showAccountFilter ? (
+            <button
+              type="button"
+              aria-expanded={filtersOpen}
+              aria-controls={filtersId}
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className={`press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:h-9 ${filtersOpen || hasActiveFilters ? "border-primary bg-selection text-strong" : "border-interactive active:bg-press"}`}
+            >
+              <SlidersHorizontal className="size-4" aria-hidden />
+              {t("filters")}
+              {hasActiveFilters ? (
+                <span className="tabular-nums">
+                  {(categoryFilter.length > 0 ? 1 : 0) + (accountFilter.length > 0 ? 1 : 0)}
+                </span>
+              ) : null}
+            </button>
+            {/* Sort: the list reads as rows, not columns, so the order is chosen here. Picking the same field
+                again flips the direction. */}
+            <label className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-interactive ps-3.5 text-sm max-lg:hidden">
+              <ArrowUpDown className="size-4 text-muted-foreground" aria-hidden />
+              <span className="sr-only">{t("sortBy")}</span>
+              <select
+                value={sortField}
+                onChange={(e) => onSortChange(e.target.value as typeof sortField)}
+                className="h-8 border-0! bg-transparent! py-0 ps-1 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <option value="date">{t("headerDate")}</option>
+                <option value="description">{t("headerDescription")}</option>
+                <option value="category_name">{t("headerCategory")}</option>
+                <option value="account">{t("headerAccount")}</option>
+                <option value="charged_amount">{t("headerAmount")}</option>
+              </select>
+            </label>
+            <div
+              id={filtersId}
+              className={`flex w-full min-w-0 flex-wrap items-center gap-2 ${filtersOpen ? "" : "hidden"}`}
+            >
+              {showAccountFilter ? (
+                <TransactionMultiFilter
+                  label={t("filterAccount")}
+                  icon={Wallet}
+                  displayValue={accountDisplayValue}
+                  triggerClassName="w-[200px]"
+                  selectAllLabel={t("filterSelectAll")}
+                  clearLabel={t("filterClearSelection")}
+                  onSelectAll={() => onAccountFilterChange(allAccountIds)}
+                  onClear={() => onAccountFilterChange([])}
+                >
+                  {accountOptions.map(({ integration, info, primary }) => (
+                    <MultiFilterOption
+                      key={integration.id}
+                      selected={accountFilter.includes(integration.id)}
+                      onToggle={() =>
+                        onAccountFilterChange(toggleFilterId(accountFilter, integration.id))
+                      }
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        {info ? (
+                          <ProviderBadge
+                            color={info.color}
+                            name={primary}
+                            domain={info.domain}
+                            size={16}
+                            radius={5}
+                          />
+                        ) : null}
+                        <span className="truncate" title={primary}>
+                          {primary}
+                        </span>
+                      </div>
+                    </MultiFilterOption>
+                  ))}
+                </TransactionMultiFilter>
+              ) : null}
               <TransactionMultiFilter
-                label={t("filterAccount")}
-                icon={Wallet}
-                displayValue={accountDisplayValue}
-                triggerClassName="w-[200px]"
+                label={t("filterCategory")}
+                icon={Tags}
+                displayValue={categoryDisplayValue}
                 selectAllLabel={t("filterSelectAll")}
                 clearLabel={t("filterClearSelection")}
-                onSelectAll={() => onAccountFilterChange(allAccountIds)}
-                onClear={() => onAccountFilterChange([])}
+                onSelectAll={() => onCategoryFilterChange(allCategoryIds)}
+                onClear={() => onCategoryFilterChange([])}
+                header={<CategoryBrowserHeader browser={catBrowser} listId={catListId} />}
+                onOpenChange={catBrowser.onOpenChange}
+                onListKeyDown={categoryListKeyDown}
               >
-                {accountOptions.map(({ integration, info, primary }) => (
-                  <MultiFilterOption
-                    key={integration.id}
-                    selected={accountFilter.includes(integration.id)}
-                    onToggle={() =>
-                      onAccountFilterChange(toggleFilterId(accountFilter, integration.id))
-                    }
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      {info ? (
-                        <ProviderBadge
-                          color={info.color}
-                          name={primary}
-                          domain={info.domain}
-                          size={16}
-                          radius={5}
-                        />
-                      ) : null}
-                      <span className="truncate" title={primary}>
-                        {primary}
-                      </span>
-                    </div>
-                  </MultiFilterOption>
-                ))}
+                <CategorySectionList
+                  browser={catBrowser}
+                  listId={catListId}
+                  renderItem={(c, indented) => catOption(c, indented)}
+                  renderTitle={(sec) => {
+                    const parent = categories.find((c) => c.id === sec.parentId);
+                    return parent ? catOption(parent, false, true) : null;
+                  }}
+                />
               </TransactionMultiFilter>
-            ) : null}
-            <TransactionMultiFilter
-              label={t("filterCategory")}
-              icon={Tags}
-              displayValue={categoryDisplayValue}
-              selectAllLabel={t("filterSelectAll")}
-              clearLabel={t("filterClearSelection")}
-              onSelectAll={() => onCategoryFilterChange(allCategoryIds)}
-              onClear={() => onCategoryFilterChange([])}
-              header={<CategoryBrowserHeader browser={catBrowser} listId={catListId} />}
-              onOpenChange={catBrowser.onOpenChange}
-              onListKeyDown={categoryListKeyDown}
-            >
-              <CategorySectionList
-                browser={catBrowser}
-                listId={catListId}
-                renderItem={(c, indented) => catOption(c, indented)}
-                renderTitle={(sec) => {
-                  const parent = categories.find((c) => c.id === sec.parentId);
-                  return parent ? catOption(parent, false, true) : null;
-                }}
-              />
-            </TransactionMultiFilter>
-            {toolbarExtra}
+              {toolbarExtra}
+            </div>
             {onAdd ? (
               <IconButton
                 label={tManual("addTitle")}
@@ -723,8 +764,8 @@ export function TransactionsTable({
               <Table className="lg:[&_td:first-child]:ps-4 lg:[&_th:first-child]:ps-4 lg:[&_td:last-child]:pe-4 lg:[&_th:last-child]:pe-4">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-9 lg:w-[52px]">
-                      <label className="inline-grid size-9 cursor-pointer place-items-center">
+                    <TableHead className="w-[36px] max-lg:px-0.5 lg:w-[52px]">
+                      <label className="tap-target inline-grid size-[36px] cursor-pointer place-items-center">
                         <input
                           className="size-4"
                           type="checkbox"
@@ -740,41 +781,11 @@ export function TransactionsTable({
                       </label>
                     </TableHead>
                     <SortableTableHead
-                      label={t("headerDate")}
-                      field="date"
-                      activeField={sortField}
-                      activeOrder={sortOrder}
-                      onSort={onSortChange}
-                      className="hidden w-[96px] lg:table-cell"
-                      sortAscLabel={t("sortAsc")}
-                      sortDescLabel={t("sortDesc")}
-                    />
-                    <SortableTableHead
                       label={t("headerDescription")}
                       field="description"
                       activeField={sortField}
                       activeOrder={sortOrder}
                       onSort={onSortChange}
-                      sortAscLabel={t("sortAsc")}
-                      sortDescLabel={t("sortDesc")}
-                    />
-                    <SortableTableHead
-                      label={t("headerCategory")}
-                      field="category_name"
-                      activeField={sortField}
-                      activeOrder={sortOrder}
-                      onSort={onSortChange}
-                      className="hidden w-[150px] lg:table-cell"
-                      sortAscLabel={t("sortAsc")}
-                      sortDescLabel={t("sortDesc")}
-                    />
-                    <SortableTableHead
-                      label={t("headerAccount")}
-                      field="account"
-                      activeField={sortField}
-                      activeOrder={sortOrder}
-                      onSort={onSortChange}
-                      className="hidden w-[130px] xl:table-cell"
                       sortAscLabel={t("sortAsc")}
                       sortDescLabel={t("sortDesc")}
                     />
@@ -808,7 +819,7 @@ export function TransactionsTable({
                       {week.start && (
                         <tr>
                           <th
-                            colSpan={8}
+                            colSpan={5}
                             scope="colgroup"
                             className="sticky top-[var(--app-header-h,0px)] z-10 bg-popover px-4 pb-1.5 pt-4 text-start text-xs font-semibold text-muted-foreground"
                           >
@@ -821,7 +832,7 @@ export function TransactionsTable({
                                   </span>
                                 )}
                                 {weekOut !== 0 && (
-                                  <span className="text-expense">
+                                  <span className="text-foreground">
                                     {signedShekels(-weekOut, locale)}
                                   </span>
                                 )}
@@ -832,13 +843,14 @@ export function TransactionsTable({
                       )}
                       {week.items.map((txn) => {
                         const isIncome = txn.chargedAmount > 0;
-                        // Income green with "+", expense a calm rose with "−" (same as the week totals), transfers muted.
+                        // Income green with "+"; spending is plain text with "−" (a month of spending should not read as
+                        // a page of errors; red is kept for things that are wrong); transfers muted.
                         const amountTone =
                           txn.kind === "income"
                             ? "text-status-on-track"
                             : txn.kind === "transfer"
                               ? "text-muted-foreground"
-                              : "text-expense";
+                              : "text-foreground";
                         const amount = signedShekels(txn.chargedAmount, locale, 2);
                         // A foreign charge also shows what it was in its own currency.
                         const foreign = foreignAmount(
@@ -917,9 +929,9 @@ export function TransactionsTable({
                                 : undefined
                             }
                           >
-                            <TableCell className="max-lg:pt-3.5 max-lg:align-top">
+                            <TableCell className="max-lg:px-0.5 max-lg:pt-3.5 max-lg:align-top">
                               {/* A 36px tap area around the 16px box. */}
-                              <label className="inline-grid size-9 cursor-pointer place-items-center lg:size-7">
+                              <label className="tap-target inline-grid size-[36px] cursor-pointer place-items-center lg:size-7">
                                 <input
                                   className="size-4"
                                   type="checkbox"
@@ -936,19 +948,16 @@ export function TransactionsTable({
                                 />
                               </label>
                             </TableCell>
-                            <TableCell className="hidden whitespace-nowrap text-xs tabular-nums text-muted-foreground lg:table-cell">
-                              {dayLabel(txn.date)}
-                            </TableCell>
-                            <TableCell className="min-w-[11rem] whitespace-normal [overflow-wrap:anywhere]">
+                            <TableCell className="whitespace-normal [overflow-wrap:anywhere] max-lg:w-full max-lg:px-0.5 lg:min-w-[11rem]">
                               {/* Below lg the amount rides on the name line (iOS list style) instead of its own column, so nothing clips at 320px. */}
-                              <div className="flex items-start justify-between gap-3">
+                              <div className="flex flex-wrap items-start justify-between gap-x-3">
                                 <div className="flex min-w-0 items-center gap-2.5">
-                                  <MerchantMark name={txn.description} />
+                                  <MerchantMark name={txn.description} size={36} />
                                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                                     {onEdit ? (
                                       <button
                                         type="button"
-                                        className="min-h-11 text-start font-medium hover:underline focus-visible:outline-2 focus-visible:outline-ring lg:min-h-0"
+                                        className="min-h-11 text-start text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-ring lg:min-h-0"
                                         aria-label={tManual("editRow", { name: txn.description })}
                                         onClick={() => onEdit(txn)}
                                       >
@@ -1005,21 +1014,26 @@ export function TransactionsTable({
                                 </div>
                                 <span
                                   className={cn(
-                                    "shrink-0 whitespace-nowrap font-medium leading-[2.75rem] tabular-nums lg:hidden",
+                                    "flex flex-wrap items-baseline justify-end font-medium leading-[2.75rem] tabular-nums lg:hidden",
                                     amountTone,
                                   )}
                                 >
-                                  {amount}
+                                  <span className="whitespace-nowrap">{amount}</span>
                                   {foreign && (
-                                    <bdi className="ms-1 text-xs font-normal text-muted-foreground">
+                                    <bdi className="ms-1 whitespace-nowrap text-xs font-normal leading-5 text-muted-foreground">
                                       ({foreign})
                                     </bdi>
                                   )}
                                 </span>
                               </div>
-                              <div className="-mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs tabular-nums text-muted-foreground lg:hidden">
+                              {/* One row, two lines, at every width: the name and the amount, then when it was, what
+                                  kind of spending and which account. Sorting by these lives in the Sort control. */}
+                              <div className="-mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs tabular-nums text-muted-foreground lg:mt-0.5 lg:ps-[46px]">
                                 {dayLabel(txn.date)}
                                 {categoryControl}
+                                <span className="hidden min-w-0 truncate lg:inline">
+                                  {txn.accountLabel?.trim() || txn.provider}
+                                </span>
                               </div>
                               {txn.memo && (
                                 <div className="text-xs text-muted-foreground">{txn.memo}</div>
@@ -1045,15 +1059,6 @@ export function TransactionsTable({
                                   />
                                 </div>
                               )}
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              {categoryControl}
-                            </TableCell>
-                            <TableCell className="hidden xl:table-cell">
-                              <TransactionSourceCell
-                                provider={txn.provider}
-                                accountLabel={txn.accountLabel}
-                              />
                             </TableCell>
                             <TableCell className="hidden whitespace-normal xl:table-cell">
                               {/* One line, like every other cell: a wrapped tags cell doubled the row's height. */}
@@ -1092,10 +1097,10 @@ export function TransactionsTable({
                                 </bdi>
                               )}
                             </TableCell>
-                            <TableCell className="text-end max-lg:align-top">
+                            <TableCell className="text-end max-lg:px-0 max-lg:align-top">
                               <DropdownMenu>
                                 <DropdownMenuTrigger
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                                  className="tap-target inline-flex size-[28px] items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground lg:size-7"
                                   disabled={updatingId === txn.id || editing || isFetching}
                                   aria-label={t("rowActions")}
                                 >
@@ -1144,6 +1149,23 @@ export function TransactionsTable({
                                         {t("excludeMerchantAction")}
                                       </DropdownMenuItem>
                                     </>
+                                  )}
+                                  {/* Only a row typed in by hand can be deleted (a bank row would come back on the next
+                                      sync); the toast that follows offers Undo for five seconds. */}
+                                  {isManualTxn(txn) && (
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={() =>
+                                        void deleteWithUndo(
+                                          [txn.id],
+                                          tManual,
+                                          () => void queryClient.invalidateQueries(),
+                                        )
+                                      }
+                                    >
+                                      <Trash2 className="me-2 h-3.5 w-3.5" />
+                                      {tManual("delete")}
+                                    </DropdownMenuItem>
                                   )}
                                 </DropdownMenuContent>
                               </DropdownMenu>

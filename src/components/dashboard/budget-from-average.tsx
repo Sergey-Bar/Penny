@@ -110,7 +110,10 @@ export function BudgetFromAverage({ modes }: { modes: Map<number, BudgetMode> })
 
   return (
     <>
-      <Button onClick={() => void openSheet()} className="min-h-11">
+      <Button
+        onClick={() => void openSheet()}
+        className="h-auto min-h-11 max-w-full py-2 whitespace-normal"
+      >
         {t("open")}
       </Button>
       <Sheet open={open} onOpenChange={setOpen}>

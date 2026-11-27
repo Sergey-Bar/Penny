@@ -106,7 +106,7 @@ export function SetupWizard({
 
   return (
     <MotionConfig reducedMotion={useA11y().prefs.stopMotion ? "always" : "user"}>
-      <div className="relative min-h-screen w-full bg-background">
+      <div className="profiles-screen relative min-h-screen w-full">
         <header className="relative z-10 mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-6 md:px-8">
           <BrandMark />
           <DotStepper index={index} labels={steps.map((s) => labels[s])} />

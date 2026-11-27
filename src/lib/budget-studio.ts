@@ -16,7 +16,7 @@ export type StudioPreferences = {
 export const STUDIO_KEY = "shekel.budget-studio.v1";
 export const DEFAULT_STUDIO: StudioPreferences = {
   customColor: null,
-  theme: "pearl",
+  theme: "system", // new installs follow the device; a saved choice always wins
   accent: "violet",
   chart: "bars",
   metric: "remaining",

@@ -410,7 +410,7 @@ export function StatementImportCard({ defaultAccount = "" }: { defaultAccount?: 
               </p>
             )}
 
-            <div className="overflow-x-auto rounded-xl border">
+            <div className="relative overflow-x-auto rounded-xl border">
               <table className="w-full text-footnote">
                 <caption className="sr-only">{t("previewCaption")}</caption>
                 <thead className="bg-muted/40 text-muted-foreground">

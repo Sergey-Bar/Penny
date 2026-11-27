@@ -28,7 +28,7 @@ const AREA: Record<MapArea, { icon: LucideIcon; tone: string }> = {
   pension: { icon: PiggyBank, tone: "var(--chart-5)" },
   debts: { icon: Landmark, tone: "var(--expense)" },
   property: { icon: Home, tone: "var(--chart-4)" },
-  netWorth: { icon: Scale, tone: "var(--primary)" },
+  netWorth: { icon: Scale, tone: "var(--chart-1)" },
 };
 
 /** "Your whole picture": a grid of compact tiles, one per money area; an empty area is a dashed invitation, never a 0. */

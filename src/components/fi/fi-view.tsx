@@ -676,9 +676,9 @@ function Bridge({
 
 function Row({ label, before, after }: { label: string; before: string; after: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
+    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="tabular-nums">
+      <dd className="text-end tabular-nums">
         <span className="text-muted-foreground line-through decoration-1">{before}</span>
         <span className="ms-2 font-semibold">{after}</span>
       </dd>

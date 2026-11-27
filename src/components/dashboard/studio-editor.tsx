@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { DEFAULT_STUDIO, type StudioPreferences } from "@/lib/budget-studio";
 import { useStudio } from "@/components/studio-provider";
+import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { useStudioCopy } from "./studio-copy";
 
 /** The design editor. `inline` shows it fully in place (Settings › Appearance); otherwise a button opens it in a sheet. */
@@ -24,6 +25,7 @@ export function StudioEditor({
   inline?: boolean;
 }) {
   const { preferences: value, preview, save: persist, resolvedStudioTheme } = useStudio();
+  const hydrated = useIsHydrated();
   // Inline (Settings › Appearance) saves every choice at once; the sheet previews until Save.
   // shortcut: the color picker saves on every drag tick; debounce if server writes get noisy.
   const onChange = inline ? persist : preview;
@@ -126,7 +128,9 @@ export function StudioEditor({
     return (
       <div
         className="budget-studio studio-editor studio-editor-inline"
-        data-studio-theme={resolvedStudioTheme}
+        // Set once the page is live: the server cannot know the device's light or dark setting, and an attribute
+        // that differs at first render is never corrected, which would leave this panel in the wrong theme.
+        data-studio-theme={hydrated ? resolvedStudioTheme : undefined}
         data-studio-accent={value.accent}
         data-studio-motion={value.motion}
       >

@@ -1,5 +1,6 @@
 "use client";
 
+import { rememberHomeView } from "@/lib/home-view";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -223,8 +224,18 @@ export function AppSidebar() {
           if (group.key === "focus") return null;
           if (group.key === "dashboard") {
             const views = [
-              { href: "/focus", label: tNavGroups("views.focus"), Icon: Focus },
-              { href: "/", label: tNavGroups("views.full"), Icon: LayoutDashboard },
+              {
+                href: "/focus",
+                label: tNavGroups("views.focus"),
+                Icon: Focus,
+                view: "focus" as const,
+              },
+              {
+                href: "/",
+                label: tNavGroups("views.full"),
+                Icon: LayoutDashboard,
+                view: "detailed" as const,
+              },
             ];
             const current = views.find((v) => v.href === pathname);
             if (compact) {
@@ -235,7 +246,11 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                       <SidebarMenuButton
                         render={
-                          <Link href={v.href} aria-current={current ? "page" : undefined}>
+                          <Link
+                            href={v.href}
+                            onClick={() => rememberHomeView(v.view)}
+                            aria-current={current ? "page" : undefined}
+                          >
                             <v.Icon aria-hidden />
                             <span>{tNavGroups("groups.dashboard")}</span>
                           </Link>
@@ -264,7 +279,11 @@ export function AppSidebar() {
                       <Link
                         key={v.href}
                         href={v.href}
-                        onClick={() => setOpenMobile(false)}
+                        // The choice is remembered, so Home opens on the same view next time.
+                        onClick={() => {
+                          rememberHomeView(v.view);
+                          setOpenMobile(false);
+                        }}
                         aria-current={on ? "page" : undefined}
                         className={`flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-ring motion-reduce:transition-none ${on ? "bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/8%),0_1px_6px_-2px_rgb(0_0_0/10%)]" : "text-muted-foreground hover:text-foreground"}`}
                       >

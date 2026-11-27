@@ -84,7 +84,7 @@ export function NetWorthDriversCard({ data }: { data: OverviewPayload }) {
             <Bar
               dataKey="market"
               stackId="d"
-              fill="var(--primary)"
+              fill="var(--chart-1)"
               radius={[3, 3, 0, 0]}
               isAnimationActive={!motionReduced()}
             />
@@ -94,7 +94,7 @@ export function NetWorthDriversCard({ data }: { data: OverviewPayload }) {
       <ul className="mt-2 flex flex-wrap justify-center gap-4 text-xs text-muted-foreground">
         {[
           ["var(--status-on-track)", t("saved")],
-          ["var(--primary)", t("market")],
+          ["var(--chart-1)", t("market")],
         ].map(([c, l]) => (
           <li key={l} className="flex items-center gap-1.5">
             <span className="size-2.5 rounded-full" style={{ background: c }} aria-hidden />

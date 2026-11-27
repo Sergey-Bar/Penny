@@ -10,6 +10,26 @@ function ink(hex: string) {
 /** The merchant's mark beside its name in transaction rows. Decorative: the name is read out already. */
 export function MerchantMark({ name, size = 28 }: { name: string; size?: number }) {
   const m = merchantMark(name);
+  // A real logo is stored as a full square on its own ground, so it fills the circle edge to edge.
+  if (m.logo)
+    return (
+      <span
+        aria-hidden
+        className="block shrink-0 overflow-hidden rounded-full ring-1 ring-black/10 dark:ring-white/15"
+        style={{ width: size, height: size }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- a small local PNG; next/image adds nothing here */}
+        <img
+          src={m.logo}
+          alt=""
+          width={size}
+          height={size}
+          loading="lazy"
+          decoding="async"
+          className="size-full object-cover"
+        />
+      </span>
+    );
   return (
     <span
       aria-hidden
