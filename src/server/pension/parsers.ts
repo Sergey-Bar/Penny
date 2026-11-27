@@ -179,8 +179,13 @@ export function parseExcellenceRows(rows: string[][], cash: number | null): Scra
   const iValueIls = col(/שווי.*(ש["״]ח|₪)/, /עלות/);
   const iValue = iValueIls >= 0 ? iValueIls : col(/שווי|market\s*value|value/i, /עלות/);
   const valueIsIls = iValueIls >= 0;
-  // Total cost only: per-unit price columns (שער/מחיר) are not a cost basis.
-  const iCost = col(/עלות|cost/i, /שער|מחיר|ממוצע|ליחידה|price|per\s*unit/i);
+  // Total cost only: exclude per-unit price and percentage/gain change columns (e.g. "שינוי מעלות %").
+  const iCost = col(
+    /עלות|cost/i,
+    /שער|מחיר|ממוצע|ליחידה|price|per\s*unit|%|אחוז|שינוי|רווח|הפסד|change|gain|pct/i,
+  );
+  const iGainIls = col(/שינוי\s*מעלות\s*\(₪\)|רווח.*₪/i, /%|אחוז/);
+  const iGainNative = col(/שינוי\s*מעלות\s*במטבע|שינוי\s*מעלות/i, /%|אחוז|₪/);
   const iCurrency = col(/^\s*(מטבע|currency)\s*$/i);
 
   const body = rows
@@ -198,7 +203,15 @@ export function parseExcellenceRows(rows: string[][], cash: number | null): Scra
         ? rowCurrency
         : money[i]!.currency;
     const costCurrency = ILS_COLUMN.test(header[iCost] ?? "") ? "ILS" : rowCurrency || currency;
-    const cost = iCost >= 0 ? parseAmount(r[iCost]) : null;
+    const directCost = iCost >= 0 ? parseAmount(r[iCost]) : null;
+    const gainIdx = currency === "ILS" && iGainIls >= 0 ? iGainIls : iGainNative;
+    const gainAmount = gainIdx >= 0 ? parseAmount(r[gainIdx]) : null;
+    const derivedCost =
+      directCost != null && directCost > 0 && costCurrency === currency
+        ? directCost
+        : gainAmount != null && money[i]!.amount - gainAmount > 0
+          ? Math.round((money[i]!.amount - gainAmount) * 100) / 100
+          : null;
     const quantity = iQty >= 0 ? parseAmount(r[iQty]) : null;
     const details: Record<string, unknown> = { provider: "אקסלנס טרייד" };
     header.forEach((name, c) => {
@@ -212,7 +225,7 @@ export function parseExcellenceRows(rows: string[][], cash: number | null): Scra
       transactions: [],
       assetType: "stock",
       quantity,
-      costBasis: cost != null && cost > 0 && costCurrency === currency ? cost : null,
+      costBasis: derivedCost,
       liquid: true,
       details,
     };

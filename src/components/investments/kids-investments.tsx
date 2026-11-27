@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { assetProviderKey } from "@/lib/account-groups";
 import { getAssets, getPlan, savePlan } from "@/lib/api";
 import { useHousehold } from "@/hooks/use-household";
 import { shekels } from "@/lib/money";
@@ -32,13 +34,17 @@ const blank = (memberId: string): KidPlan => ({
 export function KidsInvestments() {
   const t = useTranslations("kidsInvest");
   const locale = useLocale();
+  const selectedProvider = useSearchParams().get("provider");
   const { household } = useHousehold();
   const plan = useQuery({ queryKey: ["plan"], queryFn: getPlan });
   const assets = useQuery({ queryKey: ["assets"], queryFn: getAssets });
   const qc = useQueryClient();
   const [editing, setEditing] = useState<KidPlan | null>(null);
   const children = household.members.filter((m) => m.role === "child");
-  const owned = (assets.data?.assets ?? []).filter((a) => !a.isLiability && a.source !== "bank");
+  const owned = (assets.data?.assets ?? [])
+    .filter((a) => !a.isLiability && a.source !== "bank")
+    .filter((a) => !selectedProvider || assetProviderKey(a) === selectedProvider);
+  if (selectedProvider && owned.length === 0) return null;
   const year = new Date().getFullYear();
 
   async function save(k: KidPlan) {

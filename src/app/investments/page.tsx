@@ -4,6 +4,7 @@ import { FutureHero } from "@/components/ui/page-hero";
 import { InvestmentsView } from "@/components/investments/investments-view";
 import { VolatileHoldings } from "@/components/fi/volatile-holdings";
 import { InvestmentCards } from "@/components/investments/investment-cards";
+import { ProviderFilterBar } from "@/components/investments/provider-filter-bar";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ export default async function Page() {
     <AppShell>
       <PageHeader title={t("title")} largeTitle={false} />
       <div className="mx-auto w-full max-w-[1920px] px-4 pb-8 pt-3 md:px-6 lg:px-8">
+        <ProviderFilterBar />
         <div className="mb-4 md:mb-6">
           <InvestmentCards />
         </div>

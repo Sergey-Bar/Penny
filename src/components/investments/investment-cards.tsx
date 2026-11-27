@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { TrendingDown, TrendingUp } from "lucide-react";
+import { assetProviderKey } from "@/lib/account-groups";
 import { getAssets } from "@/lib/api";
 import { shekels } from "@/lib/money";
 import type { AssetType } from "@/lib/types";
@@ -23,9 +25,15 @@ const INVESTMENT_TYPES = new Set<AssetType>([
 export function InvestmentCards() {
   const t = useTranslations("investments");
   const locale = useLocale();
+  const selectedProvider = useSearchParams().get("provider");
   const q = useQuery({ queryKey: ["assets"], queryFn: getAssets });
   const holdings = (q.data?.assets ?? [])
-    .filter((a) => !a.isLiability && INVESTMENT_TYPES.has(a.type))
+    .filter(
+      (a) =>
+        !a.isLiability &&
+        INVESTMENT_TYPES.has(a.type) &&
+        (!selectedProvider || assetProviderKey(a) === selectedProvider),
+    )
     .sort((a, b) => (b.valueIls ?? 0) - (a.valueIls ?? 0));
   if (holdings.length === 0) return null;
   const money = (n: number) => shekels(Math.round(n), locale);

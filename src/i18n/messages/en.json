@@ -754,7 +754,10 @@
       "quickStartHint": "A checklist for getting set up, beside the dashboard.",
       "upcomingTitle": "Upcoming transactions",
       "upcomingShow": "Show upcoming charges on Transactions",
-      "upcomingHint": "Recurring charges due in the next 3 days, or late, pinned above the list."
+      "upcomingHint": "Recurring charges due in the next 3 days, or late, pinned above the list.",
+      "marketsTitle": "Market indices & currencies",
+      "marketsShow": "Show markets section on Assets & Liabilities",
+      "marketsHint": "Displays the market indices and currency overview cards at the bottom of the Assets & Liabilities page."
     },
     "bank": {
       "title": "Accounts & import",
@@ -1983,6 +1986,14 @@
     "byCurrency": "Allocation by currency",
     "assetsTitle": "Assets",
     "liabilitiesTitle": "Liabilities",
+    "allProviders": "All",
+    "historyTitle": "Value history",
+    "historyNoData": "Appears after the next sync (saved on every sync).",
+    "costBasis": "Cost basis",
+    "currentValue": "Current value",
+    "gainLoss": "Gain / Loss",
+    "units": "units",
+    "allHoldings": "All holdings",
     "vsMarket": "Against the market",
     "yourReturn": "Your return",
     "yourReturnNote": "Unrealised gain vs cost",
@@ -5656,7 +5667,7 @@
   "update": {
     "title": "Penny {version} is available",
     "how_desktop": "Download the new installer and run it. Your data stays.",
-    "how_docker": "Run the Docker install command again, or scripts/docker/update.sh (Windows: scripts\\docker\\update.bat). It backs up your data first.",
+    "how_docker": "Run Penny-update.bat (Windows) or ./Penny-update.sh (Mac). It backs up your data first.",
     "how_source": "Run git pull and restart Penny.",
     "download": "Download",
     "whatsNew": "What's new",

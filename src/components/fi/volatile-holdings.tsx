@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
+import { assetProviderKey } from "@/lib/account-groups";
 import { getAssets } from "@/lib/api";
 import { shekels } from "@/lib/money";
 import { isVolatile } from "@/lib/holdings";
@@ -21,9 +23,12 @@ export function VolatileHoldings() {
   const t = useTranslations("holdings");
   const ti = useTranslations("investments");
   const locale = useLocale();
+  const selectedProvider = useSearchParams().get("provider");
   const { data, isLoading, isError } = useQuery({ queryKey: ["assets"], queryFn: getAssets });
   const [editing, setEditing] = useState<Asset | "new" | null>(null);
-  const list = (data?.assets ?? []).filter(isVolatile);
+  const list = (data?.assets ?? [])
+    .filter(isVolatile)
+    .filter((a) => !selectedProvider || assetProviderKey(a) === selectedProvider);
   const total = list.reduce((s, a) => s + (a.valueIls ?? 0), 0);
   const date = (d: string) =>
     new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(new Date(d));

@@ -1,6 +1,9 @@
 "use client";
 
-import { accountLabel } from "@/lib/i18n-data";
+import { useSearchParams } from "next/navigation";
+import { accountLabel, translateProviderName } from "@/lib/i18n-data";
+import { assetProviderKey } from "@/lib/account-groups";
+import { INVESTMENT_HOUSES } from "@/lib/investment-houses";
 import { studyFundLiquidFrom } from "@/lib/study-fund";
 import { usePlan } from "@/hooks/use-plan";
 import { useState, type ReactNode } from "react";
@@ -9,7 +12,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { FileUp, Pencil, Plus, RotateCw, Trash2 } from "lucide-react";
 import { fmt, shekels } from "@/lib/money";
-import { createAssets, deleteAsset, getAssets, updateAsset } from "@/lib/api";
+import { createAssets, deleteAsset, getAssetHistory, getAssets, updateAsset } from "@/lib/api";
+import { ProviderHistoryCard } from "./provider-history-card";
 import { CardShell } from "@/components/home/card-shell";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -20,7 +24,7 @@ import { AssetDialog } from "./asset-dialog";
 import { ImportDialog } from "./import-dialog";
 import { InvestmentsExtras } from "./investments-extras";
 import { KidsInvestments } from "./kids-investments";
-import { MarketsView } from "@/components/markets/markets-view";
+import { MarketsView, useShowMarkets } from "@/components/markets/markets-view";
 import type { Asset, AssetsPayload } from "@/lib/types";
 
 const pct = (n: number) => `${n >= 0 ? "+" : "−"}${(Math.abs(n) * 100).toFixed(1)}%`;
@@ -37,8 +41,9 @@ const ALLOC_COLORS = [
 
 export function InvestmentsView() {
   const t = useTranslations("investments");
-  const [editing, setEditing] = useState<Asset | "new" | null>(null);
   const simple = usePlanSimple();
+  const showMarkets = useShowMarkets();
+  const [editing, setEditing] = useState<Asset | "new" | null>(null);
   const [importing, setImporting] = useState(false);
   const query = useQuery({ queryKey: ["assets"], queryFn: getAssets });
 
@@ -119,7 +124,7 @@ export function InvestmentsView() {
 
       <KidsInvestments />
 
-      {!simple && (
+      {!simple && showMarkets && (
         <section id="markets" className="card-surface scroll-mt-20">
           <h2 className="text-headline font-semibold">
             {t("marketsTitle")}
@@ -147,10 +152,28 @@ function Body({
   actions: ReactNode;
 }) {
   const t = useTranslations("investments");
+  const tBanks = useTranslations("banks");
   const locale = useLocale();
-  const owned = data.assets.filter((a) => !a.isLiability);
+  const searchParams = useSearchParams();
+  const selectedProvider = searchParams.get("provider");
+  const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null);
+  const historyQuery = useQuery({ queryKey: ["asset-history"], queryFn: getAssetHistory });
+
+  const ownedAll = data.assets.filter((a) => !a.isLiability);
+  const owned = selectedProvider
+    ? ownedAll.filter((a) => assetProviderKey(a) === selectedProvider)
+    : ownedAll;
   const owed = data.assets.filter((a) => a.isLiability);
   const missing = data.assets.filter((a) => a.valueIls == null);
+
+  const houseName = (id: string) =>
+    INVESTMENT_HOUSES.find((h) => h.id === id)?.name[locale === "he" ? "he" : "en"] ??
+    translateProviderName(id, id, tBanks);
+
+  const activeProviderSeries =
+    selectedProvider && historyQuery.data?.byProvider[selectedProvider]
+      ? historyQuery.data.byProvider[selectedProvider]
+      : [];
 
   return (
     <>
@@ -164,7 +187,29 @@ function Body({
         </p>
       )}
 
-      <HoldingsList title={t("assetsTitle")} assets={owned} onEdit={onEdit} action={actions} />
+      {(selectedProvider || selectedAssetId != null) && (
+        <ProviderHistoryCard
+          title={selectedProvider ? houseName(selectedProvider) : ""}
+          providerSeries={activeProviderSeries}
+          assets={owned}
+          byAsset={historyQuery.data?.byAsset ?? {}}
+          selectedAssetId={selectedAssetId}
+          onSelectAsset={setSelectedAssetId}
+        />
+      )}
+
+      <HoldingsList
+        title={
+          selectedProvider
+            ? `${t("assetsTitle")} · ${houseName(selectedProvider)}`
+            : t("assetsTitle")
+        }
+        assets={owned}
+        byAssetHistory={historyQuery.data?.byAsset ?? {}}
+        onSelectHistory={(id) => setSelectedAssetId(id)}
+        onEdit={onEdit}
+        action={actions}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
         <div className="md:col-span-2 lg:col-span-1">
@@ -301,11 +346,15 @@ function Benchmarks({ data }: { data: AssetsPayload }) {
 function HoldingsList({
   title,
   assets,
+  byAssetHistory = {},
+  onSelectHistory,
   onEdit,
   action,
 }: {
   title: string;
   assets: Asset[];
+  byAssetHistory?: Record<number, { valueIls: number }[]>;
+  onSelectHistory?: (assetId: number) => void;
   onEdit: (a: Asset) => void;
   action?: ReactNode;
 }) {
@@ -343,13 +392,21 @@ function HoldingsList({
               </p>
               <p className="text-caption text-pretty text-muted-foreground">
                 {t(`type_${a.type}`)}
-                {a.symbol && a.quantity != null && (
+                {a.quantity != null && (
                   <>
                     {" "}
                     ·{" "}
                     <span dir="ltr">
-                      {fmt(a.quantity, locale, a.quantity % 1 ? 2 : 0)} × {a.symbol}
+                      {fmt(a.quantity, locale, a.quantity % 1 ? 2 : 0)}
+                      {a.symbol ? ` × ${a.symbol}` : ` ${t("units")}`}
                     </span>
+                  </>
+                )}
+                {a.costBasis != null && (
+                  <>
+                    {" "}
+                    · {t("costBasis")}:{" "}
+                    <span dir="ltr">{formatNativeAmount(a.costBasis, a.currency, locale)}</span>
                   </>
                 )}
                 {a.type === "study_fund" && a.purchaseMonth && !a.liquid ? (
@@ -371,14 +428,26 @@ function HoldingsList({
               </p>
               {a.estimate && <HomeEstimate asset={a} />}
             </div>
-            {a.quote && a.quote.series.length > 1 && (
-              <Sparkline
-                values={a.quote.series}
-                color="var(--chart-1)"
-                label={t("priceTrend", { name: label(a) })}
-                fitToRange
-                className="hidden h-7 w-20 sm:block"
-              />
+            {((a.quote && a.quote.series.length > 1) ||
+              (byAssetHistory[a.id] && byAssetHistory[a.id].length > 1)) && (
+              <button
+                type="button"
+                onClick={() => onSelectHistory?.(a.id)}
+                className="hidden cursor-pointer sm:block"
+                title={t("historyTitle")}
+              >
+                <Sparkline
+                  values={
+                    a.quote && a.quote.series.length > 1
+                      ? a.quote.series
+                      : byAssetHistory[a.id].map((p) => p.valueIls)
+                  }
+                  color="var(--chart-1)"
+                  label={t("priceTrend", { name: label(a) })}
+                  fitToRange
+                  className="h-7 w-20"
+                />
+              </button>
             )}
             <div className="shrink-0 text-end">
               <p
@@ -391,6 +460,11 @@ function HoldingsList({
                   ? "—"
                   : shekels(a.isLiability ? -a.valueIls : a.valueIls, locale)}
               </p>
+              {a.currency !== "ILS" && a.value != null && (
+                <p className="text-caption tabular-nums text-muted-foreground" dir="ltr">
+                  {formatNativeAmount(a.isLiability ? -a.value : a.value, a.currency, locale)}
+                </p>
+              )}
               <p className="text-caption tabular-nums text-muted-foreground" dir="ltr">
                 {a.quote?.changeDay != null && (
                   <span
@@ -502,5 +576,17 @@ function currencyName(code: string, locale: string): string {
     return new Intl.DisplayNames([locale], { type: "currency" }).of(code) ?? code;
   } catch {
     return code;
+  }
+}
+
+function formatNativeAmount(amount: number, currency: string, locale: string): string {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency}`;
   }
 }
