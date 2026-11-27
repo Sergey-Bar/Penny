@@ -189,7 +189,10 @@ export async function scrapeHapoalimSecurities(page: Page): Promise<ScrapedSecur
 
     const deadline = Date.now() + 12000;
     while (Date.now() < deadline) {
-      if (capturedViews.size > 0 && (accountKeys.length === 0 || capturedViews.size >= accountKeys.length)) {
+      if (
+        capturedViews.size > 0 &&
+        (accountKeys.length === 0 || capturedViews.size >= accountKeys.length)
+      ) {
         break;
       }
       await new Promise((r) => setTimeout(r, 400));
