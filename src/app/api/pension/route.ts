@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
 import {
   deletePensionConnection,
+  getPensionCredentials,
   listPensionConnections,
   savePensionConnection,
   startPensionSync,
@@ -17,8 +18,17 @@ export const dynamic = "force-dynamic";
 const bad = (error: string) => NextResponse.json({ error }, { status: 400 });
 
 export const GET = handle("pension", async (request: Request) => {
+  const ws = getWorkspaceIdFromRequest(request);
+  const credId = new URL(request.url).searchParams.get("credentialsId");
+  if (credId != null) {
+    const id = Number(credId);
+    if (!Number.isInteger(id) || id <= 0) return bad("invalid connection id");
+    const item = getPensionCredentials(ws, id);
+    if (!item) return NextResponse.json({ error: "not found" }, { status: 404 });
+    return NextResponse.json({ connection: item });
+  }
   return NextResponse.json({
-    connections: listPensionConnections(getWorkspaceIdFromRequest(request)),
+    connections: listPensionConnections(ws),
   });
 });
 
@@ -62,20 +72,25 @@ export const POST = handle("pension", async (request: Request) => {
     return bad("phone must be an Israeli number like 0501234567");
   if (fields.includes("username") && !username) return bad("username is required");
   if (fields.includes("password") && !password) return bad("password is required");
+  const connectionIdParam = body.connectionId != null ? Number(body.connectionId) : undefined;
+  const label = typeof body.label === "string" ? body.label.trim() : "";
   // Only what this fund asks for is stored.
   const given = { id: id.padStart(9, "0"), phone, username, password };
   const { id: connectionId } = savePensionConnection(
     ws,
     fundId,
     Object.fromEntries(fields.map((f) => [f, given[f]])),
+    { id: connectionIdParam, label },
   );
   startPensionSync(ws, connectionId);
   return NextResponse.json({ id: connectionId });
 });
 
 export const DELETE = handle("pension", async (request: Request) => {
-  const id = Number(new URL(request.url).searchParams.get("id"));
+  const url = new URL(request.url);
+  const id = Number(url.searchParams.get("id"));
   if (!Number.isInteger(id) || id <= 0) return bad("invalid connection id");
-  deletePensionConnection(getWorkspaceIdFromRequest(request), id);
+  const deleteAssets = url.searchParams.get("deleteAssets") === "1";
+  deletePensionConnection(getWorkspaceIdFromRequest(request), id, { deleteAssets });
   return NextResponse.json({ success: true });
 });

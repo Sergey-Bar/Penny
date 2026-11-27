@@ -45,7 +45,7 @@ describe("replacePensionAssets", () => {
     replacePensionAssets(holder.db, 1, 7, [account("a", 100), account("b", 200)]);
     replacePensionAssets(holder.db, 1, 7, [account("a", 150, { currency: "USD", costBasis: 90 })]);
     expect(assets()).toEqual([
-      { note: "pension:7:a", value: 150, currency: "USD", symbol: null, cost: 90 },
+      { note: "pension:excellence:a", value: 150, currency: "USD", symbol: null, cost: 90 },
     ]);
     const conn = holder.db
       .prepare(`SELECT last_error, last_sync_at FROM pension_connections WHERE id = 7`)
@@ -56,9 +56,9 @@ describe("replacePensionAssets", () => {
 
   it("zeroes a dropped product that has value history instead of deleting the history", () => {
     replacePensionAssets(holder.db, 1, 7, [account("a", 100), account("b", 200)]);
-    const b = holder.db.prepare(`SELECT id FROM assets WHERE note = 'pension:7:b'`).get() as {
-      id: number;
-    };
+    const b = holder.db
+      .prepare(`SELECT id FROM assets WHERE note = 'pension:excellence:b'`)
+      .get() as { id: number };
     holder.db
       .prepare(
         `INSERT INTO asset_snapshots (asset_id, date, value_ils) VALUES (?, '2026-01-01', 200)`,
@@ -66,8 +66,8 @@ describe("replacePensionAssets", () => {
       .run(b.id);
     replacePensionAssets(holder.db, 1, 7, [account("a", 100)]);
     expect(assets().map((a) => [a.note, a.value])).toEqual([
-      ["pension:7:a", 100],
-      ["pension:7:b", 0],
+      ["pension:excellence:a", 100],
+      ["pension:excellence:b", 0],
     ]);
     expect(holder.db.prepare(`SELECT COUNT(*) AS n FROM asset_snapshots`).get()).toEqual({ n: 1 });
   });
@@ -80,7 +80,29 @@ describe("replacePensionAssets", () => {
       )
       .run();
     replacePensionAssets(holder.db, 1, 7, [account("a", 1)]);
-    expect(assets().map((a) => a.note)).toEqual([null, "pension:70:x", "pension:7:a"]);
+    expect(assets().map((a) => a.note)).toEqual([null, "pension:70:x", "pension:excellence:a"]);
+  });
+
+  it("updates existing assets without duplicating when a fund is disconnected and reconnected", async () => {
+    const { deletePensionConnection, savePensionConnection } =
+      await import("@/server/pension/sync");
+    replacePensionAssets(holder.db, 1, 7, [account("a", 100)]);
+    deletePensionConnection(1, 7);
+    const { id: newId } = savePensionConnection(1, "excellence", { username: "u", password: "p" });
+    expect(newId).not.toBe(7);
+    replacePensionAssets(holder.db, 1, newId, [account("a", 250)]);
+    expect(assets().map((a) => [a.note, a.value])).toEqual([["pension:excellence:a", 250]]);
+  });
+
+  it("migrates legacy connection-id asset keys in-place without duplicating", () => {
+    holder.db
+      .prepare(
+        `INSERT INTO assets (workspace_id, name, type, manual_value, note) VALUES
+         (1, 'legacy', 'pension', 80, 'pension:7:a')`,
+      )
+      .run();
+    replacePensionAssets(holder.db, 1, 7, [account("a", 120)]);
+    expect(assets().map((a) => [a.note, a.value])).toEqual([["pension:excellence:a", 120]]);
   });
 
   it("keeps a listed product that came without a balance", () => {
