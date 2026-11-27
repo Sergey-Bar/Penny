@@ -353,7 +353,7 @@ export function saveAIConfig(config: {
 }
 
 export function getAIKeyStatus() {
-  return fetchJSON<{ hasClaudeKey: boolean }>("/api/setup/ai");
+  return fetchJSON<{ hasClaudeKey: boolean; hasOpenAIKey?: boolean }>("/api/setup/ai");
 }
 
 export function getSettings() {

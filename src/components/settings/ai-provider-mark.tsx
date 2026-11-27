@@ -34,11 +34,11 @@ const MARKS = {
   },
 } as const;
 
-export type AiMarkId = keyof typeof MARKS;
+export type AiMarkId = keyof typeof MARKS | "openai";
 
 /** Neutral tile with the provider's mark in the current text color, so it follows light/dark. */
 export function AiProviderMark({ id, size = 36 }: { id: AiMarkId; size?: number }) {
-  const m = MARKS[id];
+  const m = MARKS[id === "openai" ? "codex" : id];
   return (
     <span
       role="img"

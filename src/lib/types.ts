@@ -324,7 +324,7 @@ export interface Integration {
 
 export interface AppSettings {
   monthsToSync: number;
-  aiProvider: "claude" | "ollama" | "codex" | "gemini" | "opencode" | "kilo" | "none";
+  aiProvider: "claude" | "openai" | "ollama" | "codex" | "gemini" | "opencode" | "kilo" | "none";
   ollamaUrl: string;
   ollamaModel: string;
   showBrowser: boolean;
