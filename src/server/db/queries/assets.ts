@@ -307,13 +307,9 @@ export function saveBankSecurities(
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)`,
   );
   const upsertSnapshot = db.prepare(
-    `INSERT INTO asset_snapshots (asset_id, date, value_ils, cost_basis_ils, value_native, currency)
-     VALUES (?, ?, ?, ?, ?, ?)
-     ON CONFLICT(asset_id, date) DO UPDATE SET
-       value_ils = excluded.value_ils,
-       cost_basis_ils = excluded.cost_basis_ils,
-       value_native = excluded.value_native,
-       currency = excluded.currency`,
+    `INSERT INTO asset_snapshots (asset_id, date, value_ils)
+     VALUES (?, ?, ?)
+     ON CONFLICT(asset_id, date) DO UPDATE SET value_ils = excluded.value_ils`,
   );
   const stale = db.prepare(
     `SELECT id, note, EXISTS (SELECT 1 FROM asset_snapshots s WHERE s.asset_id = assets.id) AS hasHistory
@@ -360,8 +356,7 @@ export function saveBankSecurities(
       }
       const valueIls = s.valueIls ?? (s.currency === "ILS" ? s.value : null);
       if (valueIls != null) {
-        const costBasisIls = s.currency === "ILS" ? s.costBasis : null;
-        upsertSnapshot.run(assetId, today, valueIls, costBasisIls, s.value, s.currency);
+        upsertSnapshot.run(assetId, today, valueIls);
       }
     }
 
