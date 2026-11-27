@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 3000",
     "demo": "node scripts/demo.mjs",
-    "site:features": "node scripts/site/build-feature-pages.mjs",
+    "site:build": "node scripts/site/build-pages.mjs",
     "dev:demo": "node scripts/demo.mjs --keep",
     "demo:reset": "node scripts/demo.mjs --reset-only",
     "build": "next build",

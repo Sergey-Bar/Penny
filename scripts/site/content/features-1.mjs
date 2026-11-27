@@ -178,7 +178,7 @@ const pages = [
       faq: [
         [
           "אילו סוגי קבצים אפשר לייבא?",
-          "CSV, ‏XLSX ו-XLS. טבלה אפשר גם להדביק ישר לגיליון החכם, ו-PDF או צילום נקראים בעזרת ספק ה-AI שבחרתם.",
+          "CSV, ‏XLSX, וקובצי XLS כמו שרוב הבנקים מורידים. קובץ XLS בפורמט הישן של Excel צריך לשמור מחדש כ-XLSX או כ-CSV. טבלה אפשר גם להדביק ישר לגיליון החכם, ו-PDF או צילום נקראים בעזרת ספק ה-AI שבחרתם.",
         ],
         [
           "מה קורה אם ייבאתי את אותו קובץ פעמיים?",
@@ -236,7 +236,7 @@ const pages = [
       faq: [
         [
           "Which file types can I import?",
-          "CSV, XLSX and XLS. A table can also be pasted straight into the smart sheet, and a PDF or photo is read with the AI provider you chose.",
+          "CSV, XLSX, and XLS files as most banks download them. An XLS file in the old Excel format has to be re-saved as XLSX or CSV. A table can also be pasted straight into the smart sheet, and a PDF or photo is read with the AI provider you chose.",
         ],
         [
           "What if I import the same file twice?",
@@ -529,7 +529,7 @@ const pages = [
       h1: "הכסף שלכם, בצ'אט בטלגרם.",
       desc: "בוט טלגרם פרטי שמדבר עם Penny שעל המחשב שלכם: סיכום שלוש פעמים בשבוע, משוב אחרי כל סנכרון, תזכורות לפני חיובים והתראות כשבנק מפסיק להסתנכרן.",
       intro:
-        "מחברים בוט פרטי לצ'אט שלכם עם קוד חד-פעמי מההגדרות. הוא עונה רק לצ'אט הזה, ומדבר עם Penny שעל המחשב שלכם, לא עם שרת שלנו.",
+        "יוצרים בוט פרטי משלכם בטלגרם, מדביקים את האסימון שלו בהגדרות ולוחצים Start. הוא עונה רק לצ'אט שלכם, ומדבר עם Penny שעל המחשב שלכם, לא עם שרת שלנו.",
       sections: [
         {
           h: "סיכום שלוש פעמים בשבוע",
@@ -566,7 +566,7 @@ const pages = [
       faq: [
         [
           "איך מחברים את הבוט?",
-          "עם קוד חד-פעמי מההגדרות של Penny. מאותו רגע הבוט מחובר לצ'אט שלכם בלבד.",
+          "יוצרים בוט אצל BotFather בטלגרם, מדביקים את האסימון שלו בהגדרות של Penny, פותחים את הבוט ולוחצים Start. <a href='guide-connect-the-telegram-bot.html'>המדריך המלא</a>.",
         ],
         [
           "זה עובד מחוץ לבית?",
@@ -586,7 +586,7 @@ const pages = [
       h1: "Your money, in a Telegram chat.",
       desc: "A private Telegram bot that talks to the Penny on your own computer: a summary three times a week, feedback after every sync, reminders before charges and alerts when a bank stops syncing.",
       intro:
-        "Connect a private bot to your chat with a one-time code from Settings. It answers only that chat, and it talks to the Penny on your computer, not to a server of ours.",
+        "Create a private bot of your own in Telegram, paste its token into Settings and press Start. It answers only your chat, and it talks to the Penny on your computer, not to a server of ours.",
       sections: [
         {
           h: "A summary three times a week",
@@ -623,7 +623,7 @@ const pages = [
       faq: [
         [
           "How do I connect the bot?",
-          "With a one-time code from Penny's Settings. From then on the bot is tied to your chat only.",
+          "Create a bot with BotFather in Telegram, paste its token into Penny's Settings, open the bot and press Start. <a href='guide-connect-the-telegram-bot.html'>The full guide</a>.",
         ],
         [
           "Does it work away from home?",
