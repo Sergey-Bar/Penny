@@ -2,7 +2,8 @@ import "server-only";
 import { utcDay } from "@/server/lib/date-utils";
 import type Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
-import { roundCents } from "@/lib/money";
+import { assertCanonicalAmount } from "@/lib/money-contract";
+import { normalizeMerchant } from "@/lib/merchant-normalize";
 import { isValidOwner, normalizeTag } from "@/lib/tags";
 import { EditError } from "@/server/db/queries/transaction-edits";
 
@@ -49,9 +50,17 @@ function check(db: Database.Database, ws: number, body: ManualInput, memberIds: 
   }
   if (body.amount !== undefined) {
     const a = body.amount;
-    if (typeof a !== "number" || !Number.isFinite(a) || a <= 0 || a > MAX_AMOUNT)
+    if (typeof a !== "number" || !Number.isFinite(a))
       throw new EditError("amount must be between 0 and 10,000,000");
-    out.amount = roundCents(a);
+    let amount: number;
+    try {
+      amount = assertCanonicalAmount(a);
+    } catch {
+      throw new EditError("amount must have at most two decimals");
+    }
+    if (amount <= 0 || amount > MAX_AMOUNT)
+      throw new EditError("amount must be between 0 and 10,000,000");
+    out.amount = amount;
     if (out.amount === 0) throw new EditError("amount must be at least 0.01");
   }
   if (body.date !== undefined) {
@@ -191,8 +200,8 @@ export function createManualTransaction(
       db
         .prepare(
           `INSERT INTO transactions (workspace_id, account_number, date, processed_date, original_amount, original_currency, charged_amount, charged_currency,
-         description, memo, type, status, provider, credential_id, sync_run_id, dedup_hash, kind, owner, category_id, category_source, is_excluded, business_share_pct)
-       VALUES (?, ?, ?, ?, ?, 'ILS', ?, 'ILS', ?, ?, 'normal', 'completed', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         description, memo, type, status, provider, credential_id, sync_run_id, dedup_hash, kind, owner, category_id, category_source, is_excluded, business_share_pct, merchant_key)
+       VALUES (?, ?, ?, ?, ?, 'ILS', ?, 'ILS', ?, ?, 'normal', 'completed', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           ws,
@@ -213,6 +222,7 @@ export function createManualTransaction(
           f.categoryId == null ? null : "user",
           f.excluded ? 1 : 0,
           f.businessSharePct ?? 0,
+          normalizeMerchant(f.description ?? ""),
         ).lastInsertRowid,
     );
     if (f.tags?.length) setTags(db, ws, id, f.tags);

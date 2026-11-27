@@ -2,9 +2,14 @@ import "server-only";
 
 import { getDb } from "../db/index";
 import type { CategoryKind } from "@/lib/types";
-import { normalizeMerchant } from "../rules/normalize";
+import {
+  normalizeMerchantV1,
+  normalizeMerchantV2,
+  normalizeMerchant as normalizeMerchantKey,
+} from "@/lib/merchant-normalize";
 
-export { normalizeMerchant };
+/** Writes use the V2 key; `normalizeMerchantV1` stays for dual-read of learned rows. */
+export const normalizeMerchant = normalizeMerchantKey;
 
 export interface MerchantMapping {
   merchantKey: string;
@@ -13,19 +18,25 @@ export interface MerchantMapping {
   source: "user" | "approved-ai";
 }
 
+/**
+ * Looks up merchant memory by V2 and then V1. The V1 query keeps rows learned before the rollout
+ * working until the migration has backfilled them.
+ */
 export function lookupMerchantCategoriesBulk(
   workspaceId: number,
   descriptions: string[],
 ): Map<string, MerchantMapping> {
   if (descriptions.length === 0) return new Map();
   const keys = new Set<string>();
-  const byKey = new Map<string, string>();
+  const candidates = new Map<string, { v2: string; v1: string }>();
   for (const d of descriptions) {
-    const k = normalizeMerchant(d);
-    if (k) {
-      keys.add(k);
-      byKey.set(d, k);
-    }
+    const v2 = normalizeMerchantV2(d);
+    const v1 = normalizeMerchantV1(d);
+    const key = v2 || v1;
+    if (!key) continue;
+    keys.add(key);
+    keys.add(v1);
+    candidates.set(d, { v2: key, v1 });
   }
   if (keys.size === 0) return new Map();
   const placeholders = Array.from(keys)
@@ -44,8 +55,8 @@ export function lookupMerchantCategoriesBulk(
   const lookupByKey = new Map<string, MerchantMapping>();
   for (const r of rows) lookupByKey.set(r.merchantKey, r);
   const result = new Map<string, MerchantMapping>();
-  for (const [description, key] of byKey) {
-    const m = lookupByKey.get(key);
+  for (const [description, { v2, v1 }] of candidates) {
+    const m = lookupByKey.get(v2) ?? lookupByKey.get(v1);
     if (m) result.set(description, m);
   }
   return result;

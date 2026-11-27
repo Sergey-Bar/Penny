@@ -167,7 +167,7 @@ export function BudgetSidePanel({ summary, month }: { summary: DashboardSummary;
               {months.map((m) => (
                 <div
                   key={m.month}
-                  className={`flex-1 rounded-t-md ${m.amount > summary.totalBudget ? "bg-expense/80" : "bg-primary/70"}`}
+                  className={`flex-1 rounded-t-md ${m.amount > summary.totalBudget ? "bg-expense/80" : "bg-[var(--chart-1)]"}`}
                   style={{ height: `${(m.amount / max) * 100}%` }}
                   title={money(m.amount)}
                 />

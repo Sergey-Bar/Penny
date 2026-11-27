@@ -72,7 +72,7 @@ export function getRecentTransactionsForHome(
     .prepare(
       `SELECT t.id, t.date, t.description, t.charged_amount as chargedAmount,
               t.charged_currency as chargedCurrency, t.kind,
-              c.name as categoryName, c.color as categoryColor,
+              c.name as categoryName, c.color as categoryColor, c.icon as categoryIcon,
               CASE WHEN t.kind = 'expense' THEN c.need_type END as needType
        FROM transactions t
        LEFT JOIN categories c ON t.category_id = c.id
@@ -90,6 +90,7 @@ export function getRecentTransactionsForHome(
     kind: "expense" | "income" | "transfer";
     categoryName: string | null;
     categoryColor: string | null;
+    categoryIcon: string | null;
     needType: NeedType | null;
   }>;
   return rows;

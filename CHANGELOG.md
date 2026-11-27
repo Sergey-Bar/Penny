@@ -2,6 +2,54 @@
 
 All notable changes to Penny. Versions follow [Semantic Versioning](https://semver.org/); dates are Israel time.
 
+## [Unreleased]
+
+One additive database migration (`082_backend_jobs`): durable jobs/attempts, runtime locks, provider health, daily metrics, audit log, insight snapshots, idempotency keys, sync post-processing status, merchant keys and category confidence/reasons. See [docs/backend-operations.md](docs/backend-operations.md).
+
+### New
+
+- **Durable job worker** behind `backend_v2` (off/shadow/on): critical and maintenance lanes, idempotent enqueue, leases/heartbeats, retry backoff, dead letters, admin retry/cancel, startup recovery and graceful shutdown.
+- **Sync post-processing** is enqueued atomically with the save, checkpoints each step, tracks `pending/running/completed/failed`, and runs inline under the manual SSE lease. The scheduler fans out one `sync.run` per credential in durable mode.
+- **Provider health** with transient retries and 24h cooldowns for auth, 2FA and site-change failures.
+- **Idempotent money writes** via `Idempotency-Key` replay/conflict handling and a boundary-exact money contract (two decimals only).
+- **Integrity and repair**: safe fixes with audit, duplicate/split/kind/account checks, hourly local snapshots (24 kept) and a restore drill (`npm run restore:drill`).
+- **Observability**: request IDs, JSON event log with redaction, daily metrics, admin `/api/ops/status` and `/api/ops/metrics`, public `/api/health/ready`, diagnostics operations summary.
+- **Explainable categorization**: V2 merchant keys with dual-read, confidence/reasons persisted, AI moved to its own maintenance job, and labeled accuracy/pairing/recurring/anomaly gates (`npm run test:intelligence`).
+- **Performance**: report indexes and `npm run bench:backend` (100k rows, query plan + p95).
+
+### Safety
+
+- Shadow mode audits intended post-processing without applying child jobs; rollback is a workspace setting or env change.
+- The hourly snapshot and metric writer never reopen a database that a wipe/restore just closed.
+
+### Pip v2 and remote access
+
+One additive migration (`083_pip`): threads, messages, tool calls, explicit memory, provider consent, feedback, briefings, agent runs, approvals and evaluation runs.
+
+- **Pip is an evidence-first household agent** behind `pip_v2` (off by default). A global dock and `/ask` answer questions from a versioned read-only tool registry; every answer carries evidence and an as-of timestamp.
+- **Deterministic fallback** runs without a model. A configured provider receives minimized facts only after consent, and a numeric verifier rejects any amount or percentage that is not in the tool results.
+- **Knowledge and calculators** are seeded, versioned and cited. Gross-net, emergency fund, compound growth, loan payoff, mortgage payment, retirement gap and savings-goal calculators are whitelisted.
+- **Proactive briefing** runs daily per enabled workspace, stores an in-app card and sends Telegram when linked. It ranks cash, budget, recurring, fee, anomaly, sync, categorization, pension, insurance and planned facts, and records helpful/not-helpful feedback.
+- **Operations**: agent runs and tool calls are recorded, `/api/ops/status` shows seven-day runs and fallbacks, `/api/pip/eval` runs the planner and red-team suite, and `PENNY_PIP_KILL=1` disables chat and briefings without deleting data.
+- **Remote access** is opt-in: named Cloudflare tunnel with Access JWT verification, or a development-only quick tunnel. Both require the app lock; remote requests fail closed without a valid token.
+- **Docs and guardrails**: strategy docs, ADRs, Pip and remote-access runbooks, an anonymity check (`npm run check:anonymity`) and a bilingual test suite (`npm run test:pip`).
+
+## [0.6.0] - 2026-11-26
+
+One database migration (`081_import_v2`): accounts, import batches and rows, pending folder files, workspace mapping profiles, and the account/origin/source columns on transactions, categories and balances. Existing `sync_runs` and sheet imports are preserved and backfilled idempotently.
+
+### New
+
+- **Import v2 workbench** behind the `import_v2` workspace flag (new workspaces start with it): CSV/XLSX/HTML/paste/PDF, header detection, full column remapping, editable grid, deterministic preview, per-row duplicate reasons, saved mappings, import history and undo.
+- **Accounts are entities.** A statement, a folder file and a sync now land on the same account by number, alias or label; an ambiguous fuzzy match asks before merging.
+- **Stable category keys.** The merchant dictionary, import patterns and rename-safe category resolution share keys; the built-in leaf coverage is tested (or documented as manual-only).
+- **Folder pending inbox** and review-inbox memo/transfer actions.
+
+### Safety
+
+- Card bills become transfers only when a card explains them; loan deposits are transfers; refunds keep the expense category; generic descriptions are never guessed; a wrong-kind category is rejected.
+- Undo keeps adopted bank rows and cleans receipts, expense shares and flow matches; the same file hash is rejected with the previous batch id.
+
 ## [0.5.0] - 2026-11-24
 
 No database migrations.

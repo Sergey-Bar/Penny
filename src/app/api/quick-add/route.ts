@@ -9,6 +9,7 @@ import { EditError } from "@/server/db/queries/transaction-edits";
 import { createManualTransaction } from "@/server/db/queries/manual-transactions";
 import { categorizeLocally } from "@/server/sync/categorize-local";
 import { quickAddInput, underRateLimit } from "@/lib/quick-add";
+import { withIdempotency } from "@/server/lib/http/idempotency";
 
 export const dynamic = "force-dynamic";
 
@@ -25,19 +26,21 @@ export const POST = handle("quick-add", async (request: Request) => {
   if (!underRateLimit(hits, device.id, Date.now()))
     return NextResponse.json({ error: "too_many" }, { status: 429 });
   const ws = device.workspaceId;
-  const body = await request.json().catch(() => null);
-  try {
-    const id = createManualTransaction(
-      getDb(),
-      ws,
-      quickAddInput(body, israelToday()),
-      getAppSettings(ws).household.members.map((m) => m.id),
-    );
-    categorizeLocally(ws);
-    return NextResponse.json({ ok: true, id });
-  } catch (error) {
-    if (error instanceof EditError)
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    throw error;
-  }
+  return withIdempotency(request, ws, async () => {
+    const body = await request.json().catch(() => null);
+    try {
+      const id = createManualTransaction(
+        getDb(),
+        ws,
+        quickAddInput(body, israelToday()),
+        getAppSettings(ws).household.members.map((m) => m.id),
+      );
+      categorizeLocally(ws);
+      return NextResponse.json({ ok: true, id });
+    } catch (error) {
+      if (error instanceof EditError)
+        return NextResponse.json({ error: error.message }, { status: error.status });
+      throw error;
+    }
+  });
 });

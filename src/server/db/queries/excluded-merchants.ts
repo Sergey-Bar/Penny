@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDb } from "../index";
+import { normalizeMerchant } from "@/lib/merchant-normalize";
 import type { ExcludedMerchant } from "@/lib/types";
 
 interface RawExcludedMerchantRow {
@@ -36,12 +37,14 @@ export function addExcludedMerchant(
   provider: string,
   merchantKey: string,
 ): void {
+  const key = normalizeMerchant(merchantKey);
+  if (!key) return;
   getDb()
     .prepare(
       `INSERT OR IGNORE INTO excluded_merchants (workspace_id, provider, merchant_key)
        VALUES (?, ?, ?)`,
     )
-    .run(workspaceId, provider, merchantKey);
+    .run(workspaceId, provider, key);
 }
 
 export function deleteExcludedMerchant(workspaceId: number, id: number): boolean {
@@ -56,12 +59,14 @@ export function deleteExcludedMerchantByKey(
   provider: string,
   merchantKey: string,
 ): boolean {
+  const key = normalizeMerchant(merchantKey);
+  if (!key) return false;
   const result = getDb()
     .prepare(
       `DELETE FROM excluded_merchants
        WHERE workspace_id = ? AND provider = ? AND merchant_key = ?`,
     )
-    .run(workspaceId, provider, merchantKey);
+    .run(workspaceId, provider, key);
   return result.changes > 0;
 }
 
@@ -82,7 +87,7 @@ export function applyMerchantRulesToSyncRun(workspaceId: number, syncRunId: numb
            SELECT 1 FROM excluded_merchants em
            WHERE em.workspace_id = transactions.workspace_id
              AND em.provider = transactions.provider
-             AND em.merchant_key = transactions.description
+             AND em.merchant_key = COALESCE(transactions.merchant_key, transactions.description)
          )`,
     )
     .run(workspaceId, syncRunId);

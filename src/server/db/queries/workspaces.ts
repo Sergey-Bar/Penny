@@ -3,6 +3,7 @@ import "server-only";
 import { ApiError } from "@/server/lib/api-error";
 import { applyCategoryHierarchy } from "../category-hierarchy";
 import { applyFamilyColors } from "../category-colors";
+import { seedCategoryKeysForWorkspace } from "../import-v2-backfill";
 
 import { getDb } from "../index";
 import type { Workspace } from "@/lib/types";
@@ -673,6 +674,10 @@ export function createWorkspace(name: string, avatar: AvatarInput = {}): Workspa
     }
     applyCategoryHierarchy(db, id);
     applyFamilyColors(db, id);
+    seedCategoryKeysForWorkspace(db, id);
+    db.prepare(
+      "INSERT OR REPLACE INTO workspace_settings (workspace_id, key, value, updated_at) VALUES (?, 'import_v2', 'true', datetime('now'))",
+    ).run(id);
     setAvatar(id, avatar);
     return id;
   });

@@ -27,6 +27,20 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles: ["remote"]
+    container_name: penny-cloudflared
+    restart: unless-stopped
+    depends_on:
+      - penny
+    command: tunnel --no-autoupdate run
+    environment:
+      # Create the tunnel in Cloudflare and store its token in .env. Never commit the token.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    security_opt:
+      - no-new-privileges:true
+
 volumes:
   penny-data:
     name: penny-data

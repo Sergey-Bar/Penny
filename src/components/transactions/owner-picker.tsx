@@ -26,7 +26,7 @@ export function OwnerPicker({
       aria-label={label}
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value || null)}
-      className="h-7 max-w-[8rem] rounded-md border border-border/60 bg-background px-1.5 text-xs text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring"
+      className="tap-target h-7 max-w-[8rem] rounded-md border border-border/60 bg-background px-1.5 text-xs text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring"
     >
       <option value="">
         {fallback ? t("defaultOwner", { name: nameOf(fallback) }) : t("ownerUnset")}

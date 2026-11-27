@@ -34,7 +34,7 @@ export function Sparkline({
         points={values.map((v, i) => `${i * step},${y(v)}`).join(" ")}
         fill="none"
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="2.5"
         strokeLinejoin="round"
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"

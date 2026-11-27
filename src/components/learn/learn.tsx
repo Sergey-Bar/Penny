@@ -9,16 +9,6 @@ import { Segmented } from "@/components/ui/segmented";
 import { Forward } from "@/components/ui/dir-chevron";
 import { ARTICLES, TOPICS, TOPIC_LABEL, pick, type Article, type Topic } from "@/content/learn";
 
-const TOPIC_TINT: Record<Topic, string> = {
-  basics: "bg-[#007aff]",
-  debt: "bg-[#ff3b30]",
-  investing: "bg-[#34c759]",
-  home: "bg-[#ff9500]",
-  car: "bg-[#5856d6]",
-  retirement: "bg-[#30b0c7]",
-  family: "bg-[#ff2d55]",
-};
-
 export function LearnHub() {
   const t = useTranslations("learn");
   const locale = useLocale();
@@ -82,7 +72,7 @@ function ArticleCard({ a }: { a: Article }) {
       className="flex h-full gap-4 rounded-2xl bg-card p-5 transition-[background-color] duration-150 hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       <span
-        className={`grid size-11 shrink-0 place-items-center rounded-xl text-white ${TOPIC_TINT[a.topic]}`}
+        className="grid size-11 shrink-0 place-items-center rounded-xl bg-selection text-accent-c"
         aria-hidden
       >
         <BookOpen className="size-5" />
@@ -112,7 +102,6 @@ export function ArticleView({ a }: { a: Article }) {
     <article className="space-y-6">
       <header className="space-y-2">
         <p className="flex items-center gap-2 text-footnote font-medium text-muted-foreground">
-          <span className={`size-2.5 rounded-full ${TOPIC_TINT[a.topic]}`} aria-hidden />
           {pick(TOPIC_LABEL[a.topic], locale)}
           <Clock className="ms-2 size-3.5" aria-hidden />
           {t("minutes", { n: a.minutes })}
