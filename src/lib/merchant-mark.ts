@@ -20,7 +20,7 @@ export const BRANDS: [RegExp, string, string, string][] = [
   [/יוחננוף/, "י", "#00843d", "yochananof.co.il"],
   [/טיב\s*טעם/, "ט", "#d6001c", "tivtaam.co.il"],
   [/קרפור|carrefour/i, "C", "#004e9f", "carrefour.co.il"],
-  [/am\s*:?\s*pm/i, "A", "#f9b000", "ampm.co.il"],
+  [/am\s*(?::\s*)?pm/i, "A", "#f9b000", "ampm.co.il"],
   [/סופר[\s-]*פארם|super[\s-]*pharm/i, "ס", "#e4002b", "super-pharm.co.il"],
   // \b only knows Latin letters, so Hebrew words get explicit edges.
   [/(^|[\s-])פז([\s-]|$)|\bpaz\b/i, "פ", "#ffcc00", "paz.co.il"],
