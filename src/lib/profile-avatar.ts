@@ -1,6 +1,18 @@
 // Shared by the API (validation) and the /profiles UI (pickers).
 import { PET_COLORS, PET_SKINS } from "./pet";
+// The app's own blues and a few calm companions; no violet since the palette changed.
 export const AVATAR_COLORS = [
+  "#1657ff",
+  "#0aa5e0",
+  "#0a8f6a",
+  "#d98a1a",
+  "#d6456f",
+  "#3f5b8a",
+  "#12a3a3",
+  "#6b7280",
+] as const;
+/** Colours offered before the palette changed. No longer offered, still accepted, so saving an older profile never fails. */
+const RETIRED_AVATAR_COLORS: readonly string[] = [
   "#3d2fd3",
   "#7c5cff",
   "#e0679b",
@@ -8,8 +20,18 @@ export const AVATAR_COLORS = [
   "#e8b931",
   "#4caf7a",
   "#2fa7c9",
-  "#6b7280",
-] as const;
+];
+
+/**
+ * The colour a profile is drawn on: its own choice, or a steady one from its id. A colour from the retired palette is
+ * shown as its counterpart in the current one, so nobody's saved profile changes and no avatar stays violet.
+ */
+export function avatarColorFor(id: number, saved: string | null | undefined): string {
+  const fallback = AVATAR_COLORS[Math.abs(id - 1) % AVATAR_COLORS.length];
+  if (!saved) return fallback;
+  const retired = RETIRED_AVATAR_COLORS.indexOf(saved.toLowerCase());
+  return retired >= 0 ? AVATAR_COLORS[retired % AVATAR_COLORS.length] : saved;
+}
 
 /** @unfinished unused since 4447003 (2026-11-14) removed its last caller; kept for the owner to decide */
 export const AVATAR_EMOJIS = [
@@ -109,7 +131,7 @@ export function parseAvatar(body: unknown): AvatarInput | { error: string } {
     if (v === null || v === "") out.avatarColor = null;
     else if (
       typeof v === "string" &&
-      (AVATAR_COLORS as readonly string[]).includes(v.toLowerCase())
+      [...AVATAR_COLORS, ...RETIRED_AVATAR_COLORS].includes(v.toLowerCase())
     )
       out.avatarColor = v.toLowerCase();
     else return { error: "avatarColor must be one of the palette colours" };

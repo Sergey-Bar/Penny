@@ -58,3 +58,43 @@ for (const btn of document.querySelectorAll("[data-copy]")) {
     setTimeout(() => (btn.textContent = label), 1800);
   });
 }
+
+// Popovers in the top bar (features, language and theme): each is a <details>, closed by a click outside it,
+// by Escape, or by opening the other one.
+const pops = [...document.querySelectorAll(".nav-bar details")];
+document.addEventListener("click", (e) => {
+  for (const d of pops) if (!d.contains(e.target)) d.open = false;
+});
+document.addEventListener("keydown", (e) => {
+  const d = e.key === "Escape" && pops.find((x) => x.open);
+  if (!d) return;
+  d.open = false;
+  d.querySelector("summary").focus();
+});
+
+// Language: following any link to the other language is a pick, and so is choosing one in the control.
+// Auto forgets the pick and reloads, so lang.js in <head> can send the visitor where their browser points.
+const LANG = "penny.site.lang";
+const saveLang = (v) => {
+  try {
+    if (v) localStorage.setItem(LANG, v);
+    else localStorage.removeItem(LANG);
+  } catch {} // storage blocked: the pick lasts for this click only
+};
+const markLang = (v) => {
+  for (const b of document.querySelectorAll("[data-lang-control] [data-lang]"))
+    if (b.dataset.lang === v) b.setAttribute("aria-current", "true");
+    else b.removeAttribute("aria-current");
+};
+let savedLang = null;
+try { savedLang = localStorage.getItem(LANG); } catch {}
+for (const b of document.querySelectorAll('[data-lang="auto"]')) b.hidden = false;
+if (savedLang !== "he" && savedLang !== "en") markLang("auto");
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a[hreflang], [data-lang]");
+  if (!a) return;
+  const v = a.dataset.lang || a.hreflang;
+  if (v === "auto") { saveLang(null); location.reload(); return; }
+  saveLang(v);
+  if (a.dataset.lang && v === document.documentElement.lang) { e.preventDefault(); markLang(v); } // already here
+});

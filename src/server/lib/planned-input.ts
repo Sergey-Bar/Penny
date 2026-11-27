@@ -2,6 +2,7 @@ import "server-only";
 
 import type { PlannedInput } from "@/server/db/queries/planned";
 import { PLANNED_STATUSES, type PlannedStatus } from "@/lib/planned";
+import { assertCanonicalAmount } from "@/lib/money-contract";
 
 const text = (v: unknown, max: number): string | null =>
   typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null;
@@ -16,9 +17,13 @@ export function parsePlannedInput(body: unknown): PlannedInput | string {
 
   const description = text(item.description, 80);
   if (!description) return "a planned expense needs a description";
-  const amount = Number(item.amount);
-  if (!Number.isFinite(amount) || amount <= 0 || amount >= 1e10)
-    return "amount must be a positive number";
+  let amount: number;
+  try {
+    amount = assertCanonicalAmount(item.amount);
+  } catch {
+    return "amount must be a positive number with at most two decimals";
+  }
+  if (amount <= 0 || amount >= 1e10) return "amount must be a positive number";
   const date = day(item.date);
   if (!date) return "date must be YYYY-MM-DD";
   const installments =
@@ -37,7 +42,7 @@ export function parsePlannedInput(body: unknown): PlannedInput | string {
   return {
     id,
     description,
-    amount: Math.round(amount * 100) / 100,
+    amount,
     date,
     account: text(item.account, 60),
     installments,

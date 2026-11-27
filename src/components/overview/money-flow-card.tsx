@@ -45,7 +45,7 @@ export function MoneyFlowCard({ data }: { data: OverviewPayload }) {
             nodePadding={14}
             nodeWidth={10}
             margin={{ top: 24, right: 150, bottom: 8, left: 8 }}
-            link={{ stroke: "var(--primary)", strokeOpacity: 0.18 }}
+            link={{ stroke: "var(--chart-1)", strokeOpacity: 0.24 }}
             node={({
               x,
               y,

@@ -2,13 +2,18 @@ import "server-only";
 
 import { POLICY_KINDS, type InsurancePolicy } from "@/lib/types";
 import type { InsurancePolicyInput } from "@/server/db/queries/insurance";
+import { assertCanonicalAmount } from "@/lib/money-contract";
 
 const text = (v: unknown, max: number): string | null =>
   typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null;
 const amount = (v: unknown): number | null => {
   if (v === "" || v === null || v === undefined) return null;
-  const n = Number(v);
-  return Number.isFinite(n) && n >= 0 && n < 1e10 ? n : null;
+  try {
+    const n = assertCanonicalAmount(v);
+    return n >= 0 && n < 1e10 ? n : null;
+  } catch {
+    return null;
+  }
 };
 const day = (v: unknown): string | null | undefined => {
   if (v === "" || v === null || v === undefined) return null;

@@ -8,6 +8,20 @@ import { cancelOtpRequest } from "@/server/sync/otp-bridge";
 import { markSyncEnd, markSyncStart } from "@/server/sync/activity";
 import { tryAcquireCredentialSync, tryAcquireSync } from "@/server/sync/lock";
 import { DEMO_BLOCKED_MESSAGE, isDemoMode } from "@/server/demo/mode";
+import { getBackendMode } from "@/server/lib/backend-mode";
+import { executeLeasedJob } from "@/server/jobs/worker";
+import type { JobRow } from "@/server/jobs/types";
+
+function postProcessCategorized(job: JobRow | null): number {
+  if (!job) return 0;
+  try {
+    const state = JSON.parse(job.state_json) as { counts?: Record<string, number> };
+    const value = state.counts?.["local-categorization"];
+    return typeof value === "number" && Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
+}
 
 function sseEvent(event: string, data: Record<string, unknown>): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -69,15 +83,44 @@ export const POST = handle("sync", async (request: Request) => {
 
       const headerPathTracking = headerPresent;
       if (headerPathTracking) markSyncStart("manual");
+      const syncHeartbeat = setInterval(() => releaseSync.heartbeat(), 30_000);
+      syncHeartbeat.unref?.();
       try {
         const summaries: WorkspaceSummary[] = [];
         if (headerPresent) {
           const workspaceId = getWorkspaceIdFromRequest(request);
-          summaries.push(await syncWorkspace(workspaceId, filterCredentialId, send));
+          const mode = getBackendMode(workspaceId);
+          summaries.push(
+            await syncWorkspace(workspaceId, filterCredentialId, send, true, {
+              mode: mode === "on" ? "manual" : mode === "shadow" ? "shadow" : "inline",
+            }),
+          );
         } else {
           summaries.push(
-            ...(await runAllWorkspaces(filterCredentialId, send, "manual", { lockHeld: true })),
+            ...(await runAllWorkspaces(filterCredentialId, send, "manual", {
+              lockHeld: true,
+              mode: "auto",
+            })),
           );
+        }
+
+        // In durable mode the post-process job is executed inline, under the manual lease, and its
+        // step events go to the same SSE stream. If the browser dies, the worker resumes it.
+        for (const summary of summaries) {
+          for (const ref of summary.postProcessJobs) {
+            const job = await executeLeasedJob(
+              ref.jobId,
+              `manual:${ref.syncRunId}`,
+              (event, data) => send(event, data),
+            );
+            if (job?.status === "succeeded") summary.categorized += postProcessCategorized(job);
+            if (!job || job.status === "dead") {
+              send("error", {
+                message: "Post-processing did not finish",
+                code: "post-process-failed",
+              });
+            }
+          }
         }
 
         const totalAdded = summaries.reduce((s, w) => s + w.added, 0);
@@ -112,6 +155,7 @@ export const POST = handle("sync", async (request: Request) => {
           error instanceof Error ? redact(error.message) : "An unexpected error occurred";
         send("error", { message });
       } finally {
+        clearInterval(syncHeartbeat);
         if (headerPathTracking) markSyncEnd();
         releaseSync();
       }

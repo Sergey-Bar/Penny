@@ -8,7 +8,7 @@ Israeli banks have poor exports, global budgeting apps don't understand shekels,
 
 Penny runs on your laptop. It pulls transactions straight from your banks and credit cards, keeps them in one SQLite file you can copy and back up, and lets an AI of your choice sort them into categories, or none at all. Then it helps with the questions that actually matter in Israel: am I on track this month, do I have a safety net, am I paying too much in fees, and am I getting every tax benefit I'm owed.
 
-Nothing leaves your machine except the calls you choose: to your bank, and to an AI provider if you pick a cloud one.
+Nothing leaves your machine except the calls you choose: to your bank, to an AI provider if you pick a cloud one, and through the tunnel if you turn on remote access.
 
 ## Who it's for
 
@@ -17,7 +17,7 @@ Nothing leaves your machine except the calls you choose: to your bank, and to an
 - **Couples and families** who share money, each with their own profile.
 - **Hebrew speakers first** (full right-to-left), with a complete English interface too.
 
-It is a poor fit if you want a cloud service you can reach from anywhere, or bookkeeping for a business.
+It is a poor fit if you want a fully hosted multi-tenant service, or bookkeeping for a business.
 
 ## Everyday money
 
@@ -46,6 +46,25 @@ More than 25 calculators and guided tools, ordered by life stage, each marked wi
 | Everyday | Bank fee audit against the basic track, debt payoff, loan cost, savings goals, vacation budget, kids' investing |
 
 Plus a **knowledge center** of short original guides in Hebrew and English, and daily tips.
+
+## Pip, the household assistant
+
+Pip has two layers. The companion keeps its mood and care list. The assistant answers questions from the household's own data, and is off until `pip_v2` is enabled.
+
+- **Ask in plain words** from the global dock or `/ask`: affordability, spending changes, subscriptions, fees, pension, insurance, income stability, planned charges, syncing and what-if calculations.
+- **Every answer has evidence.** The panel shows the tools used, the as-of date, the source ids and a "what Pip sees" disclosure. Knowledge answers carry a version and a citation.
+- **Deterministic by default.** Without a model, Pip answers from the tool results. A configured provider can phrase the answer only after consent and only if every number matches the evidence.
+- **Read-only.** Chat cannot change a transaction, move money or send an email. The tool registry has no write action.
+- **Explicit memory.** A preference, goal or constraint is saved only when the user saves it, and can be read or deleted.
+- **Daily briefing.** A short in-app card ranks the few things worth attention. Telegram delivery is optional.
+- **Fail closed.** `PENNY_PIP_KILL=1` disables chat and briefings without deleting anything.
+
+## Remote access
+
+- **Off by default.** The app keeps listening locally.
+- **Named Cloudflare tunnel with Access:** the recommended way to reach Penny from a phone. The proxy verifies the Access JWT and still requires the app lock.
+- **Quick tunnel:** development only, explicitly acknowledged and never the default.
+- **No wildcard hosts.** A remote hostname is added to the host guard only after it is configured, and a failed token check refuses the request before any route runs.
 
 ## Household
 
@@ -140,6 +159,7 @@ flowchart LR
 |---|---|
 | Credentials at rest | AES-256-GCM; the key file must be mode `0600` or the server refuses to start |
 | Network exposure | Bound to `127.0.0.1` only. Phone access on your Wi-Fi is opt-in and protected by an access code |
+| Remote access | Off by default; named Cloudflare Access JWT verification plus the app lock, or an explicitly acknowledged development quick tunnel |
 | Browser CSRF | Origin / Referer checks on every request; destructive endpoints need an explicit confirmation |
 | App lock | Optional passcode lock with automatic timeout |
 | Bot detection | Chromium sandbox on by default (`PENNY_DISABLE_CHROMIUM_SANDBOX=1` to opt out) |
@@ -167,4 +187,7 @@ flowchart LR
 - [x] Windows self-update, and a clickable demo on the website
 - [x] OFX export
 - [x] Automatic encrypted backup to a cloud folder, and a support file for bug reports
+- [x] Pip assistant with evidence, deterministic fallback, explicit memory and a daily briefing
+- [x] Remote access with Cloudflare Access and the app lock
+- [ ] Provider-chosen tools after the golden suite proves selection quality
 - [ ] Native mobile companion

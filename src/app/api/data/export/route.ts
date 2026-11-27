@@ -6,6 +6,7 @@ import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
 import { toCsv } from "@/lib/csv";
 import { toOfx, type OfxAccount } from "@/lib/ofx";
 import { BANK_PROVIDERS } from "@/lib/types";
+import { exportPipData } from "@/server/pip/repository";
 
 const HEADERS = [
   "date",
@@ -72,7 +73,9 @@ function ofx(workspaceId: number): NextResponse {
 /** All transactions of the workspace as a CSV download, or ?format=ofx for other money apps. */
 export const GET = handle("data/export", async (request: Request) => {
   const workspaceId = getWorkspaceIdFromRequest(request);
-  if (new URL(request.url).searchParams.get("format") === "ofx") return ofx(workspaceId);
+  const format = new URL(request.url).searchParams.get("format");
+  if (format === "ofx") return ofx(workspaceId);
+  if (format === "pip") return NextResponse.json(exportPipData(workspaceId));
   const rows = getDb()
     .prepare(
       `SELECT t.date, t.processed_date, t.account_number AS account, t.provider, t.description, t.memo,

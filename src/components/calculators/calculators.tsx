@@ -36,26 +36,26 @@ const HUB = [
   {
     key: "money",
     items: [
-      { href: "/calculators/growth", key: "growth", Icon: Sprout, tint: "bg-[#34c759]" },
-      { href: "/calculators/debt", key: "debt", Icon: Scale, tint: "bg-[#ff3b30]" },
-      { href: "/fi", key: "fi", Icon: LineChart, tint: "bg-[#ff2d55]" },
+      { href: "/calculators/growth", key: "growth", Icon: Sprout },
+      { href: "/calculators/debt", key: "debt", Icon: Scale },
+      { href: "/fi", key: "fi", Icon: LineChart },
     ],
   },
   {
     key: "home",
     items: [
-      { href: "/calculators/mortgage", key: "mortgage", Icon: Percent, tint: "bg-[#007aff]" },
-      { href: "/discounted-home", key: "discountedHome", Icon: House, tint: "bg-[#ff9500]" },
-      { href: "/calculators/renovation", key: "renovation", Icon: Hammer, tint: "bg-[#a2845e]" },
-      { href: "/fi", key: "rentBuy", Icon: Landmark, tint: "bg-[#30b0c7]" },
+      { href: "/calculators/mortgage", key: "mortgage", Icon: Percent },
+      { href: "/discounted-home", key: "discountedHome", Icon: House },
+      { href: "/calculators/renovation", key: "renovation", Icon: Hammer },
+      { href: "/fi", key: "rentBuy", Icon: Landmark },
     ],
   },
   {
     key: "life",
     items: [
-      { href: "/car", key: "car", Icon: Car, tint: "bg-[#5856d6]" },
-      { href: "/fi", key: "takeHome", Icon: Wallet, tint: "bg-[#34c759]" },
-      { href: "/fi", key: "fees", Icon: Banknote, tint: "bg-[#8e8e93]" },
+      { href: "/car", key: "car", Icon: Car },
+      { href: "/fi", key: "takeHome", Icon: Wallet },
+      { href: "/fi", key: "fees", Icon: Banknote },
     ],
   },
 ] as const;
@@ -73,14 +73,14 @@ export function CalculatorsHub() {
             {t(`group.${g.key}`)}
           </h2>
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {g.items.map(({ href, key, Icon, tint }) => (
+            {g.items.map(({ href, key, Icon }) => (
               <li key={key}>
                 <Link
                   href={href}
                   className="flex h-full items-start gap-4 rounded-2xl bg-card p-5 transition-[background-color] duration-150 hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   <span
-                    className={`grid size-11 shrink-0 place-items-center rounded-xl text-white ${tint}`}
+                    className="grid size-11 shrink-0 place-items-center rounded-xl bg-selection text-accent-c"
                     aria-hidden
                   >
                     <Icon className="size-5" />

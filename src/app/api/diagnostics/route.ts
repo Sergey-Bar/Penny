@@ -13,6 +13,13 @@ import { isLanEnabled } from "@/server/lib/lan-access";
 import { isDemoMode } from "@/server/demo/mode";
 import { redact, redactKnownSecrets } from "@/server/lib/redact";
 import { decrypt } from "@/server/lib/encryption";
+import { getBackendMode } from "@/server/lib/backend-mode";
+import { workerStatus } from "@/server/jobs/worker";
+import { queueStats } from "@/server/jobs/queue";
+import { hourlyBackupStatus } from "@/server/lib/hourly-backup";
+import { getAutoBackupConfig } from "@/server/lib/auto-backup";
+import { getNextRunAt } from "@/server/sync/scheduler";
+import { getPipMode, isPipKillSwitch } from "@/server/lib/pip-mode";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +75,37 @@ export const GET = handle("diagnostics", async () => {
       telegram: !!getGlobalSetting("telegram_token") || !!process.env.TELEGRAM_BOT_TOKEN,
       appLock: isLockEnabled(),
       phoneAccess: isLanEnabled(),
+      backendV2: getBackendMode(),
+      pipV2: getPipMode(),
+      pipKillSwitch: isPipKillSwitch(),
+    },
+    operations: {
+      worker: workerStatus(),
+      queue: queueStats(),
+      scheduler: { nextRunAt: getNextRunAt() },
+      pip: {
+        threads: one<{ n: number }>("SELECT COUNT(*) n FROM pip_threads").n,
+        runs7d: one<{ n: number }>(
+          "SELECT COUNT(*) n FROM pip_agent_runs WHERE created_at >= datetime('now', '-7 days')",
+        ).n,
+        fallbacks7d: one<{ n: number }>(
+          "SELECT COUNT(*) n FROM pip_agent_runs WHERE status = 'fallback' AND created_at >= datetime('now', '-7 days')",
+        ).n,
+      },
+      backups: {
+        local: (() => {
+          const status = hourlyBackupStatus();
+          return { status: status.status, ageSeconds: status.ageSeconds, count: status.count };
+        })(),
+        portable: (() => {
+          const config = getAutoBackupConfig();
+          return {
+            enabled: config.enabled,
+            frequency: config.frequency,
+            status: config.status,
+          };
+        })(),
+      },
     },
     data: {
       workspaces: one<{ n: number }>("SELECT COUNT(*) n FROM workspaces").n,

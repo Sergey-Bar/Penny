@@ -124,4 +124,4 @@ html.a11y-no-images .studio-overview { background: var(--studio-hero) !important
 html.a11y-hc-dark :is(.bg-destructive, .bg-status-over) { color: #000000 !important; }
 /* Simple-mode ring colours are made for the dark hero; on white cards they need dark ink. */
 html.a11y-hc-light { --ring-income: #1a0dab; --ring-spending: #7a3600; --ring-savings: #00458a; }
-html.a11y-hc-light :is(.wallet, .studio-overview) { --ring-income: #a99bff; --ring-spending: #f5b94a; --ring-savings: #5aa9ff; }
+html.a11y-hc-light :is(.wallet, .studio-overview) { --ring-income: #6fdc8c; --ring-spending: #f5b94a; --ring-savings: #5aa9ff; }

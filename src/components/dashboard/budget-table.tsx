@@ -126,7 +126,7 @@ export function BudgetTable({
           {frame > 0 ? t("onlyFrame", { frame: money(frame) }) : t("noBudgets")}
         </p>
       )}
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      <div className="relative overflow-x-auto rounded-2xl border border-border bg-card">
         <table className="w-full min-w-[640px] text-sm">
           <caption className="sr-only">{t("caption")}</caption>
           <thead>

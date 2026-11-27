@@ -10,6 +10,10 @@ const fromEnv = (pennyEnv("ALLOWED_HOSTS") ?? "")
   .filter(Boolean)
   .map((h) => (h.includes(":") && !h.startsWith("[") ? `[${h}]` : h));
 
+export function allowedHostsFromEnv(): string[] {
+  return [...fromEnv];
+}
+
 /** Private LAN names only (10/8, 172.16/12, 192.168/16, fe80::/10, *.local). Never public addresses. */
 export function isPrivateLanName(name: string): boolean {
   const v4 = name.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);

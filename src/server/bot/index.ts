@@ -303,6 +303,16 @@ export async function sendSyncAlerts(
   if (text) await bot.api.sendMessage(chatId, text);
 }
 
+/** Sends a Pip briefing to the linked Telegram chat. Silent when the bot is off or the app is locked. */
+export async function sendPipBriefing(workspaceId: number, text: string): Promise<void> {
+  const { chatId } = getBotConfig();
+  const bot = globalThis.__pennyBot;
+  if (!bot || !chatId || isKeyLocked() || !text) return;
+  if (workspaceId <= 0) return;
+  const parts = splitMessage(text);
+  for (const part of parts) await bot.api.sendMessage(chatId, part);
+}
+
 /** Called after the bot is saved or removed in settings. */
 export async function restartBot(): Promise<void> {
   const old = globalThis.__pennyBot;

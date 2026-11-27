@@ -19,6 +19,9 @@ import { PanelLeftIcon } from "lucide-react";
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "17rem";
+const SIDEBAR_WIDTH_STORAGE_KEY = "penny:sidebar-width";
+const SIDEBAR_WIDTH_MIN = 240;
+const SIDEBAR_WIDTH_MAX = 520;
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3.75rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
@@ -31,6 +34,10 @@ type SidebarContextProps = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  widthPx: number | null;
+  setWidthPx: (px: number | null) => void;
+  resizing: boolean;
+  setResizing: (resizing: boolean) => void;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -79,6 +86,43 @@ function SidebarProvider({
     [setOpenProp, open],
   );
 
+  const readStoredWidth = React.useCallback((): number | null => {
+    try {
+      const saved = window.localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
+      if (!saved) return null;
+      const parsed = Number(saved);
+      return Number.isFinite(parsed) && parsed >= SIDEBAR_WIDTH_MIN && parsed <= SIDEBAR_WIDTH_MAX
+        ? parsed
+        : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const widthPx = React.useSyncExternalStore(
+    React.useCallback((cb) => {
+      window.addEventListener("penny:sidebar-width", cb);
+      return () => window.removeEventListener("penny:sidebar-width", cb);
+    }, []),
+    readStoredWidth,
+    () => null,
+  );
+  const [resizing, setResizing] = React.useState(false);
+
+  const setWidthPx = React.useCallback((px: number | null) => {
+    try {
+      if (px == null) {
+        window.localStorage.removeItem(SIDEBAR_WIDTH_STORAGE_KEY);
+      } else {
+        const clamped = Math.round(Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, px)));
+        window.localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(clamped));
+      }
+      window.dispatchEvent(new Event("penny:sidebar-width"));
+    } catch {
+      // Ignore storage errors.
+    }
+  }, []);
+
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
@@ -110,8 +154,23 @@ function SidebarProvider({
       openMobile,
       setOpenMobile,
       toggleSidebar,
+      widthPx,
+      setWidthPx,
+      resizing,
+      setResizing,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar],
+    [
+      state,
+      open,
+      setOpen,
+      isMobile,
+      openMobile,
+      setOpenMobile,
+      toggleSidebar,
+      widthPx,
+      setWidthPx,
+      resizing,
+    ],
   );
 
   return (
@@ -120,7 +179,7 @@ function SidebarProvider({
         data-slot="sidebar-wrapper"
         style={
           {
-            "--sidebar-width": SIDEBAR_WIDTH,
+            "--sidebar-width": widthPx != null ? `${widthPx}px` : SIDEBAR_WIDTH,
             "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
             ...style,
           } as React.CSSProperties
@@ -150,7 +209,37 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const { isMobile, state, openMobile, setOpenMobile, setWidthPx, resizing, setResizing } =
+    useSidebar();
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const onResizePointerDown = React.useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (state !== "expanded") return;
+      e.preventDefault();
+      const container = containerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const isRtl = getComputedStyle(container).direction === "rtl";
+      setResizing(true);
+
+      const onMove = (ev: PointerEvent) => {
+        const nextWidth =
+          (side === "left" && !isRtl) || (side === "right" && isRtl)
+            ? ev.clientX - rect.left
+            : rect.right - ev.clientX;
+        setWidthPx(nextWidth);
+      };
+      const onUp = () => {
+        setResizing(false);
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [side, state, setResizing, setWidthPx],
+  );
   const tNav = useTranslations("nav");
 
   if (collapsible === "none") {
@@ -206,7 +295,8 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
-          "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
+          "relative w-(--sidebar-width) bg-transparent",
+          !resizing && "transition-[width] duration-200 ease-linear",
           "group-data-[collapsible=offcanvas]:w-0",
           "group-data-[side=right]:rotate-180",
           variant === "floating" || variant === "inset"
@@ -215,10 +305,12 @@ function Sidebar({
         )}
       />
       <div
+        ref={containerRef}
         data-slot="sidebar-container"
         data-side={side}
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:start-0 data-[side=left]:group-data-[collapsible=offcanvas]:start-[calc(var(--sidebar-width)*-1)] data-[side=right]:end-0 data-[side=right]:group-data-[collapsible=offcanvas]:end-[calc(var(--sidebar-width)*-1)] md:flex",
+          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) data-[side=left]:start-0 data-[side=left]:group-data-[collapsible=offcanvas]:start-[calc(var(--sidebar-width)*-1)] data-[side=right]:end-0 data-[side=right]:group-data-[collapsible=offcanvas]:end-[calc(var(--sidebar-width)*-1)] md:flex",
+          !resizing && "transition-[left,right,width] duration-200 ease-linear",
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
@@ -230,9 +322,18 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
+          className="relative flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
         >
           {children}
+          {state === "expanded" && (
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              onPointerDown={onResizePointerDown}
+              onDoubleClick={() => setWidthPx(null)}
+              className="absolute inset-y-0 end-0 z-20 hidden w-1.5 cursor-col-resize bg-transparent transition-colors hover:bg-sidebar-border/80 md:block"
+            />
+          )}
         </div>
       </div>
     </div>

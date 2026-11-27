@@ -247,11 +247,11 @@ function LifetimeChart({
           stroke="var(--border)"
           strokeWidth={1}
         />
-        <path d={area} fill="var(--primary)" fillOpacity={0.12} />
+        <path d={area} fill="var(--chart-1)" fillOpacity={0.12} />
         <polyline
           points={line}
           fill="none"
-          stroke="var(--primary)"
+          stroke="var(--chart-1)"
           strokeWidth={2.5}
           strokeLinejoin="round"
           strokeLinecap="round"

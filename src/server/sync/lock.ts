@@ -1,23 +1,20 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+import { getDb } from "@/server/db";
+import { acquireLock, heartbeatLock, isLockHeld, releaseLock } from "@/server/jobs/locks";
+
 export type SyncLockKind = "manual" | "scheduled";
 
-interface SyncLockState {
-  kind: SyncLockKind;
-  since: number;
+export interface SyncLease {
+  (): void;
+  owner: string;
+  heartbeat: () => boolean;
 }
 
-declare global {
-  var __pennySyncLock: SyncLockState | undefined;
-  var __pennyCredentialLocks: Map<number, SyncLockState> | undefined;
-}
-
-/**
- * A scrape times out after a minute and a full run is minutes at worst, so a lock older than this
- * means the run died without releasing. Without it one hung scrape would block every later sync.
- */
-// Above any real run: every connection is cut off after 10 minutes, so even a household with many takes less.
-const STALE_MS = 3 * 60 * 60 * 1000;
+const LOCK_NAME = "sync";
+const CREDENTIAL_PREFIX = "sync:credential:";
+const TTL_SECONDS = 300;
 
 export class SyncBusyError extends Error {
   constructor() {
@@ -26,43 +23,37 @@ export class SyncBusyError extends Error {
   }
 }
 
-function credentialLocks(now = Date.now()): Map<number, SyncLockState> {
-  if (!globalThis.__pennyCredentialLocks) {
-    globalThis.__pennyCredentialLocks = new Map();
-  }
-  for (const [id, state] of globalThis.__pennyCredentialLocks) {
-    if (now - state.since > STALE_MS) {
-      console.warn(`[sync] releasing a stale credential sync lock (${id})`);
-      globalThis.__pennyCredentialLocks.delete(id);
-    }
-  }
-  return globalThis.__pennyCredentialLocks;
+function credentialLockName(credentialId: number): string {
+  return `${CREDENTIAL_PREFIX}${credentialId}`;
 }
 
-export function isSyncRunning(now = Date.now()): boolean {
-  const lock = globalThis.__pennySyncLock;
-  if (lock) {
-    if (now - lock.since > STALE_MS) {
-      console.warn("[sync] releasing a stale sync lock");
-      globalThis.__pennySyncLock = undefined;
-    } else {
-      return true;
-    }
-  }
-  return credentialLocks(now).size > 0;
+function hasLiveCredentialLock(): boolean {
+  return !!getDb()
+    .prepare(
+      `SELECT 1 FROM runtime_locks
+       WHERE name LIKE 'sync:credential:%' AND expires_at > datetime('now') LIMIT 1`,
+    )
+    .get();
 }
 
-/** Returns the release function for a full sync, or null when any sync already holds a lock. */
-export function tryAcquireSync(kind: SyncLockKind): (() => void) | null {
+export function isSyncRunning(): boolean {
+  return isLockHeld(LOCK_NAME) || hasLiveCredentialLock();
+}
+
+/** Returns a leased handle, or null when another process/route already holds the sync mutex. */
+export function tryAcquireSync(kind: SyncLockKind, ttlSeconds = TTL_SECONDS): SyncLease | null {
   if (isSyncRunning()) return null;
-  const state: SyncLockState = { kind, since: Date.now() };
-  globalThis.__pennySyncLock = state;
+  const owner = `sync:${kind}:${process.pid}:${randomUUID()}`;
+  if (!acquireLock(LOCK_NAME, owner, ttlSeconds, { kind, pid: process.pid })) return null;
   let released = false;
-  return () => {
+  const lease = (() => {
     if (released) return;
     released = true;
-    if (globalThis.__pennySyncLock === state) globalThis.__pennySyncLock = undefined;
-  };
+    releaseLock(LOCK_NAME, owner);
+  }) as SyncLease;
+  lease.owner = owner;
+  lease.heartbeat = () => heartbeatLock(LOCK_NAME, owner, ttlSeconds);
+  return lease;
 }
 
 /**
@@ -72,18 +63,19 @@ export function tryAcquireSync(kind: SyncLockKind): (() => void) | null {
 export function tryAcquireCredentialSync(
   credentialId: number,
   kind: SyncLockKind = "manual",
-): (() => void) | null {
-  const now = Date.now();
-  const full = globalThis.__pennySyncLock;
-  if (full && now - full.since <= STALE_MS) return null;
-  const map = credentialLocks(now);
-  if (map.has(credentialId)) return null;
-  const state: SyncLockState = { kind, since: now };
-  map.set(credentialId, state);
+  ttlSeconds = TTL_SECONDS,
+): SyncLease | null {
+  if (isLockHeld(LOCK_NAME)) return null;
+  const name = credentialLockName(credentialId);
+  const owner = `${name}:${kind}:${process.pid}:${randomUUID()}`;
+  if (!acquireLock(name, owner, ttlSeconds, { kind, credentialId, pid: process.pid })) return null;
   let released = false;
-  return () => {
+  const lease = (() => {
     if (released) return;
     released = true;
-    if (map.get(credentialId) === state) map.delete(credentialId);
-  };
+    releaseLock(name, owner);
+  }) as SyncLease;
+  lease.owner = owner;
+  lease.heartbeat = () => heartbeatLock(name, owner, ttlSeconds);
+  return lease;
 }

@@ -30,7 +30,7 @@ import {
   translateProviderBlurb,
   translateProviderName,
 } from "@/lib/i18n-data";
-import { AlertTriangle, Loader2, Check, PlugZap, Unplug, X } from "lucide-react";
+import { AlertTriangle, ExternalLink, Loader2, Check, PlugZap, Unplug, X } from "lucide-react";
 
 export interface BankDetailSheetProps {
   open: boolean;
@@ -111,6 +111,18 @@ function SheetBody({
                     })
                   : translateProviderBlurb(info.id, info.blurb, tBanks)}
             </SheetDescription>
+            {info.domain && (
+              <a
+                href={`https://${info.domain}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                dir="ltr"
+              >
+                {info.domain}
+                <ExternalLink className="size-3" aria-hidden />
+              </a>
+            )}
           </div>
         </div>
       </SheetHeader>
@@ -192,6 +204,13 @@ function CredentialsForm({
         if (res.label) setLabel(res.label);
         setRequiresManualTwoFactor(res.requiresManualTwoFactor);
         setHasTwoFactorToken(res.hasTwoFactorToken);
+      } catch (err) {
+        if (!cancelled) {
+          setResult({
+            success: false,
+            message: err instanceof Error ? err.message : t("loadFailed"),
+          });
+        }
       } finally {
         if (!cancelled) setLoaded(true);
       }
@@ -199,7 +218,7 @@ function CredentialsForm({
     return () => {
       cancelled = true;
     };
-  }, [isEdit, credentialId]);
+  }, [isEdit, credentialId, t]);
 
   const allValid =
     label.trim().length > 0 &&
