@@ -186,6 +186,36 @@ describe("syncWorkspace", () => {
     expect(fake.calls[0].args[4]).toEqual({ manualTwoFactor: false });
   });
 
+  it("saves securities returned by a bank scrape", async () => {
+    creds.saveBankCredentials(ws, "hapoalim", { username: "u", password: "p" });
+    fake.scrapeBank = async () => ({
+      success: true,
+      accounts: [{ accountNumber: "123-456", transactions: [] }],
+      securities: [
+        {
+          accountNumber: "123-456",
+          equityNumber: "5123456",
+          name: "Example Fund",
+          type: "fund",
+          currency: "ILS",
+          symbol: "5123456",
+          quantity: 10,
+          value: 1_000,
+          valueIls: 1_000,
+          costBasis: 900,
+        },
+      ],
+    });
+    const s = await sync();
+    expect(s.providers[0]).toMatchObject({ ok: true });
+    const asset = db
+      .prepare(
+        "SELECT name, manual_value FROM assets WHERE workspace_id = ? AND note LIKE 'bank-securities:hapoalim:%'",
+      )
+      .get(ws) as { name: string; manual_value: number } | undefined;
+    expect(asset).toMatchObject({ name: "Example Fund", manual_value: 1_000 });
+  });
+
   it("a connection whose saved login cannot be decrypted fails alone; the next one still syncs", async () => {
     const bad = creds.saveBankCredentials(ws, "isracard", {
       id: "1",
