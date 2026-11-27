@@ -60,7 +60,7 @@ const plain = (html) =>
     .replace(/&amp;/g, "&")
     .replace(/‏/g, "");
 // JSON that sits inside a <script> element must not be able to close it.
-const jsonLd = (data) => JSON.stringify(data).replace(/</g, "\u003c");
+const jsonLd = (data) => JSON.stringify(data).replace(/</g, "\\u003c");
 const fileOf = (p) => `feature-${p.slug}.html`;
 const bySlugId = Object.fromEntries(pages.map((p) => [p.id, p]));
 
