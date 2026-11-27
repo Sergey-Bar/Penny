@@ -90,7 +90,8 @@ export function formatLastSync(
   labels: FormatLastSyncLabels = FALLBACK_LABELS,
 ): string {
   if (!iso) return labels.never;
-  const synced = new Date(iso + "Z").getTime();
+  const normalized = /Z$|[+-]\d{2}:?\d{2}$/.test(iso) ? iso : `${iso}Z`;
+  const synced = new Date(normalized).getTime();
   const ageMs = Date.now() - synced;
   if (!Number.isFinite(ageMs) || ageMs < 0) return labels.justNow;
 

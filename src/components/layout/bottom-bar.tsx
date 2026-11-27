@@ -76,7 +76,8 @@ export function BottomBar() {
           : t("staleBody", { when: formatLastSync(bad.lastSyncAt, labels) });
     toast(t("staleTitle"), {
       description,
-      duration: 15000,
+      // Long enough to read and act on; short enough not to sit over the page (it used to stay 15 seconds).
+      duration: 8000,
       action: { label: t("updateNow"), onClick: () => router.push("/settings/bank?sync=1") },
     });
   }, [health, labels, router, t]);

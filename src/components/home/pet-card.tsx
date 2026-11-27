@@ -1,20 +1,13 @@
 "use client";
 
+import { translateCategoryName } from "@/lib/i18n-data";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Clock, X } from "lucide-react";
-import {
-  getCashAhead,
-  getHome,
-  getInsights,
-  getOverview,
-  getResilience,
-  getSuggestions,
-} from "@/lib/api";
+import { getCashAhead, getHome, getInsights, getOverview, getResilience } from "@/lib/api";
 import { pipGuru, pipInsights, type PipInput, type PipTone } from "@/lib/pip-coach";
 import { usePlan } from "@/hooks/use-plan";
 import { useA11y } from "@/components/a11y/a11y-menu";
@@ -74,7 +67,6 @@ function usePet() {
   const res = useQuery({ queryKey: ["resilience"], queryFn: getResilience, enabled: on });
   const cash = useQuery({ queryKey: ["cash-ahead"], queryFn: getCashAhead, enabled: on });
   // Pip speaks for every alert: its own care list plus what the checks noticed, one number on every screen.
-  const sug = useQuery({ queryKey: ["suggestions"], queryFn: getSuggestions, enabled: on });
   const lines = useMemo(() => {
     if (!home.data || !res.data) return null;
     const m = home.data.thisMonth,
@@ -102,50 +94,17 @@ function usePet() {
     mood: petMood(lines.filter((l) => l.ok || todo.includes(l))),
     todo,
     today,
-    count: todo.length + (sug.data?.suggestions.length ?? 0),
+    // The badge counts only what needs doing. Suggestions wait inside the panel: a badge that is always lit says nothing.
+    count: todo.length,
   };
 }
 type PetState = NonNullable<ReturnType<typeof usePet>>;
 
-/** Pocket Pal in Home's purple card: just the face and a "+n" badge; tapping it opens what needs care. */
-export function PetHeroAside({ extra }: { extra?: React.ReactNode } = {}) {
-  const p = usePet();
-  const ref = useRef<HTMLSpanElement>(null);
-  const [open, setOpen] = useState(false);
-  const [view, setView] = useState<{ shown: boolean; small: boolean }>({
-    shown: false,
-    small: false,
-  });
-  useEffect(() => {
-    // Simple mode renders the card twice (phone column, desktop layout) and hides one with CSS: only the visible copy gets a live face.
-    const sync = () =>
-      setView({ shown: !!ref.current?.getClientRects().length, small: innerWidth < 768 });
-    sync();
-    addEventListener("resize", sync);
-    return () => removeEventListener("resize", sync);
-  }, [p == null]); // eslint-disable-line react-hooks/exhaustive-deps -- re-measure once the span exists
-  if (!p) return null;
-  // The aside is about a quarter of the width on phones, so the face shrinks with it.
-  const px = Math.round(PET_SIZES[p.pet.size] * (view.small ? 0.6 : 0.9));
-  return (
-    <span ref={ref} className="flex min-h-px min-w-px flex-col items-center">
-      {view.shown && (
-        <>
-          <PetButton p={p} px={px} onOpen={() => setOpen(true)} />
-          <PetSheet p={p} open={open} onOpenChange={setOpen} />
-        </>
-      )}
-      {extra}
-    </span>
-  );
-}
-
-/** A small live pet on every other page (its eyes follow the pointer), with the same badge and sheet: in the sidebar footer on desktop, next to the menu button in the page header on phones, so it never covers content. */
+/** Pip, small and live (its eyes follow the pointer), with its badge and sheet: in the sidebar footer on desktop, next to the menu button in the page header on phones, so it never covers content. */
 export function PetMini({ inSidebar }: { inSidebar?: boolean }) {
-  const path = usePathname();
   const p = usePet();
   const [open, setOpen] = useState(false);
-  if (!p || path === "/") return null;
+  if (!p) return null;
   const pet = (
     <>
       <PetButton
@@ -194,9 +153,9 @@ function PetButton({
         <span
           aria-hidden
           dir="ltr"
-          className={`absolute -end-1 -top-1 grid place-items-center rounded-full bg-destructive font-semibold text-destructive-foreground tabular-nums shadow ${mini ? "min-w-5 px-1 text-caption" : "min-w-7 px-1.5 py-0.5 text-footnote"}`}
+          className={`absolute -end-1 -top-1 grid place-items-center rounded-full bg-primary font-semibold text-primary-foreground tabular-nums shadow ${mini ? "min-w-5 px-1 text-caption" : "min-w-7 px-1.5 py-0.5 text-footnote"}`}
         >
-          +{n}
+          {n > 9 ? "9+" : n}
         </span>
       )}
     </button>
@@ -376,6 +335,7 @@ function nextBill(
  */
 function PipCoach({ onNavigate }: { onNavigate: () => void }) {
   const t = useTranslations("pet.coach");
+  const tCat = useTranslations("categoriesSeeded");
   const locale = useLocale();
   const { plan } = usePlan();
   const money = (n: number) => shekels(Math.abs(n), locale);
@@ -435,6 +395,11 @@ function PipCoach({ onNavigate }: { onNavigate: () => void }) {
   const list = pipInsights(input).slice(0, 5);
   const guru = pipGuru(res.data?.weakest, input);
 
+  // A category named in a line is shown in the reader's language, like everywhere else.
+  const named = <V extends Record<string, unknown> | undefined>(vars: V): V =>
+    vars && typeof vars.name === "string"
+      ? { ...vars, name: translateCategoryName(vars.name, tCat) }
+      : vars;
   return (
     <section
       aria-label={t("title")}
@@ -448,7 +413,7 @@ function PipCoach({ onNavigate }: { onNavigate: () => void }) {
           </span>
         )}
       </div>
-      <p className="text-footnote leading-relaxed">{t(guru.key, guru.vars)}</p>
+      <p className="text-footnote leading-relaxed">{t(guru.key, named(guru.vars))}</p>
       {list.length > 0 && (
         <ul className="space-y-1.5">
           {list.map((x) => (
@@ -457,7 +422,7 @@ function PipCoach({ onNavigate }: { onNavigate: () => void }) {
                 aria-hidden
                 className={`mt-1.5 size-1.5 shrink-0 rounded-full ${TONE_DOT[x.tone]}`}
               />
-              <span className="min-w-0 flex-1">{t(x.key, x.vars)}</span>
+              <span className="min-w-0 flex-1">{t(x.key, named(x.vars))}</span>
             </li>
           ))}
         </ul>
@@ -719,7 +684,9 @@ export function PetFace({
   const [theme] = useState(() =>
     typeof document === "undefined"
       ? undefined
-      : getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() ||
+      : // The accent, not the button colour: buttons are flat black or white, and a white face hides its own eyes.
+        getComputedStyle(document.documentElement).getPropertyValue("--accent-color").trim() ||
+        getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() ||
         undefined,
   );
   useEffect(() => {

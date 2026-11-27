@@ -7,6 +7,7 @@ import { parsePlannedInput } from "@/server/lib/planned-input";
 import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
 import { israelToday } from "@/server/lib/date-utils";
 import { isValidOwner } from "@/lib/tags";
+import { assertCanonicalAmount } from "@/lib/money-contract";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,11 @@ export const POST = handle("planned", async (request: Request) => {
   const body = await request.json().catch(() => null);
   const parsed = parsePlannedInput((body as { item?: unknown } | null)?.item);
   if (typeof parsed === "string") return bad(parsed);
+  try {
+    parsed.amount = assertCanonicalAmount(parsed.amount);
+  } catch {
+    return bad("amount must have at most two decimals");
+  }
 
   if (parsed.account && !accountExists(workspaceId, parsed.account)) return bad("unknown account");
   if (

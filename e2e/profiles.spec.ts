@@ -26,7 +26,8 @@ test("with two profiles, a new session starts at who's using, and picking one go
     await fresh.goto("/");
     await expect(fresh).toHaveURL(/\/profiles$/);
     await fresh.getByRole("button", { name: "נועה" }).click();
-    await expect(fresh).toHaveURL(/\/$/);
+    // Home opens on Focus unless the detailed dashboard was chosen.
+    await expect(fresh).toHaveURL(/\/focus$/);
     await fresh.close();
   } finally {
     // Leave one profile behind, or every later session opens on the picker.

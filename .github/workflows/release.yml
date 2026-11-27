@@ -1,7 +1,7 @@
 name: Release
 
 # Push a tag like v0.2.0 (matching package.json "version") to publish a release with the Windows and Mac
-# installers. Running copies see it through the update banner; Docker users update with Penny-update.
+# installers. Running copies see it through the update banner; Docker users update by running the install command again.
 on:
   push:
     tags: ["v*.*.*"]

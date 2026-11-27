@@ -67,7 +67,7 @@ export function AccountForecastCard() {
       <p className="mb-3 text-caption text-pretty text-muted-foreground">{t("accountsHint")}</p>
 
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <label className="flex items-center gap-2 text-caption text-muted-foreground">
+        <label className="flex min-w-0 flex-wrap items-center gap-2 text-caption text-muted-foreground">
           {t("accountSelect")}
           <Select value={chosen} onValueChange={(v) => v && setSelected(v)}>
             <SelectTrigger className="w-52">
@@ -243,7 +243,7 @@ function BandChart({ points }: { points: AccountPoint[] }) {
       {belowZero && (
         <rect x="0" y={y(0)} width={W} height={H - y(0)} fill="var(--status-over)" opacity="0.08" />
       )}
-      <polygon points={`${upper} ${lower}`} fill="var(--primary)" opacity="0.12" />
+      <polygon points={`${upper} ${lower}`} fill="var(--chart-1)" opacity="0.12" />
       <line
         x1="0"
         x2={W}
@@ -256,8 +256,8 @@ function BandChart({ points }: { points: AccountPoint[] }) {
       <polyline
         points={line}
         fill="none"
-        stroke="var(--primary)"
-        strokeWidth="2"
+        stroke="var(--chart-1)"
+        strokeWidth="2.5"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
       />
@@ -267,7 +267,7 @@ function BandChart({ points }: { points: AccountPoint[] }) {
           x2={x(lowIndex)}
           y1={y(points[lowIndex].expected)}
           y2={y(points[lowIndex].expected)}
-          stroke={points[lowIndex].expected < 0 ? "var(--status-over)" : "var(--primary)"}
+          stroke={points[lowIndex].expected < 0 ? "var(--status-over)" : "var(--chart-1)"}
           strokeWidth="8"
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"

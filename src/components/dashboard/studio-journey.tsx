@@ -83,7 +83,13 @@ export function StudioJourney({ data, month }: { data: DashboardSummary; month: 
               ) : (
                 <Circle size={13} aria-label={c.pending} />
               )}
-              {step.href ? <Link href={step.href}>{step.label}</Link> : <span>{step.label}</span>}
+              {step.href ? (
+                <Link href={step.href} className="tap-target">
+                  {step.label}
+                </Link>
+              ) : (
+                <span>{step.label}</span>
+              )}
             </li>
           ))}
         </ul>

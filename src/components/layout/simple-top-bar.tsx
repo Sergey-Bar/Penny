@@ -10,7 +10,6 @@ import { getLockStatus } from "@/components/settings/app-lock-card";
 import { SyncStatusPill } from "@/components/home/sync-status-pill";
 import { IconButton } from "@/components/ui/icon-button";
 import { buttonVariants } from "@/components/ui/button";
-import { A11yButton } from "@/components/a11y/a11y-menu";
 import { usePrivacyMode } from "@/hooks/use-privacy-mode";
 import { cn } from "@/lib/utils";
 import { OPEN_COMMAND_PALETTE } from "./command-palette";
@@ -105,7 +104,6 @@ export function SimpleTopBar() {
             <Lock className="size-4" aria-hidden />
           </IconButton>
         )}
-        <A11yButton size="icon" />
         <Link
           href="/settings"
           aria-label={t("settings")}

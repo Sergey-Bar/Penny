@@ -1,6 +1,6 @@
 # Hosts the app container may reach, one per line: a domain covers its subdomains.
 # Lines starting with # are ignored. Restart the egress service after editing:
-#   docker compose -f docker-compose.yml -f docker-compose.egress.yml restart egress
+#   docker compose -f docker-compose.yml -f docker/egress/compose.yml restart egress
 # Add a host for one run without editing: PENNY_EGRESS_EXTRA=host1,host2 in .env.
 
 # Banks

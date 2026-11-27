@@ -104,7 +104,11 @@ describe("handle and readJson", () => {
       new Request("http://localhost/x", { method: "POST", body: "{not json" }),
     );
     expect(bad.status).toBe(400);
-    expect(await bad.json()).toEqual({ error: "Invalid JSON", code: "bad_json" });
+    expect(await bad.json()).toEqual({
+      error: "Invalid JSON",
+      code: "bad_json",
+      requestId: expect.any(String),
+    });
     const ok = await POST(new Request("http://localhost/x", { method: "POST", body: '{"a":1}' }));
     expect(await ok.json()).toEqual({ a: 1 });
   });
@@ -119,6 +123,10 @@ describe("handle and readJson", () => {
       }),
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ error: "Invalid JSON", code: "bad_json" });
+    expect(await res.json()).toEqual({
+      error: "Invalid JSON",
+      code: "bad_json",
+      requestId: expect.any(String),
+    });
   });
 });

@@ -1,7 +1,7 @@
 // scripts/capture-docs-screenshots.mjs
 //
 // Boot Next.js against a tmp data dir seeded with fake data,
-// capture docs screenshots into website/src/assets/screenshots/.
+// capture docs screenshots into public/screenshots/ (the PWA manifest uses dashboard-light.png).
 //
 // Usage:
 //   npm run docs:screenshots

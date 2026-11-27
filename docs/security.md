@@ -174,7 +174,7 @@ bot notice and the Windows self-update). **Fixed.**
 
 ## 12a. Docker egress allowlist (optional, off by default)
 
-`docker-compose.egress.yml` puts the app container on an internal-only network: it has no route and no
+`docker/egress/compose.yml` puts the app container on an internal-only network: it has no route and no
 DNS to the internet. Its only way out is the `egress` container (tinyproxy, `docker/egress/`), which
 allows CONNECT to port 443 only for the domains in `docker/egress/allowlist.txt` (a domain admits its
 subdomains): the banks, card companies and pension funds the scrapers use, plus `api.github.com` for the
@@ -183,11 +183,11 @@ The egress container also publishes the app's port on `127.0.0.1` (an internal n
 Node's `fetch`/`http(s)` use the proxy via `HTTP(S)_PROXY` + `NODE_USE_ENV_PROXY=1`; the bank scraper's
 Chromium gets `--proxy-server`, and Chromium launched by the pension scraper reads the same variables.
 
-    docker compose -f docker-compose.yml -f docker-compose.egress.yml up -d --build
+    docker compose -f docker-compose.yml -f docker/egress/compose.yml up -d --build
 
 **Adding a domain:** add a line to `docker/egress/allowlist.txt` (for example your AI provider's API
 host, or the optional market-data hosts listed there commented out), then
-`docker compose -f docker-compose.yml -f docker-compose.egress.yml restart egress`. Or set
+`docker compose -f docker-compose.yml -f docker/egress/compose.yml restart egress`. Or set
 `PENNY_EGRESS_EXTRA=host1,host2` in `.env` and run the `up -d` command again. Refused hosts show in
 `docker compose ... logs egress` as "Proxying refused on filtered domain". Features whose host is not
 listed (market prices, public datasets, an AI provider) fail until it is added.
