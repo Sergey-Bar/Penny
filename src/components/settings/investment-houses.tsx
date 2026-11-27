@@ -69,11 +69,7 @@ const STEPS: Partial<
 };
 
 /** Investment houses: the wired funds connect and sync balances into assets; the rest are listed as coming soon. */
-export function InvestmentHouses({
-  mode = "all",
-}: {
-  mode?: "all" | "connected" | "catalog";
-}) {
+export function InvestmentHouses({ mode = "all" }: { mode?: "all" | "connected" | "catalog" }) {
   const t = useTranslations("settings.bank");
   const tError = useTranslations("syncErrors");
   // Known sync errors are stored in English; show them in the user's language.
@@ -93,12 +89,13 @@ export function InvestmentHouses({
         : false,
   });
   const [form, setForm] = useState<
-    ({
-      connectionId?: number;
-      fundId: PensionFund;
-      label: string;
-      isChild?: boolean;
-    } & Record<LoginField, string>) | null
+    | ({
+        connectionId?: number;
+        fundId: PensionFund;
+        label: string;
+        isChild?: boolean;
+      } & Record<LoginField, string>)
+    | null
   >(null);
   const [codes, setCodes] = useState<Record<number, string>>({});
   const [confirmDisconnectId, setConfirmDisconnectId] = useState<number | null>(null);

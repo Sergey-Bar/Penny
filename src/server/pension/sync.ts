@@ -156,17 +156,15 @@ export function deletePensionConnection(
         )
         .get(workspaceId, existing.fund_id) as { n: number }
     ).n;
-    db.prepare(
-      `DELETE FROM assets WHERE workspace_id = ? AND (note LIKE ? OR note LIKE ?)`,
-    ).run(workspaceId, `pension:${existing.fund_id}:${id}:%`, `pension:${id}:%`);
+    db.prepare(`DELETE FROM assets WHERE workspace_id = ? AND (note LIKE ? OR note LIKE ?)`).run(
+      workspaceId,
+      `pension:${existing.fund_id}:${id}:%`,
+      `pension:${id}:%`,
+    );
     if (remaining === 0) {
       db.prepare(
         `DELETE FROM assets WHERE workspace_id = ? AND note LIKE ? AND note NOT GLOB ?`,
-      ).run(
-        workspaceId,
-        `pension:${existing.fund_id}:%`,
-        `pension:${existing.fund_id}:[0-9]*:*`,
-      );
+      ).run(workspaceId, `pension:${existing.fund_id}:%`, `pension:${existing.fund_id}:[0-9]*:*`);
     }
   }
   status.delete(id);
@@ -275,10 +273,8 @@ export function replacePensionAssets(
   workspaceId: number,
   connectionId: number,
   accounts: ScrapedAccount[],
-  options: { snapshotDate?: string; fxRates?: Record<string, number> } = {},
+  _options: { snapshotDate?: string; fxRates?: Record<string, number> } = {},
 ) {
-  const snapshotDate = options.snapshotDate ?? new Date().toISOString();
-  const fxRates = options.fxRates ?? { ILS: 1 };
   const conn = db
     .prepare(`SELECT fund_id FROM pension_connections WHERE id = ?`)
     .get(connectionId) as { fund_id: PensionFund } | undefined;
@@ -294,9 +290,7 @@ export function replacePensionAssets(
   // When a fund has multiple connections (e.g. family accounts), isolate keys by connectionId too
   // so one account's sync never overwrites or zeroes another account's holdings.
   const keyScope: string | number =
-    conn && siblingCount > 1
-      ? `${conn.fund_id}:${connectionId}`
-      : (conn?.fund_id ?? connectionId);
+    conn && siblingCount > 1 ? `${conn.fund_id}:${connectionId}` : (conn?.fund_id ?? connectionId);
   const find = db.prepare(`SELECT id FROM assets WHERE workspace_id = ? AND note = ?`);
   // COALESCE keeps what the user typed when a scraper does not provide a field.
   const update = db.prepare(
@@ -336,8 +330,7 @@ export function replacePensionAssets(
         (find.get(workspaceId, key) as { id: number } | undefined) ??
         (conn?.fund_id
           ? (find.get(workspaceId, assetKey(connectionId, a.accountNumber)) as
-              | { id: number }
-              | undefined)
+              { id: number } | undefined)
           : undefined);
       if (existing) {
         update.run(

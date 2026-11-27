@@ -84,7 +84,8 @@ describe("replacePensionAssets", () => {
   });
 
   it("updates existing assets without duplicating when a fund is disconnected and reconnected", async () => {
-    const { deletePensionConnection, savePensionConnection } = await import("@/server/pension/sync");
+    const { deletePensionConnection, savePensionConnection } =
+      await import("@/server/pension/sync");
     replacePensionAssets(holder.db, 1, 7, [account("a", 100)]);
     deletePensionConnection(1, 7);
     const { id: newId } = savePensionConnection(1, "excellence", { username: "u", password: "p" });

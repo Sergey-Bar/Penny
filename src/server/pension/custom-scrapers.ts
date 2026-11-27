@@ -484,7 +484,10 @@ async function scrapeHarel(page: Page, args: ScrapeArgs): Promise<ScrapeOutcome>
       await delay(1500);
     },
     fields: [
-      { selectors: ["#idUser", 'input[placeholder*="ת.ז"]', 'input[placeholder*="זהות"]'], value: args.credentials.id ?? "" },
+      {
+        selectors: ["#idUser", 'input[placeholder*="ת.ז"]', 'input[placeholder*="זהות"]'],
+        value: args.credentials.id ?? "",
+      },
       { selectors: ["#phone", 'input[placeholder*="טלפון"]'], value: args.credentials.phone ?? "" },
     ],
     submitLabels: ["המשך", "כניסה", "שלח"],
@@ -520,7 +523,8 @@ async function scrapeHarel(page: Page, args: ScrapeArgs): Promise<ScrapeOutcome>
   let cards: { name: string; amount: string }[] = [];
   while (Date.now() < deadline) {
     const targetFrame =
-      page.frames().find((f) => f.url().includes("apps.client-view/client-view")) ?? page.mainFrame();
+      page.frames().find((f) => f.url().includes("apps.client-view/client-view")) ??
+      page.mainFrame();
     cards = await targetFrame
       .evaluate(() => {
         const candidates: { el: Element; name: string; amount: string }[] = [];
@@ -540,7 +544,9 @@ async function scrapeHarel(page: Page, args: ScrapeArgs): Promise<ScrapeOutcome>
         const seen = new Set<string>();
         for (const item of candidates) {
           // Drop wrapper containers that enclose another matched card element.
-          const isWrapper = candidates.some((other) => other.el !== item.el && item.el.contains(other.el));
+          const isWrapper = candidates.some(
+            (other) => other.el !== item.el && item.el.contains(other.el),
+          );
           if (isWrapper || seen.has(item.name)) continue;
           seen.add(item.name);
           out.push({ name: item.name, amount: item.amount });
