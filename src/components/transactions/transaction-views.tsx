@@ -136,7 +136,7 @@ export function TransactionViews({
           <button
             type="button"
             onClick={() => setNaming("")}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-dashed border-border px-3 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            className="tap-target inline-flex min-h-9 items-center gap-1.5 rounded-full border border-dashed border-border px-3 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
           >
             <BookmarkPlus className="size-4" aria-hidden />
             {t("saveCurrent")}

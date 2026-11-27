@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -30,6 +30,8 @@ export function TopBar() {
   const t = useTranslations("topBar");
   const tShell = useTranslations("shell");
   const router = useRouter();
+  // Home has its own Add and Sync under the balance, so the bar does not repeat them there.
+  const onHome = usePathname() === "/";
   const queryClient = useQueryClient();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -84,38 +86,42 @@ export function TopBar() {
           )}
         </div>
         {/* One +: add a transaction, or bring money in some other way. N still adds a transaction directly. */}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label={t("addMenu")}
-            title={t("addMenu")}
-            aria-keyshortcuts="N"
-            className={cn(buttonVariants({ size: "icon" }), "rounded-xl shadow-sm")}
-          >
-            <Plus className="size-5" aria-hidden />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-56 bg-popover">
-            <DropdownMenuItem onClick={() => router.push("/transactions?add=1")}>
-              <Plus className="size-4" aria-hidden />
-              <span className="flex-1">{tShell("addTransaction")}</span>
-              <kbd dir="ltr" className="text-[11px] text-muted-foreground">
-                N
-              </kbd>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/settings/data")}>
-              <FileUp className="size-4" aria-hidden />
-              {t("importFile")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/settings/bank")}>
-              <Landmark className="size-4" aria-hidden />
-              {t("connectBank")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/investments")}>
-              <WalletCards className="size-4" aria-hidden />
-              {t("addAccount")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <SyncButton onComplete={() => queryClient.invalidateQueries()} showLabel={false} />
+        {!onHome && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label={t("addMenu")}
+              title={t("addMenu")}
+              aria-keyshortcuts="N"
+              className={cn(buttonVariants({ size: "icon" }), "rounded-xl shadow-sm")}
+            >
+              <Plus className="size-5" aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-56 bg-popover">
+              <DropdownMenuItem onClick={() => router.push("/transactions?add=1")}>
+                <Plus className="size-4" aria-hidden />
+                <span className="flex-1">{tShell("addTransaction")}</span>
+                <kbd dir="ltr" className="text-[11px] text-muted-foreground">
+                  N
+                </kbd>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/settings/data")}>
+                <FileUp className="size-4" aria-hidden />
+                {t("importFile")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/settings/bank")}>
+                <Landmark className="size-4" aria-hidden />
+                {t("connectBank")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/investments")}>
+                <WalletCards className="size-4" aria-hidden />
+                {t("addAccount")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {!onHome && (
+          <SyncButton onComplete={() => queryClient.invalidateQueries()} showLabel={false} />
+        )}
         {/* The bell is for what happened; advice and alerts live with Pip in the side rail. */}
         <NotificationsBell />
         <Link href="/settings" aria-label={t("settings")} title={t("settings")} className={icon}>

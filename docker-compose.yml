@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        # Set by Penny-docker.ps1 / Penny-update.ps1 from git, so the update check knows the running version.
+        # Set by scripts/docker/start and update from git, so the update check knows the running version.
         PENNY_COMMIT: ${PENNY_COMMIT:-unknown}
     image: penny:latest
     container_name: penny
@@ -20,10 +20,24 @@ services:
       # Tell the user (in the app and Telegram) when a newer release exists. Nothing is installed automatically. 0 turns it off.
       PENNY_UPDATE_CHECK: ${PENNY_UPDATE_CHECK:-1}
     volumes:
-      # The database, encryption key and backups. Penny-docker and Penny-update move an older install's data here once.
+      # The database, encryption key and backups. scripts/docker/start and update move an older install's data here once.
       - penny-data:/data
       # Drop bank and investment-house statements here, one subfolder per account (created on the first scan).
       - ./imports:/data/import
+    security_opt:
+      - no-new-privileges:true
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    profiles: ["remote"]
+    container_name: penny-cloudflared
+    restart: unless-stopped
+    depends_on:
+      - penny
+    command: tunnel --no-autoupdate run
+    environment:
+      # Create the tunnel in Cloudflare and store its token in .env. Never commit the token.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
     security_opt:
       - no-new-privileges:true
 

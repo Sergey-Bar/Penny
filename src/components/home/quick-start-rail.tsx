@@ -92,7 +92,7 @@ export function QuickStartRail() {
         cy="18"
         r="15.9"
         fill="none"
-        stroke="var(--primary)"
+        stroke="var(--chart-1)"
         strokeWidth="3"
         strokeLinecap="round"
         strokeDasharray={`${pct} 100`}
@@ -147,7 +147,7 @@ export function QuickStartRail() {
           aria-valuemin={0}
           aria-valuemax={100}
         >
-          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+          <div className="h-full rounded-full bg-[var(--chart-1)]" style={{ width: `${pct}%` }} />
         </div>
         <p className="mt-1.5 flex justify-between text-xs text-muted-foreground">
           <span>{t("progress", { done: q.done, total: q.total })}</span>

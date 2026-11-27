@@ -24,21 +24,19 @@ import { deleteProfile, saveProfile } from "@/lib/api";
 import { profileName } from "@/lib/profile-avatar";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/types";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { AvatarEditor, type AvatarDraft } from "./avatar-editor";
 import { ProfileAvatar } from "./profile-avatar";
 
-// Immersive "who's using?" screen: always dark, whatever the app theme.
+// "Who's using?": the app's own canvas, light and glass pane, in whichever theme is on.
 const tile =
-  "group flex min-h-11 flex-col items-center gap-3 rounded-3xl p-2 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+  "press group flex min-h-11 w-28 flex-col items-center gap-3 rounded-3xl p-3 outline-none hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:w-36";
 const square =
-  "size-24 text-5xl md:size-36 md:text-6xl ring-white/0 ring-offset-4 ring-offset-[#0c0b14] motion-safe:transition motion-safe:duration-200 group-hover:ring-4 group-hover:ring-white group-focus-visible:ring-4 group-focus-visible:ring-white motion-safe:group-hover:scale-105 motion-safe:group-focus-visible:scale-105 motion-safe:group-active:scale-95";
+  "size-20 sm:size-24 outline-0 outline-offset-4 outline-foreground outline-solid motion-safe:transition-[scale,outline-width] motion-safe:duration-150 group-hover:scale-[1.04] group-hover:outline-[3px] group-focus-visible:outline-[3px]";
 
 type Draft = { id: number | null; name: string; avatar: AvatarDraft };
 
 export function ProfilesPage() {
   const t = useTranslations("profiles");
-  const px = useIsMobile() ? 88 : 132; // a little inside the 96/144 square
   const nameOf = (p: Profile) => profileName(p.name, t("me"));
   const router = useRouter();
   const qc = useQueryClient();
@@ -90,84 +88,84 @@ export function ProfilesPage() {
   };
 
   return (
-    <main className="fixed inset-0 z-40 flex flex-col items-center justify-center overflow-y-auto bg-[#0c0b14] bg-[radial-gradient(ellipse_at_top,#2a2160_0%,transparent_60%)] px-4 py-12 text-white">
+    <main className="profiles-screen fixed inset-0 z-40 flex flex-col items-center justify-center overflow-y-auto px-4 py-12 text-foreground">
       {/* The brand lives here only; inside the app the sidebar stays free of it. */}
       <p
-        className="absolute top-6 text-lg font-semibold tracking-tight text-white/80"
+        className="absolute top-6 flex items-center gap-2.5 text-lg font-bold tracking-tight text-foreground"
         lang="en"
         dir="ltr"
       >
+        <span
+          className="flex size-7 items-center justify-center gap-1 rounded-[9px] bg-primary"
+          aria-hidden
+        >
+          <i className="h-2.5 w-1 rounded-full bg-primary-foreground" />
+          <i className="h-2.5 w-1 rounded-full bg-primary-foreground" />
+        </span>
         Penny
       </p>
-      <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">
-        {managing ? t("manageTitle") : t("title")}
-      </h1>
+      <section className="home-hero w-full max-w-xl px-5 pb-6 pt-8 sm:px-8">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          {managing ? t("manageTitle") : t("title")}
+        </h1>
 
-      <ul className="mt-10 flex max-w-3xl flex-wrap justify-center gap-6 sm:gap-10">
-        {profiles.map((p, i) => (
-          <li
-            key={p.id}
-            className="motion-safe:animate-[fadeIn_0.45s_ease-out_both]"
-            style={{ animationDelay: `${120 + i * 70}ms` }}
-          >
-            <button
-              type="button"
-              className={tile}
-              onClick={() => (managing ? openEditor(p) : choose(p))}
-              aria-label={managing ? t("editProfile", { name: nameOf(p) }) : nameOf(p)}
+        <ul className="mt-7 flex flex-wrap justify-center gap-2 sm:gap-4">
+          {profiles.map((p, i) => (
+            <li
+              key={p.id}
+              className="motion-safe:animate-[fadeIn_0.45s_ease-out_both]"
+              style={{ animationDelay: `${120 + i * 70}ms` }}
             >
-              <span className="relative">
-                <ProfileAvatar
-                  profile={p}
-                  px={px}
-                  className={cn(square, managing && "brightness-50")}
-                />
-                {managing ? (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="flex size-12 items-center justify-center rounded-full border-2 border-white bg-black/40">
-                      <Pencil className="size-6 text-white" />
+              <button
+                type="button"
+                className={tile}
+                onClick={() => (managing ? openEditor(p) : choose(p))}
+                aria-label={managing ? t("editProfile", { name: nameOf(p) }) : nameOf(p)}
+              >
+                <span className="relative">
+                  <ProfileAvatar profile={p} className={cn(square, managing && "brightness-50")} />
+                  {managing ? (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="flex size-10 items-center justify-center rounded-full bg-black/55">
+                        <Pencil className="size-5 text-white" />
+                      </span>
                     </span>
-                  </span>
-                ) : null}
+                  ) : null}
+                </span>
+                <span className="max-w-full truncate text-[15px] font-medium">{nameOf(p)}</span>
+              </button>
+            </li>
+          ))}
+          <li
+            className="motion-safe:animate-[fadeIn_0.45s_ease-out_both]"
+            style={{ animationDelay: `${120 + profiles.length * 70}ms` }}
+          >
+            <button type="button" className={tile} onClick={() => openEditor()}>
+              <span
+                className={cn(
+                  square,
+                  "flex items-center justify-center rounded-[26%] border border-dashed border-interactive text-muted-foreground group-hover:text-foreground",
+                )}
+              >
+                <Plus className="size-7" />
               </span>
-              <span className="max-w-36 truncate text-lg text-white/60 group-hover:text-white group-focus-visible:text-white">
-                {nameOf(p)}
+              <span className="text-[15px] font-medium text-muted-foreground group-hover:text-foreground">
+                {t("add")}
               </span>
             </button>
           </li>
-        ))}
-        <li
-          className="motion-safe:animate-[fadeIn_0.45s_ease-out_both]"
-          style={{ animationDelay: `${120 + profiles.length * 70}ms` }}
-        >
-          <button type="button" className={tile} onClick={() => openEditor()}>
-            <span
-              className={cn(
-                square,
-                "flex items-center justify-center rounded-[28%] bg-white/10 text-white/70 group-hover:bg-white/20 group-hover:text-white",
-              )}
-            >
-              <Plus className="size-10" />
-            </span>
-            <span className="text-lg text-white/60 group-hover:text-white group-focus-visible:text-white">
-              {t("add")}
-            </span>
-          </button>
-        </li>
-      </ul>
+        </ul>
 
-      <Button
-        variant="outline"
-        size="lg"
-        className={cn(
-          "mt-14 border-white/50 bg-transparent px-8 text-white/80 hover:bg-white hover:text-black",
-          managing && "bg-white text-black",
-        )}
-        aria-pressed={managing}
-        onClick={() => setManaging((m) => !m)}
-      >
-        {managing ? t("done") : t("manage")}
-      </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          className={cn("mt-6 px-6", managing && "border-primary bg-selection text-strong")}
+          aria-pressed={managing}
+          onClick={() => setManaging((m) => !m)}
+        >
+          {managing ? t("done") : t("manage")}
+        </Button>
+      </section>
 
       <Dialog open={draft != null} onOpenChange={(open) => !open && setDraft(null)}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto">

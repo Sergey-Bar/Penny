@@ -6,10 +6,56 @@ import { dataDir } from "./data-dir";
 import { redact, redactError } from "./redact";
 
 const MAX_BYTES = 1_000_000;
+const EVENT_FILES = 7;
 
 export type ErrorLogEntry = { at: string; scope: string; code?: string; message: string };
 
 export const errorLogPath = (dir = dataDir()) => path.join(dir, "logs", "errors.log");
+export const eventLogPath = (dir = dataDir()) => path.join(dir, "logs", "events.log");
+
+export interface EventFields {
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+/**
+ * One redacted JSON event per line, on stderr and in <dataDir>/logs/events.log (1 MB rotation,
+ * seven files, owner-only). Never pass descriptions or amounts: they are not logged.
+ */
+export function logEvent(
+  event: string,
+  fields: EventFields = {},
+  file: string | null = process.env.VITEST ? null : eventLogPath(),
+): void {
+  try {
+    const clean: Record<string, string | number | boolean> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      if (/pass(word)?|secret|token|auth|key|cookie|credential/i.test(key)) {
+        clean[key] = "[redacted]";
+        continue;
+      }
+      if (typeof value === "string") clean[key] = redact(value).slice(0, 500);
+      else if (value === null) continue;
+      else clean[key] = value;
+    }
+    const entry = { at: new Date().toISOString(), event, ...clean };
+    const line = JSON.stringify(entry);
+    console.error(line);
+    if (!file) return;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    if (fs.existsSync(file) && fs.statSync(file).size > MAX_BYTES) {
+      // Rotate events.log.1 ... events.log.6, dropping the oldest.
+      for (let i = EVENT_FILES - 1; i >= 1; i--) {
+        const from = i === 1 ? `${file}` : `${file}.${i - 1}`;
+        const to = `${file}.${i}`;
+        if (fs.existsSync(from)) fs.renameSync(from, to);
+      }
+    }
+    fs.appendFileSync(file, line + "\n", { mode: 0o600 });
+  } catch {
+    // Logging must never fail the operation it describes.
+  }
+}
 
 const codeOf = (error: unknown): string | undefined => {
   const code = (error as { code?: unknown } | null)?.code;

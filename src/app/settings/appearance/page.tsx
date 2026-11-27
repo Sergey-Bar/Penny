@@ -262,9 +262,9 @@ function ThemeCard() {
   const current =
     preferences.theme === "midnight" ? "dark" : preferences.theme === "system" ? "system" : "light";
   const options = [
+    { value: "system", Icon: Monitor, theme: "system" },
     { value: "light", Icon: Sun, theme: "pearl" },
     { value: "dark", Icon: Moon, theme: "midnight" },
-    { value: "system", Icon: Monitor, theme: "system" },
   ] as const;
   return (
     <SettingCard title={t("themeTitle")} description={t("themeHint")}>
@@ -276,7 +276,7 @@ function ThemeCard() {
             role="radio"
             aria-checked={current === value}
             onClick={() => save({ ...preferences, theme })}
-            className={`inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring ${current === value ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-accent"}`}
+            className={`press inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${current === value ? "border-transparent bg-primary text-primary-foreground" : "border-interactive bg-transparent text-foreground hover:bg-hover active:bg-press"}`}
           >
             <Icon className="size-4" aria-hidden />
             {t(`theme_${value}`)}

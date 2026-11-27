@@ -1,0 +1,3650 @@
+[
+  {
+    "id": 1,
+    "description": "SPOTIFY",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 2,
+    "description": "SPOTIFY 123",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 3,
+    "description": "SPOTIFY סניף 45",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 4,
+    "description": "SPOTIFY branch 7",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 5,
+    "description": "SPOTIFY*",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 6,
+    "description": "SPOTIFY - 4421",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 7,
+    "description": "SPOTIFY 12/03/2026",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 8,
+    "description": "SPOTIFY 2026-03-12",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 9,
+    "description": "PAYPAL *SPOTIFY",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 10,
+    "description": "SPOTIFY LTD",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 11,
+    "description": "SPOTIFY 12.03.26",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 12,
+    "description": "SPOTIFY #88",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 13,
+    "description": "SPOTIFY store 9",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 14,
+    "description": "SPOTIFY 20260312",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 15,
+    "description": "SPOTIFY 054-1234567",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 16,
+    "description": "SPOTIFY תל אביב",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 17,
+    "description": "NETFLIX",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 18,
+    "description": "NETFLIX 123",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 19,
+    "description": "NETFLIX סניף 45",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 20,
+    "description": "NETFLIX branch 7",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 21,
+    "description": "NETFLIX*",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 22,
+    "description": "NETFLIX - 4421",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 23,
+    "description": "NETFLIX 12/03/2026",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 24,
+    "description": "NETFLIX 2026-03-12",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 25,
+    "description": "PAYPAL *NETFLIX",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 26,
+    "description": "NETFLIX LTD",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 27,
+    "description": "NETFLIX 12.03.26",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 28,
+    "description": "NETFLIX #88",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 29,
+    "description": "NETFLIX store 9",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 30,
+    "description": "NETFLIX 20260312",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 31,
+    "description": "NETFLIX 054-1234567",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 32,
+    "description": "NETFLIX תל אביב",
+    "kind": "expense",
+    "expected": "Streaming"
+  },
+  {
+    "id": 33,
+    "description": "WOLT",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 34,
+    "description": "WOLT 123",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 35,
+    "description": "WOLT סניף 45",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 36,
+    "description": "WOLT branch 7",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 37,
+    "description": "WOLT*",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 38,
+    "description": "WOLT - 4421",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 39,
+    "description": "WOLT 12/03/2026",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 40,
+    "description": "WOLT 2026-03-12",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 41,
+    "description": "PAYPAL *WOLT",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 42,
+    "description": "WOLT LTD",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 43,
+    "description": "WOLT 12.03.26",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 44,
+    "description": "WOLT #88",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 45,
+    "description": "WOLT store 9",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 46,
+    "description": "WOLT 20260312",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 47,
+    "description": "WOLT 054-1234567",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 48,
+    "description": "WOLT תל אביב",
+    "kind": "expense",
+    "expected": "Food Delivery"
+  },
+  {
+    "id": 49,
+    "description": "שופרסל",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 50,
+    "description": "שופרסל 123",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 51,
+    "description": "שופרסל סניף 45",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 52,
+    "description": "שופרסל branch 7",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 53,
+    "description": "שופרסל*",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 54,
+    "description": "שופרסל - 4421",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 55,
+    "description": "שופרסל 12/03/2026",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 56,
+    "description": "שופרסל 2026-03-12",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 57,
+    "description": "PAYPAL *שופרסל",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 58,
+    "description": "שופרסל LTD",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 59,
+    "description": "שופרסל 12.03.26",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 60,
+    "description": "שופרסל #88",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 61,
+    "description": "שופרסל store 9",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 62,
+    "description": "שופרסל 20260312",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 63,
+    "description": "שופרסל 054-1234567",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 64,
+    "description": "שופרסל תל אביב",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 65,
+    "description": "רמי לוי",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 66,
+    "description": "רמי לוי 123",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 67,
+    "description": "רמי לוי סניף 45",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 68,
+    "description": "רמי לוי branch 7",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 69,
+    "description": "רמי לוי*",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 70,
+    "description": "רמי לוי - 4421",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 71,
+    "description": "רמי לוי 12/03/2026",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 72,
+    "description": "רמי לוי 2026-03-12",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 73,
+    "description": "PAYPAL *רמי לוי",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 74,
+    "description": "רמי לוי LTD",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 75,
+    "description": "רמי לוי 12.03.26",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 76,
+    "description": "רמי לוי #88",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 77,
+    "description": "רמי לוי store 9",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 78,
+    "description": "רמי לוי 20260312",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 79,
+    "description": "רמי לוי 054-1234567",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 80,
+    "description": "רמי לוי תל אביב",
+    "kind": "expense",
+    "expected": "Groceries"
+  },
+  {
+    "id": 81,
+    "description": "פז",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 82,
+    "description": "פז 123",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 83,
+    "description": "פז סניף 45",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 84,
+    "description": "פז branch 7",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 85,
+    "description": "פז*",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 86,
+    "description": "פז - 4421",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 87,
+    "description": "פז 12/03/2026",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 88,
+    "description": "פז 2026-03-12",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 89,
+    "description": "PAYPAL *פז",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 90,
+    "description": "פז LTD",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 91,
+    "description": "פז 12.03.26",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 92,
+    "description": "פז #88",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 93,
+    "description": "פז store 9",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 94,
+    "description": "פז 20260312",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 95,
+    "description": "פז 054-1234567",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 96,
+    "description": "פז תל אביב",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 97,
+    "description": "סונול",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 98,
+    "description": "סונול 123",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 99,
+    "description": "סונול סניף 45",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 100,
+    "description": "סונול branch 7",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 101,
+    "description": "סונול*",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 102,
+    "description": "סונול - 4421",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 103,
+    "description": "סונול 12/03/2026",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 104,
+    "description": "סונול 2026-03-12",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 105,
+    "description": "PAYPAL *סונול",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 106,
+    "description": "סונול LTD",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 107,
+    "description": "סונול 12.03.26",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 108,
+    "description": "סונול #88",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 109,
+    "description": "סונול store 9",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 110,
+    "description": "סונול 20260312",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 111,
+    "description": "סונול 054-1234567",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 112,
+    "description": "סונול תל אביב",
+    "kind": "expense",
+    "expected": "Fuel"
+  },
+  {
+    "id": 113,
+    "description": "פנגו",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 114,
+    "description": "פנגו 123",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 115,
+    "description": "פנגו סניף 45",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 116,
+    "description": "פנגו branch 7",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 117,
+    "description": "פנגו*",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 118,
+    "description": "פנגו - 4421",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 119,
+    "description": "פנגו 12/03/2026",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 120,
+    "description": "פנגו 2026-03-12",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 121,
+    "description": "PAYPAL *פנגו",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 122,
+    "description": "פנגו LTD",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 123,
+    "description": "פנגו 12.03.26",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 124,
+    "description": "פנגו #88",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 125,
+    "description": "פנגו store 9",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 126,
+    "description": "פנגו 20260312",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 127,
+    "description": "פנגו 054-1234567",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 128,
+    "description": "פנגו תל אביב",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 129,
+    "description": "סלופארק",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 130,
+    "description": "סלופארק 123",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 131,
+    "description": "סלופארק סניף 45",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 132,
+    "description": "סלופארק branch 7",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 133,
+    "description": "סלופארק*",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 134,
+    "description": "סלופארק - 4421",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 135,
+    "description": "סלופארק 12/03/2026",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 136,
+    "description": "סלופארק 2026-03-12",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 137,
+    "description": "PAYPAL *סלופארק",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 138,
+    "description": "סלופארק LTD",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 139,
+    "description": "סלופארק 12.03.26",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 140,
+    "description": "סלופארק #88",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 141,
+    "description": "סלופארק store 9",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 142,
+    "description": "סלופארק 20260312",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 143,
+    "description": "סלופארק 054-1234567",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 144,
+    "description": "סלופארק תל אביב",
+    "kind": "expense",
+    "expected": "Parking"
+  },
+  {
+    "id": 145,
+    "description": "בזק",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 146,
+    "description": "בזק 123",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 147,
+    "description": "בזק סניף 45",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 148,
+    "description": "בזק branch 7",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 149,
+    "description": "בזק*",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 150,
+    "description": "בזק - 4421",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 151,
+    "description": "בזק 12/03/2026",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 152,
+    "description": "בזק 2026-03-12",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 153,
+    "description": "PAYPAL *בזק",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 154,
+    "description": "בזק LTD",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 155,
+    "description": "בזק 12.03.26",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 156,
+    "description": "בזק #88",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 157,
+    "description": "בזק store 9",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 158,
+    "description": "בזק 20260312",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 159,
+    "description": "בזק 054-1234567",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 160,
+    "description": "בזק תל אביב",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 161,
+    "description": "פרטנר",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 162,
+    "description": "פרטנר 123",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 163,
+    "description": "פרטנר סניף 45",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 164,
+    "description": "פרטנר branch 7",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 165,
+    "description": "פרטנר*",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 166,
+    "description": "פרטנר - 4421",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 167,
+    "description": "פרטנר 12/03/2026",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 168,
+    "description": "פרטנר 2026-03-12",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 169,
+    "description": "PAYPAL *פרטנר",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 170,
+    "description": "פרטנר LTD",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 171,
+    "description": "פרטנר 12.03.26",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 172,
+    "description": "פרטנר #88",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 173,
+    "description": "פרטנר store 9",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 174,
+    "description": "פרטנר 20260312",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 175,
+    "description": "פרטנר 054-1234567",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 176,
+    "description": "פרטנר תל אביב",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 177,
+    "description": "הוט",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 178,
+    "description": "הוט 123",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 179,
+    "description": "הוט סניף 45",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 180,
+    "description": "הוט branch 7",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 181,
+    "description": "הוט*",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 182,
+    "description": "הוט - 4421",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 183,
+    "description": "הוט 12/03/2026",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 184,
+    "description": "הוט 2026-03-12",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 185,
+    "description": "PAYPAL *הוט",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 186,
+    "description": "הוט LTD",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 187,
+    "description": "הוט 12.03.26",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 188,
+    "description": "הוט #88",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 189,
+    "description": "הוט store 9",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 190,
+    "description": "הוט 20260312",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 191,
+    "description": "הוט 054-1234567",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 192,
+    "description": "הוט תל אביב",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 193,
+    "description": "חברת החשמל",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 194,
+    "description": "חברת החשמל 123",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 195,
+    "description": "חברת החשמל סניף 45",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 196,
+    "description": "חברת החשמל branch 7",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 197,
+    "description": "חברת החשמל*",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 198,
+    "description": "חברת החשמל - 4421",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 199,
+    "description": "חברת החשמל 12/03/2026",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 200,
+    "description": "חברת החשמל 2026-03-12",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 201,
+    "description": "PAYPAL *חברת החשמל",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 202,
+    "description": "חברת החשמל LTD",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 203,
+    "description": "חברת החשמל 12.03.26",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 204,
+    "description": "חברת החשמל #88",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 205,
+    "description": "חברת החשמל store 9",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 206,
+    "description": "חברת החשמל 20260312",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 207,
+    "description": "חברת החשמל 054-1234567",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 208,
+    "description": "חברת החשמל תל אביב",
+    "kind": "expense",
+    "expected": "Electricity"
+  },
+  {
+    "id": 209,
+    "description": "מי אביבים",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 210,
+    "description": "מי אביבים 123",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 211,
+    "description": "מי אביבים סניף 45",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 212,
+    "description": "מי אביבים branch 7",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 213,
+    "description": "מי אביבים*",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 214,
+    "description": "מי אביבים - 4421",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 215,
+    "description": "מי אביבים 12/03/2026",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 216,
+    "description": "מי אביבים 2026-03-12",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 217,
+    "description": "PAYPAL *מי אביבים",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 218,
+    "description": "מי אביבים LTD",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 219,
+    "description": "מי אביבים 12.03.26",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 220,
+    "description": "מי אביבים #88",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 221,
+    "description": "מי אביבים store 9",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 222,
+    "description": "מי אביבים 20260312",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 223,
+    "description": "מי אביבים 054-1234567",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 224,
+    "description": "מי אביבים תל אביב",
+    "kind": "expense",
+    "expected": "Water"
+  },
+  {
+    "id": 225,
+    "description": "ארנונה",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 226,
+    "description": "ארנונה 123",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 227,
+    "description": "ארנונה סניף 45",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 228,
+    "description": "ארנונה branch 7",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 229,
+    "description": "ארנונה*",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 230,
+    "description": "ארנונה - 4421",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 231,
+    "description": "ארנונה 12/03/2026",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 232,
+    "description": "ארנונה 2026-03-12",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 233,
+    "description": "PAYPAL *ארנונה",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 234,
+    "description": "ארנונה LTD",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 235,
+    "description": "ארנונה 12.03.26",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 236,
+    "description": "ארנונה #88",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 237,
+    "description": "ארנונה store 9",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 238,
+    "description": "ארנונה 20260312",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 239,
+    "description": "ארנונה 054-1234567",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 240,
+    "description": "ארנונה תל אביב",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 241,
+    "description": "שכר דירה",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 242,
+    "description": "שכר דירה 123",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 243,
+    "description": "שכר דירה סניף 45",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 244,
+    "description": "שכר דירה branch 7",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 245,
+    "description": "שכר דירה*",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 246,
+    "description": "שכר דירה - 4421",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 247,
+    "description": "שכר דירה 12/03/2026",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 248,
+    "description": "שכר דירה 2026-03-12",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 249,
+    "description": "PAYPAL *שכר דירה",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 250,
+    "description": "שכר דירה LTD",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 251,
+    "description": "שכר דירה 12.03.26",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 252,
+    "description": "שכר דירה #88",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 253,
+    "description": "שכר דירה store 9",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 254,
+    "description": "שכר דירה 20260312",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 255,
+    "description": "שכר דירה 054-1234567",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 256,
+    "description": "שכר דירה תל אביב",
+    "kind": "expense",
+    "expected": "Rent"
+  },
+  {
+    "id": 257,
+    "description": "משכנתא",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 258,
+    "description": "משכנתא 123",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 259,
+    "description": "משכנתא סניף 45",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 260,
+    "description": "משכנתא branch 7",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 261,
+    "description": "משכנתא*",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 262,
+    "description": "משכנתא - 4421",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 263,
+    "description": "משכנתא 12/03/2026",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 264,
+    "description": "משכנתא 2026-03-12",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 265,
+    "description": "PAYPAL *משכנתא",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 266,
+    "description": "משכנתא LTD",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 267,
+    "description": "משכנתא 12.03.26",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 268,
+    "description": "משכנתא #88",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 269,
+    "description": "משכנתא store 9",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 270,
+    "description": "משכנתא 20260312",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 271,
+    "description": "משכנתא 054-1234567",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 272,
+    "description": "משכנתא תל אביב",
+    "kind": "expense",
+    "expected": "Mortgage"
+  },
+  {
+    "id": 273,
+    "description": "סופרגז",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 274,
+    "description": "סופרגז 123",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 275,
+    "description": "סופרגז סניף 45",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 276,
+    "description": "סופרגז branch 7",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 277,
+    "description": "סופרגז*",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 278,
+    "description": "סופרגז - 4421",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 279,
+    "description": "סופרגז 12/03/2026",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 280,
+    "description": "סופרגז 2026-03-12",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 281,
+    "description": "PAYPAL *סופרגז",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 282,
+    "description": "סופרגז LTD",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 283,
+    "description": "סופרגז 12.03.26",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 284,
+    "description": "סופרגז #88",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 285,
+    "description": "סופרגז store 9",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 286,
+    "description": "סופרגז 20260312",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 287,
+    "description": "סופרגז 054-1234567",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 288,
+    "description": "סופרגז תל אביב",
+    "kind": "expense",
+    "expected": "Gas"
+  },
+  {
+    "id": 289,
+    "description": "אגד",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 290,
+    "description": "אגד 123",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 291,
+    "description": "אגד סניף 45",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 292,
+    "description": "אגד branch 7",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 293,
+    "description": "אגד*",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 294,
+    "description": "אגד - 4421",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 295,
+    "description": "אגד 12/03/2026",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 296,
+    "description": "אגד 2026-03-12",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 297,
+    "description": "PAYPAL *אגד",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 298,
+    "description": "אגד LTD",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 299,
+    "description": "אגד 12.03.26",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 300,
+    "description": "אגד #88",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 301,
+    "description": "אגד store 9",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 302,
+    "description": "אגד 20260312",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 303,
+    "description": "אגד 054-1234567",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 304,
+    "description": "אגד תל אביב",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 305,
+    "description": "רכבת ישראל",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 306,
+    "description": "רכבת ישראל 123",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 307,
+    "description": "רכבת ישראל סניף 45",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 308,
+    "description": "רכבת ישראל branch 7",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 309,
+    "description": "רכבת ישראל*",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 310,
+    "description": "רכבת ישראל - 4421",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 311,
+    "description": "רכבת ישראל 12/03/2026",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 312,
+    "description": "רכבת ישראל 2026-03-12",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 313,
+    "description": "PAYPAL *רכבת ישראל",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 314,
+    "description": "רכבת ישראל LTD",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 315,
+    "description": "רכבת ישראל 12.03.26",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 316,
+    "description": "רכבת ישראל #88",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 317,
+    "description": "רכבת ישראל store 9",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 318,
+    "description": "רכבת ישראל 20260312",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 319,
+    "description": "רכבת ישראל 054-1234567",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 320,
+    "description": "רכבת ישראל תל אביב",
+    "kind": "expense",
+    "expected": "Public Transport"
+  },
+  {
+    "id": 321,
+    "description": "איקאה",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 322,
+    "description": "איקאה 123",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 323,
+    "description": "איקאה סניף 45",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 324,
+    "description": "איקאה branch 7",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 325,
+    "description": "איקאה*",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 326,
+    "description": "איקאה - 4421",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 327,
+    "description": "איקאה 12/03/2026",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 328,
+    "description": "איקאה 2026-03-12",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 329,
+    "description": "PAYPAL *איקאה",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 330,
+    "description": "איקאה LTD",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 331,
+    "description": "איקאה 12.03.26",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 332,
+    "description": "איקאה #88",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 333,
+    "description": "איקאה store 9",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 334,
+    "description": "איקאה 20260312",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 335,
+    "description": "איקאה 054-1234567",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 336,
+    "description": "איקאה תל אביב",
+    "kind": "expense",
+    "expected": "Furniture"
+  },
+  {
+    "id": 337,
+    "description": "זארה",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 338,
+    "description": "זארה 123",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 339,
+    "description": "זארה סניף 45",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 340,
+    "description": "זארה branch 7",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 341,
+    "description": "זארה*",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 342,
+    "description": "זארה - 4421",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 343,
+    "description": "זארה 12/03/2026",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 344,
+    "description": "זארה 2026-03-12",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 345,
+    "description": "PAYPAL *זארה",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 346,
+    "description": "זארה LTD",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 347,
+    "description": "זארה 12.03.26",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 348,
+    "description": "זארה #88",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 349,
+    "description": "זארה store 9",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 350,
+    "description": "זארה 20260312",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 351,
+    "description": "זארה 054-1234567",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 352,
+    "description": "זארה תל אביב",
+    "kind": "expense",
+    "expected": "Clothing & Shoes"
+  },
+  {
+    "id": 353,
+    "description": "סופר פארם",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 354,
+    "description": "סופר פארם 123",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 355,
+    "description": "סופר פארם סניף 45",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 356,
+    "description": "סופר פארם branch 7",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 357,
+    "description": "סופר פארם*",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 358,
+    "description": "סופר פארם - 4421",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 359,
+    "description": "סופר פארם 12/03/2026",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 360,
+    "description": "סופר פארם 2026-03-12",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 361,
+    "description": "PAYPAL *סופר פארם",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 362,
+    "description": "סופר פארם LTD",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 363,
+    "description": "סופר פארם 12.03.26",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 364,
+    "description": "סופר פארם #88",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 365,
+    "description": "סופר פארם store 9",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 366,
+    "description": "סופר פארם 20260312",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 367,
+    "description": "סופר פארם 054-1234567",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 368,
+    "description": "סופר פארם תל אביב",
+    "kind": "expense",
+    "expected": "Medications"
+  },
+  {
+    "id": 369,
+    "description": "קופת חולים",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 370,
+    "description": "קופת חולים 123",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 371,
+    "description": "קופת חולים סניף 45",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 372,
+    "description": "קופת חולים branch 7",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 373,
+    "description": "קופת חולים*",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 374,
+    "description": "קופת חולים - 4421",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 375,
+    "description": "קופת חולים 12/03/2026",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 376,
+    "description": "קופת חולים 2026-03-12",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 377,
+    "description": "PAYPAL *קופת חולים",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 378,
+    "description": "קופת חולים LTD",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 379,
+    "description": "קופת חולים 12.03.26",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 380,
+    "description": "קופת חולים #88",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 381,
+    "description": "קופת חולים store 9",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 382,
+    "description": "קופת חולים 20260312",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 383,
+    "description": "קופת חולים 054-1234567",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 384,
+    "description": "קופת חולים תל אביב",
+    "kind": "expense",
+    "expected": "Health Fund"
+  },
+  {
+    "id": 385,
+    "description": "ביטוח לאומי",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 386,
+    "description": "ביטוח לאומי 123",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 387,
+    "description": "ביטוח לאומי סניף 45",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 388,
+    "description": "ביטוח לאומי branch 7",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 389,
+    "description": "ביטוח לאומי*",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 390,
+    "description": "ביטוח לאומי - 4421",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 391,
+    "description": "ביטוח לאומי 12/03/2026",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 392,
+    "description": "ביטוח לאומי 2026-03-12",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 393,
+    "description": "PAYPAL *ביטוח לאומי",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 394,
+    "description": "ביטוח לאומי LTD",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 395,
+    "description": "ביטוח לאומי 12.03.26",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 396,
+    "description": "ביטוח לאומי #88",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 397,
+    "description": "ביטוח לאומי store 9",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 398,
+    "description": "ביטוח לאומי 20260312",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 399,
+    "description": "ביטוח לאומי 054-1234567",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 400,
+    "description": "ביטוח לאומי תל אביב",
+    "kind": "expense",
+    "expected": "National Insurance"
+  },
+  {
+    "id": 401,
+    "description": "מס הכנסה",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 402,
+    "description": "מס הכנסה 123",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 403,
+    "description": "מס הכנסה סניף 45",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 404,
+    "description": "מס הכנסה branch 7",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 405,
+    "description": "מס הכנסה*",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 406,
+    "description": "מס הכנסה - 4421",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 407,
+    "description": "מס הכנסה 12/03/2026",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 408,
+    "description": "מס הכנסה 2026-03-12",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 409,
+    "description": "PAYPAL *מס הכנסה",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 410,
+    "description": "מס הכנסה LTD",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 411,
+    "description": "מס הכנסה 12.03.26",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 412,
+    "description": "מס הכנסה #88",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 413,
+    "description": "מס הכנסה store 9",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 414,
+    "description": "מס הכנסה 20260312",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 415,
+    "description": "מס הכנסה 054-1234567",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 416,
+    "description": "מס הכנסה תל אביב",
+    "kind": "expense",
+    "expected": "Income Tax"
+  },
+  {
+    "id": 417,
+    "description": "AMAZON",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 418,
+    "description": "AMAZON 123",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 419,
+    "description": "AMAZON סניף 45",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 420,
+    "description": "AMAZON branch 7",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 421,
+    "description": "AMAZON*",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 422,
+    "description": "AMAZON - 4421",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 423,
+    "description": "AMAZON 12/03/2026",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 424,
+    "description": "AMAZON 2026-03-12",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 425,
+    "description": "PAYPAL *AMAZON",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 426,
+    "description": "AMAZON LTD",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 427,
+    "description": "AMAZON 12.03.26",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 428,
+    "description": "AMAZON #88",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 429,
+    "description": "AMAZON store 9",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 430,
+    "description": "AMAZON 20260312",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 431,
+    "description": "AMAZON 054-1234567",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 432,
+    "description": "AMAZON תל אביב",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 433,
+    "description": "ADOBE",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 434,
+    "description": "ADOBE 123",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 435,
+    "description": "ADOBE סניף 45",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 436,
+    "description": "ADOBE branch 7",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 437,
+    "description": "ADOBE*",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 438,
+    "description": "ADOBE - 4421",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 439,
+    "description": "ADOBE 12/03/2026",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 440,
+    "description": "ADOBE 2026-03-12",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 441,
+    "description": "PAYPAL *ADOBE",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 442,
+    "description": "ADOBE LTD",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 443,
+    "description": "ADOBE 12.03.26",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 444,
+    "description": "ADOBE #88",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 445,
+    "description": "ADOBE store 9",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 446,
+    "description": "ADOBE 20260312",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 447,
+    "description": "ADOBE 054-1234567",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 448,
+    "description": "ADOBE תל אביב",
+    "kind": "expense",
+    "expected": "Subscriptions"
+  },
+  {
+    "id": 449,
+    "description": "אל על",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 450,
+    "description": "אל על 123",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 451,
+    "description": "אל על סניף 45",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 452,
+    "description": "אל על branch 7",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 453,
+    "description": "אל על*",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 454,
+    "description": "אל על - 4421",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 455,
+    "description": "אל על 12/03/2026",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 456,
+    "description": "אל על 2026-03-12",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 457,
+    "description": "PAYPAL *אל על",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 458,
+    "description": "אל על LTD",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 459,
+    "description": "אל על 12.03.26",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 460,
+    "description": "אל על #88",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 461,
+    "description": "אל על store 9",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 462,
+    "description": "אל על 20260312",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 463,
+    "description": "אל על 054-1234567",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 464,
+    "description": "אל על תל אביב",
+    "kind": "expense",
+    "expected": "Travel"
+  },
+  {
+    "id": 465,
+    "description": "פיצה האט",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 466,
+    "description": "פיצה האט 123",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 467,
+    "description": "פיצה האט סניף 45",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 468,
+    "description": "פיצה האט branch 7",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 469,
+    "description": "פיצה האט*",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 470,
+    "description": "פיצה האט - 4421",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 471,
+    "description": "פיצה האט 12/03/2026",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 472,
+    "description": "פיצה האט 2026-03-12",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 473,
+    "description": "PAYPAL *פיצה האט",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 474,
+    "description": "פיצה האט LTD",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 475,
+    "description": "פיצה האט 12.03.26",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 476,
+    "description": "פיצה האט #88",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 477,
+    "description": "פיצה האט store 9",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 478,
+    "description": "פיצה האט 20260312",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 479,
+    "description": "פיצה האט 054-1234567",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 480,
+    "description": "פיצה האט תל אביב",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 481,
+    "description": "מקדונלדס",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 482,
+    "description": "מקדונלדס 123",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 483,
+    "description": "מקדונלדס סניף 45",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 484,
+    "description": "מקדונלדס branch 7",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 485,
+    "description": "מקדונלדס*",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 486,
+    "description": "מקדונלדס - 4421",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 487,
+    "description": "מקדונלדס 12/03/2026",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 488,
+    "description": "מקדונלדס 2026-03-12",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 489,
+    "description": "PAYPAL *מקדונלדס",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 490,
+    "description": "מקדונלדס LTD",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 491,
+    "description": "מקדונלדס 12.03.26",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 492,
+    "description": "מקדונלדס #88",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 493,
+    "description": "מקדונלדס store 9",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 494,
+    "description": "מקדונלדס 20260312",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 495,
+    "description": "מקדונלדס 054-1234567",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 496,
+    "description": "מקדונלדס תל אביב",
+    "kind": "expense",
+    "expected": "Restaurants"
+  },
+  {
+    "id": 497,
+    "description": "בית ספר",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 498,
+    "description": "בית ספר 123",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 499,
+    "description": "בית ספר סניף 45",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 500,
+    "description": "בית ספר branch 7",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 501,
+    "description": "בית ספר*",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 502,
+    "description": "בית ספר - 4421",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 503,
+    "description": "בית ספר 12/03/2026",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 504,
+    "description": "בית ספר 2026-03-12",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 505,
+    "description": "PAYPAL *בית ספר",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 506,
+    "description": "בית ספר LTD",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 507,
+    "description": "בית ספר 12.03.26",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 508,
+    "description": "בית ספר #88",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 509,
+    "description": "בית ספר store 9",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 510,
+    "description": "בית ספר 20260312",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 511,
+    "description": "בית ספר 054-1234567",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 512,
+    "description": "בית ספר תל אביב",
+    "kind": "expense",
+    "expected": "Tuition"
+  },
+  {
+    "id": 513,
+    "description": "עיריית תל אביב",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 514,
+    "description": "עיריית תל אביב 123",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 515,
+    "description": "עיריית תל אביב סניף 45",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 516,
+    "description": "עיריית תל אביב branch 7",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 517,
+    "description": "עיריית תל אביב*",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 518,
+    "description": "עיריית תל אביב - 4421",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 519,
+    "description": "עיריית תל אביב 12/03/2026",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 520,
+    "description": "עיריית תל אביב 2026-03-12",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 521,
+    "description": "PAYPAL *עיריית תל אביב",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 522,
+    "description": "עיריית תל אביב LTD",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 523,
+    "description": "עיריית תל אביב 12.03.26",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 524,
+    "description": "עיריית תל אביב #88",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 525,
+    "description": "עיריית תל אביב store 9",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 526,
+    "description": "עיריית תל אביב 20260312",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 527,
+    "description": "עיריית תל אביב 054-1234567",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 528,
+    "description": "עיריית תל אביב תל אביב",
+    "kind": "expense",
+    "expected": "Arnona"
+  },
+  {
+    "id": 529,
+    "description": "סלקום",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 530,
+    "description": "סלקום 123",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 531,
+    "description": "סלקום סניף 45",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 532,
+    "description": "סלקום branch 7",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 533,
+    "description": "סלקום*",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 534,
+    "description": "סלקום - 4421",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 535,
+    "description": "סלקום 12/03/2026",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 536,
+    "description": "סלקום 2026-03-12",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 537,
+    "description": "PAYPAL *סלקום",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 538,
+    "description": "סלקום LTD",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 539,
+    "description": "סלקום 12.03.26",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 540,
+    "description": "סלקום #88",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 541,
+    "description": "סלקום store 9",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 542,
+    "description": "סלקום 20260312",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 543,
+    "description": "סלקום 054-1234567",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 544,
+    "description": "סלקום תל אביב",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 545,
+    "description": "גולן טלקום",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 546,
+    "description": "גולן טלקום 123",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 547,
+    "description": "גולן טלקום סניף 45",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 548,
+    "description": "גולן טלקום branch 7",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 549,
+    "description": "גולן טלקום*",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 550,
+    "description": "גולן טלקום - 4421",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 551,
+    "description": "גולן טלקום 12/03/2026",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 552,
+    "description": "גולן טלקום 2026-03-12",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 553,
+    "description": "PAYPAL *גולן טלקום",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 554,
+    "description": "גולן טלקום LTD",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 555,
+    "description": "גולן טלקום 12.03.26",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 556,
+    "description": "גולן טלקום #88",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 557,
+    "description": "גולן טלקום store 9",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 558,
+    "description": "גולן טלקום 20260312",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 559,
+    "description": "גולן טלקום 054-1234567",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 560,
+    "description": "גולן טלקום תל אביב",
+    "kind": "expense",
+    "expected": "Mobile Phone"
+  },
+  {
+    "id": 561,
+    "description": "יס",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 562,
+    "description": "יס 123",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 563,
+    "description": "יס סניף 45",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 564,
+    "description": "יס branch 7",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 565,
+    "description": "יס*",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 566,
+    "description": "יס - 4421",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 567,
+    "description": "יס 12/03/2026",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 568,
+    "description": "יס 2026-03-12",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 569,
+    "description": "PAYPAL *יס",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 570,
+    "description": "יס LTD",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 571,
+    "description": "יס 12.03.26",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 572,
+    "description": "יס #88",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 573,
+    "description": "יס store 9",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 574,
+    "description": "יס 20260312",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 575,
+    "description": "יס 054-1234567",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 576,
+    "description": "יס תל אביב",
+    "kind": "expense",
+    "expected": "Internet & TV"
+  },
+  {
+    "id": 577,
+    "description": "איביי",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 578,
+    "description": "איביי 123",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 579,
+    "description": "איביי סניף 45",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 580,
+    "description": "איביי branch 7",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 581,
+    "description": "איביי*",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 582,
+    "description": "איביי - 4421",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 583,
+    "description": "איביי 12/03/2026",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 584,
+    "description": "איביי 2026-03-12",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 585,
+    "description": "PAYPAL *איביי",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 586,
+    "description": "איביי LTD",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 587,
+    "description": "איביי 12.03.26",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 588,
+    "description": "איביי #88",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 589,
+    "description": "איביי store 9",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 590,
+    "description": "איביי 20260312",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 591,
+    "description": "איביי 054-1234567",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 592,
+    "description": "איביי תל אביב",
+    "kind": "expense",
+    "expected": "Electronics"
+  },
+  {
+    "id": 593,
+    "description": "עלי אקספרס",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 594,
+    "description": "עלי אקספרס 123",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 595,
+    "description": "עלי אקספרס סניף 45",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 596,
+    "description": "עלי אקספרס branch 7",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 597,
+    "description": "עלי אקספרס*",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 598,
+    "description": "עלי אקספרס - 4421",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 599,
+    "description": "עלי אקספרס 12/03/2026",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 600,
+    "description": "עלי אקספרס 2026-03-12",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 601,
+    "description": "PAYPAL *עלי אקספרס",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 602,
+    "description": "עלי אקספרס LTD",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 603,
+    "description": "עלי אקספרס 12.03.26",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 604,
+    "description": "עלי אקספרס #88",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 605,
+    "description": "עלי אקספרס store 9",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 606,
+    "description": "עלי אקספרס 20260312",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 607,
+    "description": "עלי אקספרס 054-1234567",
+    "kind": "expense",
+    "expected": "Shopping"
+  },
+  {
+    "id": 608,
+    "description": "עלי אקספרס תל אביב",
+    "kind": "expense",
+    "expected": "Shopping"
+  }
+]

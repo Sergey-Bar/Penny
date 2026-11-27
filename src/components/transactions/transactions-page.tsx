@@ -280,32 +280,40 @@ export function TransactionsPage() {
             ]}
             onChange={setView}
           />
+          {/* The month in three figures, each under its own label: what came in, what went out, what is left. */}
           {summaryQuery.data && (
-            <dl className="ms-auto flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-              <div className="flex items-baseline gap-1.5">
-                <dt className="text-muted-foreground">{t("sumIncome")}</dt>
-                <dd>
-                  <bdi data-money className="font-semibold tabular-nums text-status-on-track">
-                    {signedShekels(Math.abs(summaryQuery.data.income.total), locale)}
-                  </bdi>
-                </dd>
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <dt className="text-muted-foreground">{t("sumExpenses")}</dt>
-                <dd>
-                  <bdi data-money className="font-semibold tabular-nums text-expense">
-                    {signedShekels(-Math.abs(summaryQuery.data.expense.total), locale)}
-                  </bdi>
-                </dd>
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <dt className="text-muted-foreground">{t("sumNet")}</dt>
-                <dd>
-                  <bdi data-money className="font-semibold tabular-nums">
-                    {signedShekels(summaryQuery.data.net, locale)}
-                  </bdi>
-                </dd>
-              </div>
+            <dl className="ms-auto flex flex-wrap items-end gap-x-7 gap-y-2 max-sm:ms-0 max-sm:w-full max-sm:justify-between">
+              {(
+                [
+                  [
+                    t("sumIncome"),
+                    signedShekels(Math.abs(summaryQuery.data.income.total), locale),
+                    "text-status-on-track",
+                  ],
+                  [
+                    t("sumExpenses"),
+                    signedShekels(-Math.abs(summaryQuery.data.expense.total), locale),
+                    "",
+                  ],
+                  [
+                    t("sumNet"),
+                    signedShekels(summaryQuery.data.net, locale),
+                    summaryQuery.data.net < 0 ? "text-expense" : "",
+                  ],
+                ] as const
+              ).map(([label, value, tone]) => (
+                <div key={label}>
+                  <dt className="text-[13px] text-muted-foreground">{label}</dt>
+                  <dd>
+                    <bdi
+                      data-money
+                      className={`text-xl leading-tight font-semibold tracking-tight tabular-nums ${tone}`}
+                    >
+                      {value}
+                    </bdi>
+                  </dd>
+                </div>
+              ))}
             </dl>
           )}
         </div>

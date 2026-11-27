@@ -36,7 +36,11 @@ if (!health?.ok) {
   process.exit(1);
 }
 
-const browser = await chromium.launch({ channel: process.env.CI ? undefined : "chrome" });
+// CHROME points at a specific browser binary (for machines without a Chrome install).
+const browser = await chromium.launch({
+  channel: process.env.CI || process.env.CHROME ? undefined : "chrome",
+  executablePath: process.env.CHROME || undefined,
+});
 const hotspots = {};
 for (const lang of ["he", "en"]) {
   const context = await browser.newContext({
@@ -45,7 +49,11 @@ for (const lang of ["he", "en"]) {
     locale: lang === "he" ? "he-IL" : "en-US",
     reducedMotion: "reduce",
   });
-  await context.addCookies([{ name: "NEXT_LOCALE", value: lang, url: BASE }]);
+  // home_view: the tour shows the detailed dashboard, which is no longer what Home opens on.
+  await context.addCookies([
+    { name: "NEXT_LOCALE", value: lang, url: BASE },
+    { name: "home_view", value: "detailed", url: BASE },
+  ]);
   const page = await context.newPage();
   // Two profiles: pick the first one, as a person would.
   await page.goto(`${BASE}/profiles`);

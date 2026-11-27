@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Check, CheckCheck } from "lucide-react";
+import { ArrowRightLeft, Check, CheckCheck } from "lucide-react";
 import { CardShell } from "@/components/home/card-shell";
 import { IconButton } from "@/components/ui/icon-button";
 import { DataState } from "@/components/ui/data-state";
@@ -12,8 +12,10 @@ import {
   approveTransactionCategory,
   getCategories,
   getReviewInbox,
+  setTransactionKind,
   unapproveTransaction,
   updateTransactionCategory,
+  updateTransactionFields,
 } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { translateCategoryName } from "@/lib/i18n-data";
@@ -32,6 +34,7 @@ export function ReviewInbox() {
   const [hidden, setHidden] = useState<Set<number>>(new Set());
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [active, setActive] = useState(0);
+  const [memos, setMemos] = useState<Record<number, string>>({});
   const listRef = useRef<HTMLUListElement>(null);
 
   const rows = (inbox.data?.transactions ?? []).filter((r) => !hidden.has(r.id));
@@ -105,6 +108,31 @@ export function ReviewInbox() {
     try {
       await updateTransactionCategory(row.id, categoryId);
       refresh();
+    } catch {
+      hide([row.id], false);
+      toast.error(t("failed"));
+    }
+  };
+
+  const saveMemo = async (row: TransactionWithCategory) => {
+    const next = memos[row.id];
+    if (next === undefined || next === (row.memo ?? "")) return;
+    try {
+      await updateTransactionFields(row.id, { memo: next || null });
+      refresh();
+      toast.success(t("memoSaved"));
+    } catch {
+      toast.error(t("failed"));
+    }
+  };
+
+  const markTransfer = async (row: TransactionWithCategory) => {
+    hide([row.id], true);
+    focusRow(current);
+    try {
+      await setTransactionKind(row.id, "transfer");
+      refresh();
+      toast(t("transferDone"));
     } catch {
       hide([row.id], false);
       toast.error(t("failed"));
@@ -213,6 +241,20 @@ export function ReviewInbox() {
               <span className="tabular-nums" dir="ltr">
                 {formatCurrency(r.chargedAmount, "ILS", locale)}
               </span>
+              <input
+                aria-label={t("memo", { name: r.description })}
+                placeholder={t("memoPlaceholder")}
+                value={memos[r.id] ?? r.memo ?? ""}
+                onChange={(event) =>
+                  setMemos((current) => ({ ...current, [r.id]: event.target.value }))
+                }
+                onBlur={() => void saveMemo(r)}
+                className="h-9 w-40 rounded-md border border-input bg-background px-2 text-sm"
+                maxLength={200}
+              />
+              <IconButton label={t("markTransfer")} onClick={() => void markTransfer(r)}>
+                <ArrowRightLeft className="size-4" aria-hidden />
+              </IconButton>
               <select
                 id={`review-cat-${r.id}`}
                 aria-label={t("category", { name: r.description })}

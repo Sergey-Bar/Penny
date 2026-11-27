@@ -3,17 +3,19 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-/** The daily scheduler's failure paths: a busy lock, a run that throws, the retry pass, start-up. */
+/** The daily scheduler: failures, the durable fan-out, a busy lock, start-up. */
 
+type Summary = import("@/server/sync/orchestrator").WorkspaceSummary;
 type Run = (
-  credentialId?: number,
-  onEvent?: unknown,
-  kind?: string,
-  options?: { lockHeld?: boolean },
-) => Promise<unknown[]>;
+  workspaceId: number,
+  filterCredentialId: undefined,
+  onEvent: unknown,
+  interactive: boolean,
+  options: { mode?: string },
+) => Promise<Summary>;
 const orch = vi.hoisted(() => ({ run: null as null | Run, calls: [] as unknown[][] }));
 vi.mock("@/server/sync/orchestrator", () => ({
-  runAllWorkspaces: (...args: Parameters<Run>) => {
+  syncWorkspace: (...args: Parameters<Run>) => {
     orch.calls.push(args);
     return orch.run!(...args);
   },
@@ -26,6 +28,19 @@ const KEYS = [
   "auto_sync_retries",
   "auto_sync_time",
 ];
+
+function summary(workspaceId = 1): Summary {
+  return {
+    workspaceId,
+    workspaceName: "Default",
+    providers: [],
+    added: 0,
+    updated: 0,
+    categorized: 0,
+    aiWarning: null,
+    postProcessJobs: [],
+  };
+}
 
 let scheduler: typeof import("@/server/sync/scheduler");
 let settings: typeof import("@/server/db/queries/settings");
@@ -42,25 +57,23 @@ beforeAll(async () => {
 });
 beforeEach(() => {
   orch.calls.length = 0;
-  orch.run = async () => [];
+  orch.run = async (workspaceId) => summary(workspaceId);
   for (const key of KEYS) db.prepare("DELETE FROM settings WHERE key = ?").run(key);
+  db.prepare("DELETE FROM workspace_settings WHERE key = 'backend_v2'").run();
+  db.prepare("DELETE FROM jobs").run();
+  db.prepare("DELETE FROM bank_credentials").run();
+  db.prepare("DELETE FROM runtime_locks").run();
   globalThis.__pennyScheduler = undefined;
-  globalThis.__pennySyncLock = undefined;
 });
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
-  globalThis.__pennySyncLock = undefined;
+  db.prepare("DELETE FROM runtime_locks").run();
 });
 
 const get = (k: string) => settings.getGlobalSetting(k);
 const dueFull = () =>
   settings.setGlobalSetting("auto_sync_last_attempt", String(Date.now() - 3 * 24 * 60 * MIN));
-const dueRetry = (ids: unknown) => {
-  settings.setGlobalSetting("auto_sync_last_attempt", String(Date.now() - 16 * MIN));
-  settings.setGlobalSetting("auto_sync_retry_ids", JSON.stringify(ids));
-  settings.setGlobalSetting("auto_sync_retries", "0");
-};
 
 describe("scheduler tick", () => {
   it("a run that throws is still recorded as an attempt, so it does not retry every minute", async () => {
@@ -71,13 +84,13 @@ describe("scheduler tick", () => {
     };
     const err = vi.spyOn(console, "error").mockImplementation(() => undefined);
     vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const before = Date.now();
     await scheduler.runSchedulerTick();
     expect(Number(get("auto_sync_last_attempt"))).toBeGreaterThanOrEqual(before);
     expect(get("auto_sync_retry_ids")).toBe("[]");
     expect(err).toHaveBeenCalledTimes(1);
     expect(String(err.mock.calls[0][1])).not.toContain("hunter2");
-    // The next tick in the same slot does nothing.
     await scheduler.runSchedulerTick();
     expect(orch.calls).toHaveLength(1);
   });
@@ -94,82 +107,40 @@ describe("scheduler tick", () => {
     expect(warn).toHaveBeenCalledWith("[scheduler] waiting: a sync is already running");
     expect(get("auto_sync_last_attempt")).toBe(last);
 
-    orch.run = async () => [];
+    orch.run = async (workspaceId) => summary(workspaceId);
     await scheduler.runSchedulerTick();
     expect(orch.calls).toHaveLength(2);
     expect(get("auto_sync_last_attempt")).not.toBe(last);
     expect(get("auto_sync_retries")).toBe("0");
   });
 
-  it("the retry pass holds one lock for every connection it retries", async () => {
-    dueRetry([2, 3]);
+  it("durable mode enqueues one sync.run job per credential instead of scraping inline", async () => {
+    dueFull();
+    const ws = (db.prepare("SELECT id FROM workspaces LIMIT 1").get() as { id: number }).id;
+    settings.setWorkspaceSetting(ws, "backend_v2", "on");
+    db.prepare(
+      `INSERT INTO bank_credentials
+         (workspace_id, provider, label, credentials_encrypted, iv, auth_tag)
+       VALUES (?, 'leumi', 'Leumi', X'00', X'00', X'00')`,
+    ).run(ws);
     vi.spyOn(console, "log").mockImplementation(() => undefined);
-    const heldDuring: boolean[] = [];
-    orch.run = async (id, _e, kind, options) => {
-      heldDuring.push(lock.isSyncRunning());
-      expect(kind).toBe("scheduled");
-      expect(options).toEqual({ lockHeld: true });
-      return [
-        {
-          providers: [{ ok: id !== 3, retryable: id === 3, credentialId: id }],
-        },
-      ];
-    };
     await scheduler.runSchedulerTick();
-    expect(orch.calls.map((c) => c[0])).toEqual([2, 3]);
-    expect(heldDuring).toEqual([true, true]);
-    expect(lock.isSyncRunning()).toBe(false); // released afterwards
-    expect(get("auto_sync_retry_ids")).toBe("[3]");
-    expect(get("auto_sync_retries")).toBe("1");
-  });
-
-  it("the retry pass waits when a manual sync is running, without touching the record", async () => {
-    dueRetry([2]);
-    const release = lock.tryAcquireSync("manual")!;
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
-    const last = get("auto_sync_last_attempt");
-    await scheduler.runSchedulerTick();
-    release();
+    const jobs = db.prepare("SELECT type, workspace_id AS ws FROM jobs").all() as {
+      type: string;
+      ws: number;
+    }[];
+    expect(jobs).toEqual([{ type: "sync.run", ws }]);
     expect(orch.calls).toEqual([]);
-    expect(warn).toHaveBeenCalledWith("[scheduler] waiting: a sync is already running");
-    expect(get("auto_sync_last_attempt")).toBe(last);
-    expect(get("auto_sync_retry_ids")).toBe("[2]");
-  });
-
-  it("the retry pass releases its lock when a retry throws", async () => {
-    dueRetry([2]);
-    orch.run = async () => {
-      throw new Error("boom");
-    };
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
-    await scheduler.runSchedulerTick();
-    expect(lock.isSyncRunning()).toBe(false);
-    expect(get("auto_sync_retry_ids")).toBe("[]");
-  });
-
-  it("an unreadable retry list means nothing to retry", async () => {
-    settings.setGlobalSetting("auto_sync_last_attempt", String(Date.now() - 16 * MIN));
-    for (const bad of ["not json", '{"a":1}', '["x", 1.5]']) {
-      settings.setGlobalSetting("auto_sync_retry_ids", bad);
-      await scheduler.runSchedulerTick();
-    }
-    expect(orch.calls).toEqual([]);
-  });
-
-  it("skips integers only: a list with junk retries the real ids", async () => {
-    dueRetry([4, "x", 2.5, null]);
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
-    await scheduler.runSchedulerTick();
-    expect(orch.calls.map((c) => c[0])).toEqual([4]);
   });
 
   it("does not start a second run while one is in progress", async () => {
     dueFull();
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     let finish!: () => void;
-    orch.run = () => new Promise((r) => (finish = () => r([])));
+    orch.run = () =>
+      new Promise<Summary>((resolve) => {
+        finish = () => resolve(summary());
+      });
     const first = scheduler.runSchedulerTick();
     await vi.waitFor(() => expect(orch.calls).toHaveLength(1));
     await scheduler.runSchedulerTick();
@@ -198,7 +169,6 @@ describe("scheduler tick", () => {
 
   it("after an upgrade, counts the latest sync as the last attempt instead of syncing at once", async () => {
     const ws = (db.prepare("SELECT id FROM workspaces LIMIT 1").get() as { id: number }).id;
-    // A sync a minute ago, in SQLite's UTC text form.
     const at = new Date(Math.floor((Date.now() - MIN) / 1000) * 1000);
     db.prepare(
       "INSERT INTO sync_runs (workspace_id, provider, started_at, status, scrape_from_date) VALUES (?, 'leumi', ?, 'completed', '2026-01-01')",
@@ -268,7 +238,6 @@ describe("initScheduler", () => {
     expect([...handlers.keys()].sort()).toEqual(["SIGINT", "SIGTERM", "exit"]);
     expect(vi.getTimerCount()).toBe(1);
 
-    // Calling again (another route import) arms nothing new.
     const id = state.intervalId;
     scheduler.initScheduler();
     scheduler.reschedule();

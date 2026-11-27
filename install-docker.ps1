@@ -1,8 +1,9 @@
 # Install, start or update Penny in Docker (Windows). Works on its own, in PowerShell:
 #   irm https://raw.githubusercontent.com/Sergey-Bar/Penny/main/install-docker.ps1 | iex
 # 1. checks that Docker Desktop is installed and running, 2. downloads the newest release into ~\Penny (or $env:PENNY_DIR),
-# 3. if Penny is already there and a newer release exists, offers to update (backup + rollback via Penny-update.ps1),
+# 3. if Penny is already there and a newer release exists, offers to update (backup + rollback),
 # 4. builds, starts and opens http://127.0.0.1:41234. Your data lives in a Docker volume, never in the code folder.
+# Run it again any time: it updates when there is something new and otherwise just starts Penny.
 # Inside a function, so "return" ends the install without closing a window opened for "irm | iex".
 function Install-Penny {
     $ErrorActionPreference = "Stop"
@@ -74,8 +75,12 @@ function Install-Penny {
         return $null
     }
 
-    $start = Join-Path $dir "Penny-docker.ps1"
-    $update = Join-Path $dir "Penny-update.ps1"
+    # Releases before scripts\docker\ keep these scripts at the top of the folder.
+    function Get-Script($name, $oldName) {
+        $p = Join-Path $dir "scripts\docker\$name.ps1"
+        if (Test-Path $p) { return $p }
+        return (Join-Path $dir $oldName)
+    }
 
     if (-not (Test-Path (Join-Path $dir "docker-compose.yml"))) {
         Write-Host "Downloading Penny $latest into $dir..."
@@ -85,7 +90,7 @@ function Install-Penny {
         } else {
             Get-Release $latest
         }
-        & powershell -NoProfile -ExecutionPolicy Bypass -File $start
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Get-Script "start" "Penny-docker.ps1")
         return
     }
 
@@ -94,15 +99,15 @@ function Install-Penny {
     if ($latest -and $have -ne $latest) {
         if (Confirm-Step "Penny $(if ($have) { $have } else { '(unknown version)' }) is installed. Update to $($latest)? Your data is backed up first.") {
             if (-not (Test-Path (Join-Path $dir ".git"))) { Get-Release $latest }
-            & powershell -NoProfile -ExecutionPolicy Bypass -File $update
+            & powershell -NoProfile -ExecutionPolicy Bypass -File (Get-Script "update" "Penny-update.ps1")
             return
         }
-    } else {
+    } elseif ($latest) {
         Write-Host "Penny $have is up to date."
     }
 
     # 4. Start (or restart) what is installed.
-    & powershell -NoProfile -ExecutionPolicy Bypass -File $start
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Get-Script "start" "Penny-docker.ps1")
     return
 }
 Install-Penny

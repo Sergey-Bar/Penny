@@ -81,6 +81,9 @@ local network or the internet, unless you turn on phone access (see
 - `api.telegram.org` — only if you connect the Telegram bot: your bot token
   and the messages the bot sends you (snapshots, merchant names, dates, and
   amounts unless you hide them)
+- Cloudflare (the tunnel and Access) — only if you turn on remote access;
+  Cloudflare terminates TLS and sees the request content in transit, but not
+  the database, the key file or the tunnel token
 - `api.github.com` — update check; receives the request only, no data. The
   Windows desktop app also downloads the installer from GitHub. Off in
   Settings -> Privacy & security
@@ -109,6 +112,24 @@ open `http://<private-ip>:41234`.
   this too; treat it as a real limit, not a disclaimer.
 - With the app lock on, the key on disk is the PIN-wrapped key: see
   "What's NOT protected at rest".
+
+## Remote access
+
+Settings -> Privacy & security -> Remote access is off by default. It uses a
+Cloudflare tunnel so a phone can reach the same local app without opening a
+port. The app lock must be on.
+
+- Named mode verifies the `Cf-Access-Jwt-Assertion` header against the
+  Cloudflare Access JWKS: signature, issuer, audience and expiry. If the key
+  cache is empty or stale, the request fails closed.
+- The tunnel hostname is added to the host guard only when it is configured;
+  wildcards are rejected.
+- Quick tunnels are development-only, require the app lock and an explicit
+  `PENNY_REMOTE_QUICK_ACK=1`, and must not be left running.
+- Cloudflare terminates TLS and sees request content in transit. It does not
+  receive the database, the key file or the tunnel token. The tunnel token is
+  read by the connector, not by Penny.
+- Setup and recovery: [docs/remote-access.md](docs/remote-access.md).
 
 ## Chromium sandbox
 

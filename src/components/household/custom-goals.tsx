@@ -345,7 +345,7 @@ export function CustomGoals() {
                     const pct = Math.min(100, Math.max(0, (g.savedAmount / g.targetAmount) * 100));
                     return (
                       <li key={g.id} className="rounded-xl bg-muted/50 p-4">
-                        <div className="flex items-start gap-3">
+                        <div className="flex flex-wrap items-start justify-end gap-3">
                           <span
                             className="grid size-10 shrink-0 place-items-center rounded-full text-xl"
                             style={{
@@ -355,7 +355,7 @@ export function CustomGoals() {
                           >
                             {g.icon && !/^[a-z-]+$/i.test(g.icon) ? g.icon : "🎯"}
                           </span>
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-[8rem] flex-1">
                             <p className="truncate font-semibold">{g.name}</p>
                             <p className="text-footnote text-muted-foreground">
                               {t("savedOf", { saved: $(g.savedAmount), total: $(g.targetAmount) })}

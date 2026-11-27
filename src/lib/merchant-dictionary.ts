@@ -5,6 +5,8 @@
  * first ("רמי לוי תקשורת" before "רמי לוי", "פזגז" before "פז"). Category names are the app's seeded English names.
  * Hebrew has no \b, so Hebrew words are bounded by (^|[^א-ת]) and (?![א-ת]).
  */
+import { categoryKeyForName } from "@/lib/category-keys";
+
 const he = (words: string) => new RegExp(`(^|[^א-ת])(?:${words})(?![א-ת])`);
 const en = (words: string) => new RegExp(`\\b(?:${words})\\b`, "i");
 
@@ -142,6 +144,51 @@ const EXPENSE: Entry[] = [
   // Giving.
   [he("תרומה|תרומת|עמותת|ע\"ר|ג'יגיב|ישראל גיבס"), "Donations"],
   [en("jgive|israelgives|donation"), "Donations"],
+  // Categories that had no positive pattern yet (plan: full leaf coverage, or MANUAL_ONLY).
+  [he("שיפוצים|קבלן|קבלנים|הום סנטר|עצמלה|חומרי בניין|אייס|ace"), "Renovations"],
+  [en("ace hardware|home ?center|homedepot"), "Renovations"],
+  [he("חוג|חוגים|סטודיו|מדריך|מדריכה|קייטנה"), "Kids Activities"],
+  [he("שכר לימוד|אוניברסיטה|מכללה|אוניברסיטה פתוחה|בית ספר"), "Tuition"],
+  [en("tuition|university|college"), "Tuition"],
+  [he("קוסמטיקה|ספורה|בושם|איפור|קרם"), "Cosmetics"],
+  [en("sephora|sephora|cosmetics|ulta"), "Cosmetics"],
+  [he("אירועים|שמחות|מתנות|מתנה|בר מצווה|בת מצווה|חתונה"), "Gifts & Events"],
+  [en("gift|gifts|events"), "Gifts & Events"],
+  [he("החזר הלוואה|החזר הלוואות|פירעון הלוואה|הלוואה"), "Loans"],
+  [en("loan repayment|loan"), "Loans"],
+  [he("קרן השתלמות|קופת גמל|קופת פנסיה|פיקדון|חיסכון|חיסכון חודשי"), "Savings"],
+  [en("gemel|hishtalmut|savings|deposit plan"), "Savings"],
+  [he("קרנות נאמנות|תיק השקעות|ברוקר|אקסלנס|מיטב|פסגות|בלינק"), "Investments"],
+  [en("broker|mutual fund|excellence|meitav|psagot|blink|interactive brokers"), "Investments"],
+  [he("סופר פארם|סופר-פארם|בי פארם|ניו פארם|בית מרקחת|תרופות"), "Medications"],
+  [en("pharmacy|super ?pharm|be pharm"), "Medications"],
+  [he("עוזרת בית|ניקיון|חברת ניקיון|שטיפת שטיחים"), "Cleaning"],
+  [en("cleaning service|cleaner|maid"), "Cleaning"],
+  [he("ציוד לימוד|ציוד לבית ספר|קלמר|מחברות|ספרי לימוד"), "School Supplies"],
+  [en("school supplies|stationery"), "School Supplies"],
+  [he("ביגוד ילדים|נעלי ילדים|בגדי תינוקות"), "Kids Clothing"],
+  [en("kids clothing|baby clothes"), "Kids Clothing"],
+  [he("דמי כיס"), "Pocket Money"],
+  [he("וטרינר|מרפאה וטרינרית|חיסון לכלב|חיסון לחתול"), "Vet"],
+  [en("veterinar|vet clinic"), "Vet"],
+  [he("מזון לחיות|מזון לכלבים|מזון לחתולים|פט שופ"), "Pet Food"],
+  [en("pet food|pet shop|petsmart"), "Pet Food"],
+  [he("מוסך|טיפולי רכב|טיפול לרכב|החלפת שמן|צמיגים"), "Car Maintenance"],
+  [en("garage|car service|tire|tyres|oil change"), "Car Maintenance"],
+  [he("שכר דירה|שכירות|שכר דיור"), "Rent"],
+  [en("rent payment|monthly rent"), "Rent"],
+  [he("ביטוח חיים|ביטוח משכנתא"), "Life Insurance"],
+  [en("life insurance"), "Life Insurance"],
+  [he("ביטוח בריאות|ביטוח סיעודי|אובדן כושר"), "Health Insurance"],
+  [en("health insurance|disability insurance"), "Health Insurance"],
+  [he("ביטוח רכב|ביטוח מקיף|ביטוח חובה"), "Car Insurance"],
+  [en("car insurance|auto insurance"), "Car Insurance"],
+  [he("ביטוח דירה|ביטוח מבנה|ביטוח תכולה"), "Insurance"],
+  [en("home insurance|property insurance"), "Insurance"],
+  [he('עמלת המרה|עמלת מט"ח|עמלת חו"ל|עסקה בחו"ל'), "Bank Fees"],
+  [en("foreign transaction fee|conversion fee"), "Bank Fees"],
+  [he("ריבית חובה|ריבית על יתרת חובה|ריבית בגין|ריבית משיכת יתר"), "Interest"],
+  [en("overdraft interest|interest charge"), "Interest"],
 ];
 
 const INCOME: Entry[] = [
@@ -152,15 +199,42 @@ const INCOME: Entry[] = [
   ],
   [he("החזר מס|החזר מס הכנסה"), "Tax Refunds"],
   [he("דיבידנד|ריבית זכות"), "Investment Income"],
+  [he("שכר דירה|הכנסה משכירות|שכירות"), "Rental Income"],
+  [en("rental income|rent received"), "Rental Income"],
+  [he("פנסיה|קצבת פנסיה|גמלה"), "Pension"],
+  [en("pension"), "Pension"],
+  [he("חשבונית|פרילנס|ייעוץ|עבודה עצמאית|הכנסה מעסק"), "Freelance & Side Income"],
+  [en("freelance|consulting|invoice|self employed"), "Freelance & Side Income"],
+  [he("מתנה|מתנות שהתקבלו|מענק"), "Gifts Received"],
+  [en("gift received"), "Gifts Received"],
+  [he("זיכוי|החזר|החזר כספי|ביטול עסקה"), "Refunds & Reimbursements"],
+  [en("refund|reimbursement|chargeback"), "Refunds & Reimbursements"],
 ];
 
 /** The category name a description almost certainly belongs to, or null when it isn't a known merchant. */
 export function dictionaryCategory(description: string, kind: "expense" | "income"): string | null {
   const d = description
     .normalize("NFC")
-    .replace(/[‎‏‪-‮⁦-⁩]/g, "")
+    .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "")
     .replace(/\s+/g, " ")
     .trim();
   for (const [re, name] of kind === "income" ? INCOME : EXPENSE) if (re.test(d)) return name;
   return null;
+}
+
+/**
+ * The stable category key for a description. Renaming a category keeps its key, so the
+ * dictionary keeps working after a rename. Null when no unambiguous merchant matched.
+ */
+export function dictionaryCategoryKey(
+  description: string,
+  kind: "expense" | "income",
+): string | null {
+  const name = dictionaryCategory(description, kind);
+  return name ? categoryKeyForName(name) : null;
+}
+
+/** Every category name the dictionary can name, for the coverage test. */
+export function dictionaryCategoryNames(kind: "expense" | "income"): string[] {
+  return [...new Set((kind === "income" ? INCOME : EXPENSE).map(([, name]) => name))];
 }

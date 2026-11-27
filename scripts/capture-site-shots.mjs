@@ -41,7 +41,11 @@ if (!(await fetch(`${BASE}/api/health`).catch(() => null))?.ok) {
   console.error(`No app at ${BASE}. Start the demo first: npm run demo`);
   process.exit(1);
 }
-const browser = await chromium.launch({ channel: process.env.CI ? undefined : "chrome" });
+// CHROME points at a specific browser binary (for machines without a Chrome install).
+const browser = await chromium.launch({
+  channel: process.env.CI || process.env.CHROME ? undefined : "chrome",
+  executablePath: process.env.CHROME || undefined,
+});
 for (const lang of ["he", "en"]) {
   for (const [shots, viewport, scale] of [
     [DESKTOP, { width: 1440, height: 900 }, 1],
@@ -57,7 +61,11 @@ for (const lang of ["he", "en"]) {
       locale: lang === "he" ? "he-IL" : "en-US",
       reducedMotion: "reduce",
     });
-    await ctx.addCookies([{ name: "NEXT_LOCALE", value: lang, url: BASE }]);
+    // home_view: the pictures show the detailed dashboard, which is no longer what Home opens on.
+    await ctx.addCookies([
+      { name: "NEXT_LOCALE", value: lang, url: BASE },
+      { name: "home_view", value: "detailed", url: BASE },
+    ]);
     const page = await ctx.newPage();
     page.on("dialog", (d) => void d.accept()); // the guide asks "hide for good?"
     await page.goto(`${BASE}/profiles`);

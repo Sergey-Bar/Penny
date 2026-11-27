@@ -81,6 +81,14 @@ export function TransactionSheet({
       <SheetContent
         side={isMobile ? "bottom" : "right"}
         className="w-full overflow-y-auto p-0 data-[side=bottom]:max-h-[92dvh] sm:max-w-md!"
+        // A new transaction starts at the amount: it is the one thing every entry needs, so typing can begin at once.
+        // An existing one keeps the default, so opening it to look does not raise the keyboard.
+        initialFocus={() => {
+          const amount = document.getElementById("mt-amount");
+          return amount instanceof HTMLInputElement && !amount.disabled && amount.value === ""
+            ? amount
+            : true;
+        }}
       >
         <Form
           key={shown?.id ?? "new"}
