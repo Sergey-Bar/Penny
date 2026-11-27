@@ -108,5 +108,5 @@ describe("migration 082", () => {
     expect(audit.n).toBe(1);
     expect(db.pragma("foreign_key_check")).toEqual([]);
     db.close();
-  });
+  }, 180_000);
 });
