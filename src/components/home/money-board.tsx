@@ -13,7 +13,7 @@ import { buildMoneyMap, type MapArea, type MapRow } from "@/lib/money-map";
 import { boardLots, houseCount, type BoardLot } from "@/lib/money-board";
 import { shekels } from "@/lib/money";
 import { dirFor, isLocale, defaultLocale } from "@/i18n/routing";
-import { CardSkeleton } from "./card-shell";
+import { CardError, CardSkeleton } from "./card-shell";
 
 /** Each area's colour: the strip along its lot's outer edge, its buildings and its dot in the list. */
 const TONE: Record<MapArea | "budget" | "transactions", string> = {
@@ -179,6 +179,13 @@ export function MoneyBoard() {
   const { plan } = usePlan();
   const { household, loading } = useHousehold();
 
+  // A failed load is not an empty household: say it failed instead of inviting people to add what they already have.
+  if (assets.isError || health.isError || cash.isError)
+    return (
+      <div className="md:col-span-2 lg:col-span-3">
+        <CardError label={tBoard("mapTile")} />
+      </div>
+    );
   if (assets.isPending || health.isPending || cash.isPending || loading)
     return (
       <div className="md:col-span-2 lg:col-span-3">

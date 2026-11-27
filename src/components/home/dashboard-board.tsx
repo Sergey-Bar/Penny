@@ -209,6 +209,7 @@ function HomeHero({
   review: number;
 }) {
   const t = useTranslations("board");
+  const tData = useTranslations("dataState");
   const tOwner = useTranslations("ownerFilter");
   const tShell = useTranslations("shell");
   const tTop = useTranslations("topBar");
@@ -284,7 +285,20 @@ function HomeHero({
 
       {showBalance &&
         (q.isError ? (
-          <p className="py-12 text-sm text-muted-foreground">{t("noBalance")}</p>
+          // A failed load says so and offers another try; "no bank yet" here would send people to connect one again.
+          <div className="py-10">
+            <p className="text-sm font-medium" role="alert">
+              {tData("error")}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{tData("errorHint")}</p>
+            <button
+              type="button"
+              onClick={() => void q.refetch()}
+              className="hero-pill mx-auto mt-4 px-4 text-sm font-medium"
+            >
+              {tData("retry")}
+            </button>
+          </div>
         ) : q.isLoading ? (
           <div className="mx-auto mt-8 mb-6 h-28 w-64 animate-pulse rounded-3xl bg-pane-clear" />
         ) : points.length === 0 ? (

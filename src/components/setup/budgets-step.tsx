@@ -70,6 +70,23 @@ export function BudgetsStep({ onComplete, onBack }: BudgetsStepProps) {
     queryFn: () => getCategories("expense"),
   });
 
+  const tCat = useTranslations("categoriesSeeded");
+  // Lines under their group, in the order the groups arrive; a line with no group in the list stays in one loose block.
+  const groups = useMemo(() => {
+    const byId = new Map(categories.map((c) => [c.id, c]));
+    const parentIds = new Set(
+      categories.map((c) => c.parentId).filter((id): id is number => id != null && byId.has(id)),
+    );
+    const out: { parent: Category | null; items: Category[] }[] = [];
+    for (const parent of categories.filter((c) => parentIds.has(c.id)))
+      out.push({ parent, items: categories.filter((c) => c.parentId === parent.id) });
+    const loose = categories.filter(
+      (c) => !parentIds.has(c.id) && (c.parentId == null || !byId.has(c.parentId)),
+    );
+    if (loose.length) out.push({ parent: null, items: loose });
+    return out;
+  }, [categories]);
+
   const [amounts, setAmounts] = useState<Map<number, string>>(new Map());
   const [saving, setSaving] = useState(false);
 
@@ -130,15 +147,41 @@ export function BudgetsStep({ onComplete, onBack }: BudgetsStepProps) {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-          {categories.map((cat) => (
-            <CategoryCell
-              key={cat.id}
-              category={cat}
-              value={amounts.get(cat.id) ?? ""}
-              onChange={(v) => setAmount(cat.id, v)}
-            />
-          ))}
+        <div className="space-y-2">
+          {groups.map((group, gi) => {
+            const cells = (
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                {group.items.map((cat) => (
+                  <CategoryCell
+                    key={cat.id}
+                    category={cat}
+                    value={amounts.get(cat.id) ?? ""}
+                    onChange={(v) => setAmount(cat.id, v)}
+                  />
+                ))}
+              </div>
+            );
+            if (!group.parent) return <div key="loose">{cells}</div>;
+            const set = group.items.filter((c) => amounts.has(c.id)).length;
+            return (
+              // One fold per group, the first open: a hundred lines at once is a wall nobody fills in.
+              <details
+                key={group.parent.id}
+                open={gi === 0}
+                className="rounded-xl border border-border bg-card/40 px-3"
+              >
+                <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 text-sm font-semibold">
+                  <span className="min-w-0 truncate">
+                    {translateCategoryName(group.parent.name, tCat)}
+                  </span>
+                  <span className="shrink-0 text-xs font-normal text-muted-foreground tabular-nums">
+                    {set > 0 ? `${set}/${group.items.length}` : group.items.length}
+                  </span>
+                </summary>
+                <div className="pb-3">{cells}</div>
+              </details>
+            );
+          })}
         </div>
       )}
 
@@ -146,7 +189,7 @@ export function BudgetsStep({ onComplete, onBack }: BudgetsStepProps) {
         <span>
           {t("budgetsCount", {
             budgeted: budgeted.length,
-            total: categories.length,
+            total: groups.reduce((n, g) => n + g.items.length, 0),
           })}
         </span>
         {total > 0 && (
