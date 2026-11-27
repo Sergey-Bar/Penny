@@ -1,6 +1,6 @@
 import { logError } from "@/server/lib/log";
 import { applyAutomaticGoalRules } from "@/server/db/queries/financial-control";
-import { saveAccountBalances } from "../db/queries/assets";
+import { saveAccountBalances, saveBankSecurities } from "../db/queries/assets";
 import { APP_LOCKED_MESSAGE, isKeyLocked } from "../lib/encryption";
 import { redactError } from "../lib/redact";
 import "server-only";
@@ -322,6 +322,9 @@ async function syncOneCredential(
     // Bank balances feed cash, the emergency fund and net worth without typing them in.
     if (BANK_PROVIDERS.find((b) => b.id === provider)?.kind === "bank") {
       saveAccountBalances(workspaceId, provider, result.accounts, toLocalISODate(startDate));
+    }
+    if (result.securities) {
+      saveBankSecurities(workspaceId, provider, result.securities);
     }
     // Off and shadow still run the safe inline steps; the durable path runs them in the job.
     if (!durable || shadow) {

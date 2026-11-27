@@ -2,6 +2,7 @@ import "server-only";
 
 import { getDb } from "../index";
 import { israelDay } from "@/server/lib/date-utils";
+import { israelToday } from "@/lib/dates";
 import { balanceDrift } from "@/lib/balance-drift";
 import { LIABILITY_TYPES, type AssetInput, type AssetType } from "@/lib/types";
 
@@ -266,4 +267,108 @@ export function assetSnapshots(
     else out.set(r.assetId, [{ date: r.date, valueIls: r.valueIls }]);
   }
   return out;
+}
+
+export interface BankSecurityInput {
+  accountNumber: string;
+  equityNumber: string;
+  name: string;
+  type: "stock" | "fund" | "bond";
+  currency: string;
+  symbol: string | null;
+  quantity: number | null;
+  value: number;
+  valueIls: number | null;
+  costBasis: number | null;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Upserts securities holdings synced from a bank's capital-market portal (e.g. Hapoalim myTrade)
+ * and records today's snapshot for each holding. Stale holdings are zeroed if they have history
+ * or deleted otherwise.
+ */
+export function saveBankSecurities(
+  workspaceId: number,
+  provider: string,
+  securities: BankSecurityInput[],
+): void {
+  const db = getDb();
+  const today = israelToday();
+  const prefix = `bank-securities:${provider}:`;
+  const find = db.prepare(`SELECT id FROM assets WHERE workspace_id = ? AND note = ?`);
+  const update = db.prepare(
+    `UPDATE assets SET name = ?, type = ?, currency = ?, symbol = ?, quantity = ?,
+       manual_value = ?, cost_basis = ?, liquid = 1, is_liability = 0, details = ?
+     WHERE id = ?`,
+  );
+  const insert = db.prepare(
+    `INSERT INTO assets (workspace_id, name, type, currency, symbol, quantity, manual_value, cost_basis, liquid, is_liability, note, details)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)`,
+  );
+  const upsertSnapshot = db.prepare(
+    `INSERT INTO asset_snapshots (asset_id, date, value_ils)
+     VALUES (?, ?, ?)
+     ON CONFLICT(asset_id, date) DO UPDATE SET value_ils = excluded.value_ils`,
+  );
+  const stale = db.prepare(
+    `SELECT id, note, EXISTS (SELECT 1 FROM asset_snapshots s WHERE s.asset_id = assets.id) AS hasHistory
+     FROM assets WHERE workspace_id = ? AND substr(note, 1, ?) = ?`,
+  );
+  const zero = db.prepare(`UPDATE assets SET manual_value = 0 WHERE id = ?`);
+  const remove = db.prepare(`DELETE FROM assets WHERE id = ?`);
+
+  db.transaction(() => {
+    const keep = new Set<string>();
+    for (const s of securities) {
+      const note = `${prefix}${s.accountNumber}:${s.equityNumber}`;
+      keep.add(note);
+      const detailsJson = s.details ? JSON.stringify({ ...s.details, provider }) : null;
+      const existing = find.get(workspaceId, note) as { id: number } | undefined;
+      let assetId: number;
+      if (existing) {
+        update.run(
+          s.name,
+          s.type,
+          s.currency,
+          s.symbol,
+          s.quantity,
+          s.value,
+          s.costBasis,
+          detailsJson,
+          existing.id,
+        );
+        assetId = existing.id;
+      } else {
+        const res = insert.run(
+          workspaceId,
+          s.name,
+          s.type,
+          s.currency,
+          s.symbol,
+          s.quantity,
+          s.value,
+          s.costBasis,
+          note,
+          detailsJson,
+        );
+        assetId = Number(res.lastInsertRowid);
+      }
+      const valueIls = s.valueIls ?? (s.currency === "ILS" ? s.value : null);
+      if (valueIls != null) {
+        upsertSnapshot.run(assetId, today, valueIls);
+      }
+    }
+
+    const existingRows = stale.all(workspaceId, prefix.length, prefix) as {
+      id: number;
+      note: string;
+      hasHistory: number;
+    }[];
+    for (const row of existingRows) {
+      if (keep.has(row.note)) continue;
+      if (row.hasHistory) zero.run(row.id);
+      else remove.run(row.id);
+    }
+  })();
 }
