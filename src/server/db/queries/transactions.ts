@@ -10,7 +10,12 @@ import { computeDedupHash } from "../../lib/dedup";
 import { detectKind } from "../../lib/transfers";
 import { BANK_PROVIDERS } from "@/lib/types";
 import { CAPTURED_PREFIX, matchCapturedCharges } from "./manual-transactions";
-import { accountKindForProvider, markAccountSynced, resolveAccount } from "./accounts";
+import {
+  accountKindForProvider,
+  getAccountByNumber,
+  markAccountSynced,
+  resolveAccount,
+} from "./accounts";
 import type {
   TransactionWithCategory,
   MonthlySummary,
@@ -19,6 +24,7 @@ import type {
 } from "@/lib/types";
 import { isTransactionSortField, TRANSACTION_SORT_SQL } from "@/lib/transaction-sort";
 import { enqueueJob } from "@/server/jobs/queue";
+import { storedImportCandidates } from "./imports";
 export type TransactionKindFilter = "expense" | "income" | "all";
 
 interface RawTransaction {
@@ -93,7 +99,7 @@ export function insertTransactions(
       label: accountNumber,
       create: true,
     });
-    const id = resolved?.account.id ?? null;
+    const id = resolved?.ambiguous ? null : (resolved?.account.id ?? null);
     if (id != null) markAccountSynced(workspaceId, id);
     accountIds.set(accountNumber, id);
     return id;
@@ -135,6 +141,11 @@ export function insertTransactions(
        AND abs(julianday(substr(date, 1, 10)) - julianday(substr(?, 1, 10))) <= 1
      ORDER BY abs(julianday(substr(date, 1, 10)) - julianday(substr(?, 1, 10))) LIMIT 1`,
   );
+  const exactFileTwin = db.prepare(
+    `SELECT id FROM transactions
+     WHERE workspace_id = ? AND dedup_hash = ? AND dedup_sequence = ?
+       AND provider = 'file' AND account_id = ?`,
+  );
   const adoptStmt = db.prepare(`
     UPDATE transactions SET
       date = @date, processed_date = @processedDate, original_amount = @originalAmount, original_currency = @originalCurrency,
@@ -145,10 +156,7 @@ export function insertTransactions(
       installment_total = @installmentTotal, provider = @provider, credential_id = @credentialId,
       sync_run_id = @syncRunId, dedup_hash = @dedupHash, dedup_sequence = @dedupSequence, updated_at = datetime('now'),
       origin = 'sync', adopted_at = datetime('now'), merchant_key = @merchantKey,
-      account_id = COALESCE(account_id, (
-        SELECT a.id FROM accounts a
-        WHERE a.workspace_id = @workspaceId AND a.number = @accountNumber
-        ORDER BY CASE WHEN a.provider = @provider THEN 0 ELSE 1 END LIMIT 1))
+      account_id = COALESCE(@accountId, account_id)
     WHERE id = @id`);
 
   const batchInsert = db.transaction(() => {
@@ -216,26 +224,24 @@ export function insertTransactions(
         merchantKey: normalizeMerchant(txn.description),
       };
 
-      if (batchCount > existingCount) {
-        const twin = fileTwinStmt.get(
-          workspaceId,
-          txn.accountNumber,
-          roundCents(txn.chargedAmount),
-          params.date,
-          params.date,
-        ) as { id: number } | undefined;
-        if (twin) {
-          adoptStmt.run({ ...params, id: twin.id });
-          updated++;
-        } else {
-          insertStmt.run(params);
-          added++;
-        }
+      const twin = (
+        batchCount > existingCount
+          ? fileTwinStmt.get(
+              workspaceId,
+              txn.accountNumber,
+              roundCents(txn.chargedAmount),
+              params.date,
+              params.date,
+            )
+          : exactFileTwin.get(workspaceId, hash, sequence, accountId)
+      ) as { id: number } | undefined;
+      if (twin) {
+        adoptStmt.run({ ...params, id: twin.id });
+        updated++;
       } else {
         const result = insertStmt.run(params);
-        if (result.changes > 0) {
-          updated++;
-        }
+        if (batchCount > existingCount) added++;
+        else if (result.changes > 0) updated++;
       }
     }
   });
@@ -1352,17 +1358,44 @@ export function deleteCashExpense(workspaceId: number, id: number): boolean {
 
 // ---- Statement file import ---------------------------------------------------
 
+function resolveStatementAccount(
+  workspaceId: number,
+  account: string,
+  source: "bank" | "card",
+  create = false,
+) {
+  return resolveAccount(workspaceId, {
+    provider: "file",
+    kind: source,
+    number: account,
+    label: account,
+    create,
+  });
+}
+
 /** Stored rows of one account from a day before `from` to a day after `to` (bank sync and earlier files alike). */
 export function storedForImport(
   workspaceId: number,
   account: string,
   from: string,
   to: string,
+  source?: "bank" | "card",
 ): { date: string; amount: number }[] {
+  if (source != null) {
+    const resolved = resolveStatementAccount(workspaceId, account, source);
+    if (resolved?.ambiguous) return [];
+    if (resolved) {
+      const { id, number } = resolved.account;
+      return storedImportCandidates(workspaceId, id, number, from, to).map(
+        ({ date, signedAmount: amount }) => ({ date, amount }),
+      );
+    }
+  }
   return getDb()
     .prepare(
       `SELECT substr(date, 1, 10) AS date, charged_amount AS amount FROM transactions
-       WHERE workspace_id = ? AND account_number = ? AND substr(date, 1, 10) BETWEEN date(?, '-1 day') AND date(?, '+1 day')`,
+       WHERE workspace_id = ? AND account_number = ? AND substr(date, 1, 10) BETWEEN date(?, '-1 day') AND date(?, '+1 day')
+         ${source == null ? "" : "AND account_id IS NULL AND provider = 'file'"}`,
     )
     .all(workspaceId, account, from, to) as { date: string; amount: number }[];
 }
@@ -1388,14 +1421,21 @@ export function insertFileImport(
         )
         .run(workspaceId, fileName).lastInsertRowid,
     );
-    const resolved = resolveAccount(workspaceId, {
-      provider: "file",
-      kind: source === "card" ? "card" : "bank",
-      number: account,
-      label: account,
-      create: true,
-    });
-    const accountId = resolved?.ambiguous ? null : (resolved?.account.id ?? null);
+    const resolved = resolveStatementAccount(workspaceId, account, source, true);
+    const resolvedAccount = resolved?.ambiguous ? null : (resolved?.account ?? null);
+    const accountId = resolvedAccount?.id ?? null;
+    const unlinkedProvider =
+      resolvedAccount &&
+      getAccountByNumber(workspaceId, resolvedAccount.provider, resolvedAccount.number)?.id ===
+        accountId
+        ? resolvedAccount.provider
+        : null;
+    const existingHashes = db.prepare(
+      `SELECT COUNT(*) AS count
+       FROM transactions
+       WHERE workspace_id = ? AND dedup_hash IN (?, ?)
+         AND (account_id = ? OR (account_id IS NULL AND account_number = ? AND provider = ?))`,
+    );
     const stmt = db.prepare(
       `INSERT INTO transactions (workspace_id, account_number, account_id, date, processed_date, original_amount, original_currency,
          charged_amount, charged_currency, description, type, status, provider, sync_run_id, dedup_hash, dedup_sequence, kind,
@@ -1405,15 +1445,48 @@ export function insertFileImport(
        ON CONFLICT(workspace_id, dedup_hash, dedup_sequence) DO NOTHING`,
     );
     const cardExplainsBill = hasCardCredential(workspaceId);
+    const existingByHash = new Map<string, number>();
+    const zeroBased = new Set(
+      rows.filter((r) => r.seq === 0).map((r) => JSON.stringify([r.date, r.amount, r.description])),
+    );
     let added = 0;
     for (const r of rows) {
-      const hash = computeDedupHash({
-        accountNumber: account,
+      const fields = {
+        accountNumber: resolvedAccount?.number ?? account,
         date: r.date,
         originalAmount: r.amount,
         originalCurrency: "ILS",
         description: r.description,
-      });
+      };
+      const legacyHash = computeDedupHash(fields);
+      const hash = resolvedAccount
+        ? computeDedupHash({
+            ...fields,
+            accountIdentity: `${resolvedAccount.id}:${resolvedAccount.provider}`,
+          })
+        : legacyHash;
+      // Both sync's zero-based sequences and older files' one-based sequences can be present.
+      // Check the rows that existed before this import, so identical rows in this file survive.
+      const sequence = zeroBased.has(JSON.stringify([r.date, r.amount, r.description]))
+        ? r.seq
+        : r.seq - 1;
+      if (resolvedAccount) {
+        let count = existingByHash.get(hash);
+        if (count == null) {
+          count = (
+            existingHashes.get(
+              workspaceId,
+              legacyHash,
+              hash,
+              accountId,
+              resolvedAccount.number,
+              unlinkedProvider,
+            ) as { count: number }
+          ).count;
+          existingByHash.set(hash, count);
+        }
+        if (sequence < count) continue;
+      }
       // A statement has no provider type; classify it like the matching source: bank transfer
       // patterns and sign, or a card row (always an expense, refunds included).
       const kind = detectKind(
@@ -1424,7 +1497,7 @@ export function insertFileImport(
       );
       added += stmt.run(
         workspaceId,
-        account,
+        resolvedAccount?.number ?? account,
         accountId,
         r.date,
         r.date,
@@ -1433,7 +1506,7 @@ export function insertFileImport(
         r.description,
         runId,
         hash,
-        r.seq,
+        resolvedAccount ? sequence : r.seq,
         kind,
         normalizeMerchant(r.description),
       ).changes;

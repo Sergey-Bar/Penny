@@ -180,13 +180,11 @@ export async function scrapeHapoalimSecurities(
         const json = (await res.json()) as {
           UserAccounts?: { UserAccount?: Array<{ "-key"?: string }> };
         };
-        accountKeys = [
-          ...new Set(
-            (json?.UserAccounts?.UserAccount ?? [])
-              .map((a) => a["-key"]?.trim())
-              .filter((k): k is string => Boolean(k)),
-          ),
-        ];
+        const accounts = json?.UserAccounts?.UserAccount;
+        if (!Array.isArray(accounts)) return;
+        const keys = accounts.map((a) => a?.["-key"]?.trim());
+        if (!keys.every((key): key is string => Boolean(key))) return;
+        accountKeys = [...new Set(keys)];
         sawAccountsResponse = true;
       } else if (url.includes("/account/view?")) {
         const parsedUrl = new URL(url);

@@ -139,7 +139,7 @@ export function tableToDrafts(
       installmentTotal: numberOrNull(cell(row, mapping.installmentTotal)),
       identifier: cell(row, mapping.identifier) || null,
       balance: cell(row, mapping.balance) || null,
-      ...(mapping.debit == null && mapping.credit == null
+      ...(mapping.amount != null || (mapping.debit == null && mapping.credit == null)
         ? {}
         : { debit: debitCell, credit: creditCell }),
       sourceRef: `${options.sheetName ?? ""}#${index + 1}`,

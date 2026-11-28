@@ -2,6 +2,7 @@ import "server-only";
 
 import { getDb } from "@/server/db";
 import { classifyKind } from "@/lib/import/classify";
+import { isCardBill } from "@/lib/import/patterns";
 import type { ImportKind, SignConvention } from "@/lib/import/types";
 import { reconcileFlows } from "@/server/finance/pairing";
 
@@ -26,15 +27,25 @@ function hasCardCoverage(workspaceId: number, id: number, date: string, amount: 
     getDb()
       .prepare(
         `SELECT 1 FROM transactions t JOIN accounts a ON a.id = t.account_id
-         WHERE t.workspace_id = ? AND t.id != ? AND a.kind = 'card'
-           AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(?, 1, 10))) <= 45
+         WHERE t.workspace_id = @workspaceId AND t.id != @id AND a.kind = 'card'
+           AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(@date, 1, 10))) <= 45
            AND (
-             t.linked_txn_id = ? OR t.transfer_pair_id = ?
-             OR abs(abs(t.charged_amount) - ?) <= ?
+             t.linked_txn_id = @id OR t.transfer_pair_id = @id
+             OR abs(abs(t.charged_amount) - @amount) <= @tolerance
            )
+         UNION ALL
+         SELECT 1 FROM transactions t JOIN accounts a ON a.id = t.account_id
+         JOIN transactions bill ON bill.id = @id
+         WHERE t.workspace_id = @workspaceId AND t.id != @id AND a.kind = 'card'
+           AND t.status = 'completed' AND t.charged_amount < 0 AND t.is_excluded = 0
+           AND COALESCE(t.charged_currency, t.original_currency)
+             = COALESCE(bill.charged_currency, bill.original_currency)
+           AND substr(t.date, 1, 10) BETWEEN date(@date, '-45 days') AND date(@date)
+         GROUP BY t.account_id
+         HAVING COUNT(*) > 1 AND abs(-sum(t.charged_amount) - @amount) <= @tolerance
          LIMIT 1`,
       )
-      .get(workspaceId, id, date, id, id, Math.abs(amount), tolerance) !== undefined
+      .get({ workspaceId, id, date, amount: Math.abs(amount), tolerance }) !== undefined
   );
 }
 
@@ -123,7 +134,9 @@ function reclassifyTransactions(
         explicitKind: "auto",
         accountKind,
         signConvention,
-        hasCardCoverage: hasCardCoverage(workspaceId, row.id, row.date, row.charged_amount),
+        hasCardCoverage:
+          isCardBill(row.description) &&
+          hasCardCoverage(workspaceId, row.id, row.date, row.charged_amount),
         hasTransferPair: hasTransferPair(
           workspaceId,
           row.id,

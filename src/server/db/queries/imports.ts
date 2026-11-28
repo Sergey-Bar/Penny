@@ -649,15 +649,22 @@ export function storedImportCandidates(
 ): StoredImportCandidate[] {
   return getDb()
     .prepare(
-      `SELECT id, COALESCE(account_id, ?) AS accountId, substr(date, 1, 10) AS date, description,
-              charged_amount AS signedAmount, identifier, installment_number AS installmentNumber,
-              installment_total AS installmentTotal
-       FROM transactions
-       WHERE workspace_id = ?
-         AND (account_id = ? OR (account_id IS NULL AND account_number = ?))
-         AND substr(date, 1, 10) BETWEEN date(?, '-1 day') AND date(?, '+1 day')`,
+      `SELECT t.id, a.id AS accountId, substr(t.date, 1, 10) AS date, t.description,
+              t.charged_amount AS signedAmount, t.identifier,
+              t.installment_number AS installmentNumber, t.installment_total AS installmentTotal
+       FROM accounts a JOIN transactions t ON t.workspace_id = a.workspace_id
+       WHERE a.workspace_id = ? AND a.id = ?
+         AND (t.account_id = a.id OR (
+           t.account_id IS NULL AND t.account_number = ? AND t.account_number = a.number
+           AND t.provider = a.provider AND NOT EXISTS (
+             SELECT 1 FROM accounts other
+             WHERE other.workspace_id = a.workspace_id AND other.number = a.number
+               AND other.provider = a.provider AND other.id != a.id
+           )
+         ))
+         AND substr(t.date, 1, 10) BETWEEN date(?, '-1 day') AND date(?, '+1 day')`,
     )
-    .all(accountId, workspaceId, accountId, accountNumber, from, to) as StoredImportCandidate[];
+    .all(workspaceId, accountId, accountNumber, from, to) as StoredImportCandidate[];
 }
 
 export function findGroupBatch(workspaceId: number, groupId: string): ImportBatch | null {

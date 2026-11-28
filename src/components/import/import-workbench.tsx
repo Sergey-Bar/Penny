@@ -581,7 +581,7 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
       for (const [targetAccountId, groupRows] of groups) {
         for (let offset = 0; offset < groupRows.length; offset += chunkSize) {
           const chunk = groupRows.slice(offset, offset + chunkSize);
-          const isFirstChunk = chunkIndex === 0;
+          const hasStatementBalance = offset === 0 && targetAccountId === parse?.account?.id;
           const result = await post<{ batchId: number; added: number; duplicates: number }>(
             "/api/import/save",
             {
@@ -592,7 +592,7 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
               fileSha256: offset === 0 ? (parse?.file.sha256 ?? null) : null,
               fileSize: parse?.file.size ?? file?.size ?? null,
               sourceFormat: parse?.format ?? null,
-              balance: isFirstChunk ? parse?.balance : null,
+              balance: hasStatementBalance ? parse?.balance : undefined,
               mapping,
               header: parse?.header.cells,
               parseId: null,

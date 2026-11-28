@@ -211,6 +211,9 @@ export function saveAccountBalances(
   const prevLegacy = db.prepare(
     "SELECT balance, drift, updated_at as updatedAt FROM account_balances WHERE workspace_id = ? AND provider = ? AND account_number = ? AND account_id IS NULL",
   );
+  const removeUnlinked = db.prepare(
+    "DELETE FROM account_balances WHERE workspace_id = ? AND provider = ? AND account_number = ? AND account_id IS NULL",
+  );
   const upsertLinked = db.prepare(
     `INSERT INTO account_balances (workspace_id, provider, account_number, account_id, balance, drift, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
@@ -253,6 +256,8 @@ export function saveAccountBalances(
         upsertLegacy.run(workspaceId, provider, a.accountNumber, a.balance, drift);
       } else {
         upsertLinked.run(workspaceId, provider, a.accountNumber, accountId, a.balance, drift);
+        // The current bank balance replaces the unlinked value, including manually entered values.
+        removeUnlinked.run(workspaceId, provider, a.accountNumber);
       }
     }
   })();
@@ -558,7 +563,8 @@ export function saveBankSecurities(
 
 /**
  * A row belongs to the syncing credential when its key carries that credential id, or when it is
- * a legacy key (provider:account:equity) for an account the completed scrape covered.
+ * a legacy key (provider:account:equity) for an account the completed scrape covered. An explicit
+ * empty account list confirms the credential has no accounts, but cannot identify any legacy key.
  */
 function rowOwnedByScope(
   note: string,
@@ -573,7 +579,7 @@ function rowOwnedByScope(
   }
   const rest = note.slice(prefix.length).split(":");
   if (rest.length >= 3 && credentialId != null && rest[0] === String(credentialId)) {
-    return !hasAccountScope || accountsInScope.has(rest[1]);
+    return !hasAccountScope || accountsInScope.size === 0 || accountsInScope.has(rest[1]);
   }
   return rest.length === 2 && accountsInScope.has(rest[0]);
 }

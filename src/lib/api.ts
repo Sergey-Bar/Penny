@@ -1620,6 +1620,7 @@ export function listStatementImports() {
   return fetchJSON<{
     imports: {
       id: number;
+      undoRef: string;
       createdAt: string;
       fileName: string | null;
       account: string;
@@ -1628,8 +1629,10 @@ export function listStatementImports() {
   }>(`/api/import`);
 }
 
-export function undoStatementImport(batchId: number) {
-  return fetchJSON<{ removed: number }>(`/api/import?batch=${batchId}`, { method: "DELETE" });
+export function undoStatementImport(undoRef: string | number) {
+  return fetchJSON<{ removed: number }>(`/api/import?batch=${encodeURIComponent(undoRef)}`, {
+    method: "DELETE",
+  });
 }
 
 export interface SheetRowInput {

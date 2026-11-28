@@ -146,7 +146,6 @@ export async function parseImportBytes(
 
   const { drafts, pending, skipped } = tableToDrafts(body, mapping, {
     sheetName: sheet.name,
-    defaultAccountId: account?.id ?? null,
     skipSectionHeaders: true,
     rowOffset: headerRow + 1,
   });

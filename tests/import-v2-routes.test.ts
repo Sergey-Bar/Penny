@@ -67,20 +67,27 @@ describe("import v2 routes", () => {
       "file",
       new File([new TextEncoder().encode(CSV)], "leumi.csv", { type: "text/csv" }),
     );
-    form.append("options", JSON.stringify({ limit: 10 }));
+    const account = await accountId();
+    form.append("options", JSON.stringify({ limit: 10, accountId: account }));
     const response = await parseRoute.POST(
       new Request("http://127.0.0.1/api/import/parse", { method: "POST", body: form }),
     );
     expect(response.status).toBe(200);
     const body = (await response.json()) as {
       parseId: string;
+      account: { id: number };
       mapping: { date: number; description: number; amount: number };
       rows: { total: number; page: ImportDraftRow[] };
     };
     expect(body.parseId).toMatch(/^p_/);
     expect(body.mapping).toMatchObject({ date: 0, description: 1, amount: 2 });
+    expect(body.account.id).toBe(account);
     expect(body.rows.total).toBe(2);
-    expect(body.rows.page[0]).toMatchObject({ date: "01/02/2024", description: "שופרסל" });
+    expect(body.rows.page[0]).toMatchObject({
+      date: "01/02/2024",
+      description: "שופרסל",
+      accountId: null,
+    });
   });
 
   it("previews, saves, reads and undoes a batch", async () => {

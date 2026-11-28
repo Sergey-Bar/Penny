@@ -111,20 +111,24 @@ export const POST = handle("import", async (request: Request) => {
 
 /** Import history: past statement imports with their account and row count. */
 export const GET = handle("import", async (request: Request) => {
-  return NextResponse.json({ imports: listFileImports(getWorkspaceIdFromRequest(request)) });
+  const imports = listFileImports(getWorkspaceIdFromRequest(request));
+  return NextResponse.json({
+    imports: imports.map((row) => ({ ...row, undoRef: `sync-${row.id}` })),
+  });
 });
 
 /** Undo one import: ?batch=. Imports always identify their own kind of batch. */
 export const DELETE = handle("import", async (request: Request) => {
   const workspaceId = getWorkspaceIdFromRequest(request);
   const raw = new URL(request.url).searchParams.get("batch") ?? "";
+  const syncRef = /^sync-(\d+)$/.exec(raw.trim());
   if (importV2Enabled(workspaceId)) {
     const id = resolveBatchId(workspaceId, raw);
-    if (id == null) return bad("invalid batch");
-    const result = deleteImportBatch(workspaceId, id);
-    return NextResponse.json({ ...result, removed: result.removed });
+    if (id != null) return NextResponse.json(deleteImportBatch(workspaceId, id));
+    // A legacy import made with v2 disabled may have no corresponding v2 batch.
+    if (!syncRef) return bad("invalid batch");
   }
-  const batch = Number(raw);
+  const batch = Number(syncRef?.[1] ?? raw);
   if (!Number.isInteger(batch) || batch <= 0) return bad("invalid batch");
   return NextResponse.json({ removed: deleteFileImport(workspaceId, batch) });
 });

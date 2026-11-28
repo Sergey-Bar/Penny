@@ -265,6 +265,34 @@ describe("saveBankSecurities stale reconciliation", () => {
     expect(assetRow(workspaceId, otherAccount)?.manualValue).toBe(300);
   });
 
+  it("clears only credential-owned holdings after confirmed empty discovery", async () => {
+    const workspaceId = 1;
+    clearAssets(workspaceId);
+    saveBankSecurities(workspaceId, "hapoalim", [holding("333", "C", 300)]);
+    saveBankSecurities(workspaceId, "hapoalim", [holding("111", "A", 100)], {
+      credentialId: 7,
+      accountNumbers: ["111"],
+    });
+    saveBankSecurities(workspaceId, "hapoalim", [holding("222", "B", 200)], {
+      credentialId: 8,
+      accountNumbers: ["222"],
+    });
+
+    const page = new FakePage([accountsResponse([])]);
+    const result = await scrapeHapoalimSecurities(page as unknown as Page, {
+      captureDeadlineMs: 150,
+    });
+    expect(result).toEqual({ securities: [], accountNumbers: [] });
+    saveBankSecurities(workspaceId, "hapoalim", result!.securities, {
+      credentialId: 7,
+      accountNumbers: result!.accountNumbers,
+    });
+
+    expect(assetRow(workspaceId, "bank-securities:hapoalim:7:111:A")?.manualValue).toBe(0);
+    expect(assetRow(workspaceId, "bank-securities:hapoalim:8:222:B")?.manualValue).toBe(200);
+    expect(assetRow(workspaceId, "bank-securities:hapoalim:333:C")?.manualValue).toBe(300);
+  });
+
   it("adopts a legacy key instead of creating a duplicate", () => {
     const workspaceId = 1;
     clearAssets(workspaceId);

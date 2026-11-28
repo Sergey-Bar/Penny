@@ -49,4 +49,36 @@ describe("import history and undo", () => {
     expect(left).toEqual([{ description: "שופרסל" }, { description: "פז" }]);
     expect(q.listFileImports(ws).map((h) => h.id)).toEqual([first.batchId]);
   });
+
+  it("reclassifies a card bill covered by purchases on the same card", async () => {
+    const { getDb } = await import("@/server/db");
+    const { insertFileImport } = await import("@/server/db/queries/transactions");
+    const { reclassifyWorkspace } = await import("@/server/lib/import/reclassify");
+    const db = getDb();
+    const ws = (db.prepare("SELECT id FROM workspaces LIMIT 1").get() as { id: number }).id;
+
+    insertFileImport(ws, "Card coverage bank", [
+      { date: "2026-04-10", description: "חיוב כרטיס אשראי", amount: -1000, seq: 1 },
+    ]);
+    reclassifyWorkspace(ws);
+    const bill = () =>
+      db
+        .prepare("SELECT kind FROM transactions WHERE account_number = ?")
+        .get("Card coverage bank");
+    expect(bill()).toEqual({ kind: "expense" });
+
+    insertFileImport(
+      ws,
+      "Card coverage card",
+      [
+        { date: "2026-04-01", description: "Purchase A", amount: -400, seq: 1 },
+        { date: "2026-04-03", description: "Purchase B", amount: -600, seq: 1 },
+      ],
+      "card",
+    );
+    reclassifyWorkspace(ws);
+    expect(bill()).toEqual({ kind: "transfer" });
+    reclassifyWorkspace(ws);
+    expect(bill()).toEqual({ kind: "transfer" });
+  });
 });

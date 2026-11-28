@@ -59,21 +59,29 @@ export function getAccountByNumber(
   number: string,
   currency?: string | null,
 ): Account | null {
+  const matches = accountsByNumber(workspaceId, provider, number, currency);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function accountsByNumber(
+  workspaceId: number,
+  provider: string,
+  number: string,
+  currency?: string | null,
+): Account[] {
   const normalizedCurrency = currency?.trim().toUpperCase();
-  return (
-    ((normalizedCurrency
-      ? getDb()
-          .prepare(
-            `SELECT ${ACCOUNT_COLUMNS} FROM accounts
-             WHERE workspace_id = ? AND provider = ? AND number = ? AND currency = ?`,
-          )
-          .get(workspaceId, provider, number, normalizedCurrency)
-      : getDb()
-          .prepare(
-            `SELECT ${ACCOUNT_COLUMNS} FROM accounts WHERE workspace_id = ? AND provider = ? AND number = ?`,
-          )
-          .get(workspaceId, provider, number)) as Account | undefined) ?? null
-  );
+  return getDb()
+    .prepare(
+      `SELECT ${ACCOUNT_COLUMNS} FROM accounts
+       WHERE workspace_id = ? AND provider = ? AND number = ?${normalizedCurrency ? " AND currency = ?" : ""}
+       ORDER BY id`,
+    )
+    .all(
+      workspaceId,
+      provider,
+      number,
+      ...(normalizedCurrency ? [normalizedCurrency] : []),
+    ) as Account[];
 }
 
 export function getAccountByAlias(workspaceId: number, alias: string): Account | null {
@@ -221,8 +229,9 @@ export function resolveAccount(
   const crossProviderLookup =
     !provider || provider === "file" || provider === "cash" || provider === "manual";
   if (provider && number) {
-    const exact = getAccountByNumber(workspaceId, provider, number, currency || null);
-    if (exact) return { account: exact, created: false, ambiguous: false, candidates: [exact] };
+    const exact = accountsByNumber(workspaceId, provider, number, currency);
+    if (exact.length > 0)
+      return { account: exact[0], created: false, ambiguous: exact.length > 1, candidates: exact };
   }
   if (number && crossProviderLookup) {
     const matches = getDb()

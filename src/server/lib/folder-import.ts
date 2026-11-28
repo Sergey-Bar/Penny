@@ -40,7 +40,7 @@ export function saveStatementImport(
   const dates = rows.map((r) => r.date).sort((a, b) => a.localeCompare(b));
   const marked = markDuplicates(
     rows,
-    storedForImport(workspaceId, account, dates[0], dates[dates.length - 1]),
+    storedForImport(workspaceId, account, dates[0], dates[dates.length - 1], source),
   );
   const fresh = marked.filter((r) => !r.duplicate);
   const duplicates = marked.length - fresh.length;

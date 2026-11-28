@@ -265,7 +265,8 @@ export interface SignDetectionInput {
 export function detectSignConvention(input: SignDetectionInput): SignConvention {
   const { amounts, mapping, accountKind, kindValues, rows } = input;
   if (mapping.kind != null && (kindValues?.length ?? 0) > 0) return "explicit";
-  if (mapping.debit != null || mapping.credit != null) return "explicit";
+  if (mapping.amount == null && (mapping.debit != null || mapping.credit != null))
+    return "explicit";
   const hasNegative = amounts.some((n) => n < 0);
   if (accountKind === "card") {
     if (!hasNegative) return "cardPositive";
