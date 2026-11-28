@@ -99,10 +99,18 @@ export function tableToDrafts(
     }
     const date = cell(row, mapping.date);
     const description = cell(row, mapping.description);
+    const debitCell = mapping.debit == null ? null : cell(row, mapping.debit);
+    const creditCell = mapping.credit == null ? null : cell(row, mapping.credit);
+    const debitN = debitCell == null ? null : parseAmount(debitCell);
+    const creditN = creditCell == null ? null : parseAmount(creditCell);
     const amountSource =
       mapping.amount != null
         ? cell(row, mapping.amount)
-        : cell(row, mapping.debit) || cell(row, mapping.credit);
+        : debitN != null && debitN !== 0
+          ? debitCell!
+          : creditN != null && creditN !== 0
+            ? creditCell!
+            : (debitCell ?? "") || (creditCell ?? "");
     if (!date && !description && !amountSource) {
       skipped++;
       return;
@@ -131,6 +139,9 @@ export function tableToDrafts(
       installmentTotal: numberOrNull(cell(row, mapping.installmentTotal)),
       identifier: cell(row, mapping.identifier) || null,
       balance: cell(row, mapping.balance) || null,
+      ...(mapping.debit == null && mapping.credit == null
+        ? {}
+        : { debit: debitCell, credit: creditCell }),
       sourceRef: `${options.sheetName ?? ""}#${index + 1}`,
     };
     if (drafts.length >= maxRows) {

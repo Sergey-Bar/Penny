@@ -13,17 +13,19 @@ import {
   getBatchByClientToken,
   getImportBatch,
   insertBatchRow,
+  learnMerchantMemoryForBatch,
+  setBatchPostCommitStatus,
   storedImportCandidates,
 } from "@/server/db/queries/imports";
 import { getAppSettings } from "@/server/db/queries/settings";
 import { computeDedupHash } from "@/server/lib/dedup";
-import { incrementMerchantHits, recordMerchantCategory } from "@/server/lib/merchant-memory";
 import { normalizeMerchant } from "@/lib/merchant-normalize";
 import { categorizeLocally } from "@/server/sync/categorize-local";
 import { reconcileFlows } from "@/server/finance/pairing";
 import { matchStored, type DedupeRow, type StoredCandidate } from "@/lib/import/dedupe";
 import { isFatal, validateNormalizedRow } from "@/lib/import/validate";
-import type { ImportKind, ImportOrigin, NormalizedRow, SaveImportResult } from "@/lib/import/types";
+import { ruleKindSigned } from "@/lib/import/rule-kind";
+import type { ImportOrigin, NormalizedRow, SaveImportResult } from "@/lib/import/types";
 import { categorizeImportRows, importRuleMatches } from "@/server/lib/import/categorize";
 import { getBackendMode } from "@/server/lib/backend-mode";
 import { enqueueJob } from "@/server/jobs/queue";
@@ -61,14 +63,6 @@ const REVIEW_CODES = new Set([
   "possibleDuplicate",
 ]);
 
-const round = (n: number) => Math.round(n * 100) / 100;
-
-const ruleKindSigned = (row: NormalizedRow, kind: ImportKind): number => {
-  if (kind === "expense") return row.refund ? row.amount : -row.amount;
-  if (kind === "income") return row.amount;
-  return row.signedAmount;
-};
-
 /**
  * Writes one batch: a legacy sync_run for compatibility, the batch and its rows, the
  * transactions, tags/owner/business share, the balance, and the merchant memory learned from
@@ -78,15 +72,23 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
   const account = getAccount(input.workspaceId, input.accountId);
   if (!account) throw new ApiError("account is required", 400, "accountMissing");
 
-  if (input.fileSha256 && input.force !== true && input.allowAlreadyImported !== true) {
-    const existing = findBatchBySha(input.workspaceId, input.fileSha256, input.accountId);
-    if (existing) throw new ApiError("This file was already imported", 409, "alreadyImported");
-  }
-
+  // A token replay must return the batch it already committed before the file-hash gate sees
+  // the same file again and answers 409.
   if (input.clientToken) {
     const existing = getBatchByClientToken(input.workspaceId, input.clientToken);
-    if (existing && existing.status !== "undone")
-      return resultFromBatch(existing.id, existing.groupId, existing);
+    if (existing) {
+      if (existing.status === "undone")
+        throw new ApiError("This import was undone", 409, "importUndone");
+      return finishExistingBatch(existing, input.workspaceId);
+    }
+  }
+
+  if (input.fileSha256 && input.force !== true && input.allowAlreadyImported !== true) {
+    const existing = findBatchBySha(input.workspaceId, input.fileSha256, input.accountId);
+    if (existing)
+      throw new ApiError("This file was already imported", 409, "alreadyImported", {
+        batchId: existing.id,
+      });
   }
 
   const members = getAppSettings(input.workspaceId).household.members.map((m) => m.id);
@@ -105,7 +107,7 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
     if (row.kindSource === "user") return;
     row.kind = rule.kind;
     row.kindSource = "rule";
-    row.signedAmount = round(ruleKindSigned(row, rule.kind));
+    row.signedAmount = ruleKindSigned(row, rule.kind);
   });
 
   const categoryKinds = new Map(
@@ -152,26 +154,12 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
       signedAmount: row.signedAmount,
       categoryId: row.categoryId,
     })),
+    { ruleMatches },
   );
 
-  const syncRunId = createLegacySyncRun(input.workspaceId, input.fileName ?? null);
   const groupId = input.groupId ?? `g_${randomUUID()}`;
-  const batchId = createImportBatch({
-    workspaceId: input.workspaceId,
-    accountId: account.id,
-    syncRunId,
-    origin: input.origin,
-    fileName: input.fileName,
-    fileSha256: input.fileSha256,
-    fileSize: input.fileSize,
-    sourceFormat: input.sourceFormat,
-    profileFingerprint: input.profileFingerprint,
-    mappingJson: input.mappingJson,
-    headerJson: input.headerJson,
-    groupId,
-    chunkIndex: input.chunkIndex ?? 0,
-    clientToken: input.clientToken,
-  });
+  let syncRunId = 0;
+  let batchId = 0;
 
   const provider =
     account.provider === "cash" || account.provider === "manual" || account.isManual
@@ -182,25 +170,19 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
   const hashCounts = new Map<string, number>();
   const outcomes: SaveImportResult["rows"] = [];
   const counts = { added: 0, duplicates: 0, skipped: 0, errors: 0, adopted: 0 };
-  const learned: {
-    description: string;
-    categoryId: number;
-    kind: "expense" | "income";
-    source: string;
-  }[] = [];
 
   const insert = db.prepare(
     `INSERT INTO transactions (
        workspace_id, account_number, account_id, date, processed_date, original_amount, original_currency,
        charged_amount, charged_currency, description, memo, type, status, identifier, installment_number,
-       installment_total, category_id, category_source, provider, sync_run_id, dedup_hash, dedup_sequence,
-       kind, needs_review, business_share_pct, owner, origin, import_batch_id, import_row_index,
+       installment_total, category_id, category_source, provider, sync_run_id, dedup_hash, dedup_hash_legacy,
+       dedup_sequence, kind, needs_review, business_share_pct, owner, origin, import_batch_id, import_row_index,
        kind_source, memo_source, category_origin, merchant_key
      ) VALUES (
        @workspaceId, @accountNumber, @accountId, @date, @processedDate, @originalAmount, @originalCurrency,
        @chargedAmount, @chargedCurrency, @description, @memo, @type, 'completed', @identifier, @installmentNumber,
-       @installmentTotal, @categoryId, @categorySource, @provider, @syncRunId, @dedupHash, @dedupSequence,
-       @kind, @needsReview, @businessSharePct, @owner, @origin, @importBatchId, @importRowIndex,
+       @installmentTotal, @categoryId, @categorySource, @provider, @syncRunId, @dedupHash, @dedupHashLegacy,
+       @dedupSequence, @kind, @needsReview, @businessSharePct, @owner, @origin, @importBatchId, @importRowIndex,
        @kindSource, @memoSource, @categoryOrigin, @merchantKey
      )
      ON CONFLICT(workspace_id, dedup_hash, dedup_sequence) DO NOTHING`,
@@ -210,6 +192,26 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
   );
 
   db.transaction(() => {
+    // The replay markers are part of the same transaction as the rows and counts: a failed
+    // attempt rolls them back, so a retry is not answered from an empty batch.
+    syncRunId = createLegacySyncRun(input.workspaceId, input.fileName ?? null);
+    batchId = createImportBatch({
+      workspaceId: input.workspaceId,
+      accountId: account.id,
+      syncRunId,
+      origin: input.origin,
+      fileName: input.fileName,
+      fileSha256: input.fileSha256,
+      fileSize: input.fileSize,
+      sourceFormat: input.sourceFormat,
+      profileFingerprint: input.profileFingerprint,
+      mappingJson: input.mappingJson,
+      headerJson: input.headerJson,
+      groupId,
+      chunkIndex: input.chunkIndex ?? 0,
+      clientToken: input.clientToken,
+      postCommitStatus: "pending",
+    });
     rows.forEach((row, index) => {
       const reasons = validation[index];
       if (isFatal(reasons)) {
@@ -273,6 +275,16 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
           row.confidence < 0.7 ||
           row.reasons.some((r) => REVIEW_CODES.has(r.code)) ||
           match.status === "possibleDuplicate");
+      const legacyHash = computeDedupHash({
+        accountNumber: account.number,
+        date: row.date,
+        originalAmount: row.originalAmount ?? row.signedAmount,
+        originalCurrency: row.originalCurrency ?? account.currency,
+        description: row.description,
+        identifier: row.identifier,
+        installmentNumber: row.installmentNumber,
+        installmentTotal: row.installmentTotal,
+      });
       const hash = computeDedupHash({
         accountNumber: account.number,
         date: row.date,
@@ -282,6 +294,7 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
         identifier: row.identifier,
         installmentNumber: row.installmentNumber,
         installmentTotal: row.installmentTotal,
+        accountIdentity: `${account.id}:${account.provider}`,
       });
       const sequence = hashCounts.get(hash) ?? 0;
       hashCounts.set(hash, sequence + 1);
@@ -307,6 +320,7 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
         provider,
         syncRunId,
         dedupHash: hash,
+        dedupHashLegacy: legacyHash,
         dedupSequence: sequence,
         kind: row.kind,
         needsReview: review ? 1 : 0,
@@ -341,24 +355,11 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
         transactionId,
         rowIndex: row.rowIndex,
         status: "added",
-        reasonCode: review ? "possibleDuplicate" : null,
+        reasonCode: match.status === "possibleDuplicate" ? "possibleDuplicate" : null,
       });
-      if (
-        categoryId != null &&
-        decision &&
-        decision.source !== "ai" &&
-        decision.source !== "none"
-      ) {
-        learned.push({
-          description: row.description,
-          categoryId,
-          kind: row.kind === "income" ? "income" : "expense",
-          source: decision.source,
-        });
-      }
     });
 
-    finalizeBatch(batchId, {
+    finalizeBatch(input.workspaceId, batchId, {
       added: counts.added,
       duplicates: counts.duplicates,
       skipped: counts.skipped,
@@ -378,36 +379,74 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
     }
   })();
 
-  for (const item of learned) {
-    recordMerchantCategory(input.workspaceId, item.description, item.categoryId, item.kind, "user");
-    const key = normalizeMerchant(item.description);
-    if (key && item.source === "memory") incrementMerchantHits(input.workspaceId, [key]);
-  }
-
-  const mode = getBackendMode(input.workspaceId);
-  if (mode === "on" && counts.added + counts.adopted > 0) {
-    enqueueJob({
-      workspaceId: input.workspaceId,
-      type: "import.finalize",
-      payload: { workspaceId: input.workspaceId, batchId },
-      idempotencyKey: `import.finalize:${batchId}`,
-    });
-  } else {
-    if (learned.length > 0) categorizeLocally(input.workspaceId);
-    reconcileFlows(input.workspaceId);
-    if (mode === "shadow" && counts.added + counts.adopted > 0) {
-      enqueueJob({
-        workspaceId: input.workspaceId,
-        type: "import.finalize",
-        payload: { workspaceId: input.workspaceId, batchId },
-        idempotencyKey: `import.finalize:${batchId}`,
-        shadow: true,
-      });
-    }
-  }
+  finishPostCommit(input.workspaceId, batchId, counts.added + counts.adopted, true);
 
   const batch = getImportBatch(input.workspaceId, batchId);
   return resultFromBatch(batchId, groupId, batch, outcomes, counts);
+}
+
+/**
+ * Categorization, merchant memory and flow reconciliation after the rows commit. The status is
+ * persisted so a token replay reruns an interrupted pass instead of reporting success early.
+ */
+function finishPostCommit(
+  workspaceId: number,
+  batchId: number,
+  added: number,
+  firstRun: boolean,
+): void {
+  setBatchPostCommitStatus(workspaceId, batchId, "running");
+  try {
+    const learned = learnMerchantMemoryForBatch(workspaceId, batchId, {
+      incrementHits: firstRun,
+    });
+    const mode = getBackendMode(workspaceId);
+    if (mode === "on" && added > 0) {
+      enqueueJob({
+        workspaceId,
+        type: "import.finalize",
+        payload: { workspaceId, batchId },
+        idempotencyKey: `import.finalize:${batchId}`,
+      });
+    } else {
+      if (learned > 0) categorizeLocally(workspaceId);
+      reconcileFlows(workspaceId);
+      if (mode === "shadow" && added > 0) {
+        enqueueJob({
+          workspaceId,
+          type: "import.finalize",
+          payload: { workspaceId, batchId },
+          idempotencyKey: `import.finalize:${batchId}`,
+          shadow: true,
+        });
+      }
+    }
+    setBatchPostCommitStatus(workspaceId, batchId, "completed");
+  } catch (error) {
+    setBatchPostCommitStatus(
+      workspaceId,
+      batchId,
+      "failed",
+      error instanceof Error ? error.message.slice(0, 500) : "post-commit failed",
+    );
+    throw new ApiError(
+      "The import was saved, but post-processing is incomplete; retry the same import",
+      503,
+      "postCommitIncomplete",
+      { batchId },
+    );
+  }
+}
+
+function finishExistingBatch(
+  existing: NonNullable<ReturnType<typeof getBatchByClientToken>>,
+  workspaceId: number,
+): SaveImportResult {
+  if (existing.postCommitStatus !== "completed") {
+    finishPostCommit(workspaceId, existing.id, existing.added, false);
+  }
+  const batch = getImportBatch(workspaceId, existing.id) ?? existing;
+  return resultFromBatch(existing.id, existing.groupId, batch);
 }
 
 function resultFromBatch(

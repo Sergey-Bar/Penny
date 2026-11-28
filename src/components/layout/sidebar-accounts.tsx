@@ -19,6 +19,7 @@ import { loadPreference } from "@/lib/preference-sync";
 
 const isGroup = (k: unknown): k is AccountGroupKey =>
   (ACCOUNT_GROUPS as readonly unknown[]).includes(k);
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export type SidebarAccountsPref = {
   hidden: AccountGroupKey[];
   moves: Record<number, AccountGroupKey>;
@@ -118,7 +119,7 @@ export function SidebarAccounts({ onNavigate }: { onNavigate: () => void }) {
               </bdi>
             </summary>
             <ul className="mb-1">
-              {groupItemsByProvider(g.items).map((entry) => {
+              {groupItemsByProvider(g.items, g.key === "investments").map((entry) => {
                 if (entry.kind === "item") {
                   const a = entry.item;
                   return (
@@ -147,8 +148,17 @@ export function SidebarAccounts({ onNavigate }: { onNavigate: () => void }) {
                 }
                 const house = INVESTMENT_HOUSES.find((h) => h.id === entry.providerKey);
                 const houseName = house?.name[locale === "he" ? "he" : "en"] ?? entry.providerKey;
+                // Strip only the full configured house name, in either locale, and escape it so a
+                // provider id with regex characters cannot change the pattern.
+                const prefixes = [house?.name.he, house?.name.en].filter((name): name is string =>
+                  Boolean(name),
+                );
                 const stripPrefix = (n: string) =>
-                  n.replace(/^אקסלנס\s*-\s*/, "").replace(new RegExp(`^${houseName}\\s*-\\s*`), "");
+                  prefixes.reduce(
+                    (value, name) =>
+                      value.replace(new RegExp(`^${escapeRegExp(name)}\\s*-\\s*`), ""),
+                    n,
+                  );
                 return (
                   <li key={`provider:${entry.providerKey}`}>
                     <details className="group/prov">

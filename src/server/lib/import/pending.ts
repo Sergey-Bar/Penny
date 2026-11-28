@@ -12,7 +12,12 @@ function assertInsideImportDir(filePath: string): void {
   const root = path.resolve(getFolderImportConfig().dir);
   const resolved = path.resolve(filePath);
   const relative = path.relative(root, resolved);
-  if (relative.startsWith("..") || path.isAbsolute(relative))
+  const first = relative.split(path.sep)[0];
+  if (
+    relative.startsWith("..") ||
+    path.isAbsolute(relative) ||
+    ["ignored", "imported", "failed"].includes(first)
+  )
     throw new ApiError("File is outside the import folder", 400, "badPath");
 }
 
@@ -49,7 +54,17 @@ export async function ignorePending(workspaceId: number, pendingId: number): Pro
       break;
     }
   }
-  await fs.rename(pending.path, target).catch(() => undefined);
+  try {
+    await fs.rename(pending.path, target);
+  } catch (error) {
+    throw new ApiError(
+      error instanceof Error
+        ? `Could not move the file: ${error.message.slice(0, 200)}`
+        : "Could not move the file",
+      500,
+      "moveFailed",
+    );
+  }
   setPendingStatus(workspaceId, pendingId, "ignored");
 }
 

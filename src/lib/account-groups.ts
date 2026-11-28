@@ -72,10 +72,16 @@ export function groupAccounts(assets: Asset[], moves: Record<number, AccountGrou
 export type GroupedSidebarEntry<T extends { value: number; providerKey: string | null }> =
   { kind: "item"; item: T } | { kind: "provider"; providerKey: string; total: number; items: T[] };
 
-/** Collapses items sharing a providerKey into a subgroup when 2+ items belong to that provider. */
+/** Collapses investments sharing a providerKey into a subgroup when 2+ items belong to it. */
 export function groupItemsByProvider<T extends { value: number; providerKey: string | null }>(
   items: T[],
+  groupByProvider = true,
 ): GroupedSidebarEntry<T>[] {
+  if (!groupByProvider) {
+    return items
+      .map((item) => ({ kind: "item" as const, item }))
+      .sort((a, b) => Math.abs(b.item.value) - Math.abs(a.item.value));
+  }
   const byProvider = new Map<string, T[]>();
   for (const item of items) {
     if (!item.providerKey) continue;

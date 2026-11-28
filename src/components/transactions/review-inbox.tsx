@@ -35,6 +35,7 @@ export function ReviewInbox() {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [active, setActive] = useState(0);
   const [memos, setMemos] = useState<Record<number, string>>({});
+  const memoQueues = useRef(new Map<number, Promise<void>>());
   const listRef = useRef<HTMLUListElement>(null);
 
   const rows = (inbox.data?.transactions ?? []).filter((r) => !hidden.has(r.id));
@@ -114,16 +115,26 @@ export function ReviewInbox() {
     }
   };
 
-  const saveMemo = async (row: TransactionWithCategory) => {
+  const saveMemo = (row: TransactionWithCategory) => {
     const next = memos[row.id];
     if (next === undefined || next === (row.memo ?? "")) return;
-    try {
-      await updateTransactionFields(row.id, { memo: next || null });
-      refresh();
-      toast.success(t("memoSaved"));
-    } catch {
-      toast.error(t("failed"));
-    }
+    // Blur can fire twice while the first request is in flight; keep one request per row and
+    // apply the edits in order so the last text the person typed wins.
+    const run = async () => {
+      try {
+        await updateTransactionFields(row.id, { memo: next || null });
+        refresh();
+        toast.success(t("memoSaved"));
+      } catch {
+        toast.error(t("failed"));
+      }
+    };
+    const previous = memoQueues.current.get(row.id) ?? Promise.resolve();
+    const task = previous.catch(() => undefined).then(run);
+    memoQueues.current.set(row.id, task);
+    void task.finally(() => {
+      if (memoQueues.current.get(row.id) === task) memoQueues.current.delete(row.id);
+    });
   };
 
   const markTransfer = async (row: TransactionWithCategory) => {

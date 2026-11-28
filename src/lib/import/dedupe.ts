@@ -120,11 +120,20 @@ export function matchStored(
   const pool = new Map<number, { row: StoredCandidate; used: boolean }>(
     stored.map((row) => [row.id, { row, used: false }]),
   );
+  // Index by account, amount and direction so a large statement does not compare every row
+  // with every stored row. Date distance and description still decide within the bucket.
+  const bucketKey = (row: DedupeRow) =>
+    `${row.accountId}|${Math.round(Math.abs(row.signedAmount) * 100)}|${row.signedAmount < 0 ? "-" : "+"}`;
+  const buckets = new Map<string, StoredCandidate[]>();
+  for (const candidate of stored) {
+    const key = bucketKey(candidate);
+    const list = buckets.get(key);
+    if (list) list.push(candidate);
+    else buckets.set(key, [candidate]);
+  }
   const pairs: { rowIndex: number; id: number; score: number; distance: number }[] = [];
   rows.forEach((row, rowIndex) => {
-    for (const candidate of stored) {
-      if (candidate.accountId !== row.accountId) continue;
-      if (!sameAmount(row, candidate) || !sameDirection(row, candidate)) continue;
+    for (const candidate of buckets.get(bucketKey(row)) ?? []) {
       const distance = Math.abs(day(row.date) - day(candidate.date));
       if (distance > 1) continue;
       const score = scoreMatch(row, candidate);
@@ -138,8 +147,8 @@ export function matchStored(
   const taken = new Set<number>();
   for (const pair of pairs) {
     if (out[pair.rowIndex].status !== "new" || taken.has(pair.id)) continue;
-    const slot = pool.get(pair.id);
-    if (!slot || slot.used) continue;
+    const slot = pool.get(pair.id)!;
+    if (slot.used) continue;
     slot.used = true;
     taken.add(pair.id);
     out[pair.rowIndex] = {

@@ -1,9 +1,17 @@
 import { ApiError, handle } from "@/server/lib/api-error";
 import { NextResponse } from "next/server";
 import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
-import { getDb } from "@/server/db";
 import { normalizeMerchant } from "@/server/lib/merchant-memory";
+import { forgetMerchant } from "@/server/lib/import/forget";
 import { requireImportEditor, readBody } from "@/server/lib/import/request";
+import { z } from "zod";
+
+const forgetSchema = z
+  .object({
+    merchant: z.string().min(1).max(200),
+    transactionIds: z.array(z.number().int().positive()).max(500).optional(),
+  })
+  .strict();
 
 /**
  * POST /api/import/forget { merchant, transactionIds? }
@@ -13,27 +21,10 @@ import { requireImportEditor, readBody } from "@/server/lib/import/request";
 export const POST = handle("import/forget", async (request: Request) => {
   const workspaceId = getWorkspaceIdFromRequest(request);
   requireImportEditor(request, workspaceId);
-  const body = await readBody<{ merchant?: string; transactionIds?: number[] }>(request);
-  const merchant = normalizeMerchant(body.merchant ?? "");
+  const raw = await readBody<{ merchant?: string; transactionIds?: number[] }>(request);
+  const parsed = forgetSchema.safeParse(raw);
+  if (!parsed.success) throw new ApiError("merchant is required", 400, "bad_json");
+  const merchant = normalizeMerchant(parsed.data.merchant);
   if (!merchant) throw new ApiError("merchant is required", 400, "bad_json");
-  const db = getDb();
-  return db.transaction(() => {
-    const forgotten = db
-      .prepare("DELETE FROM merchant_categories WHERE workspace_id = ? AND merchant_key = ?")
-      .run(workspaceId, merchant).changes;
-    const ids = (body.transactionIds ?? []).filter((id) => Number.isInteger(id) && id > 0);
-    let cleared = 0;
-    if (ids.length > 0) {
-      const placeholders = ids.map(() => "?").join(",");
-      cleared = db
-        .prepare(
-          `UPDATE transactions SET category_id = NULL, category_source = NULL, category_origin = 'none',
-             needs_review = 1, updated_at = datetime('now')
-           WHERE workspace_id = ? AND id IN (${placeholders})
-             AND category_origin IN ('memory','dictionary','pattern','rule','none')`,
-        )
-        .run(workspaceId, ...ids).changes;
-    }
-    return NextResponse.json({ forgotten, cleared });
-  })();
+  return NextResponse.json(forgetMerchant(workspaceId, merchant, parsed.data.transactionIds ?? []));
 });

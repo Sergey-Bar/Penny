@@ -43,7 +43,7 @@ interface InsertResult {
   updated: number;
 }
 
-function dedupHashFor(txn: RawTransaction): string {
+function dedupHashFor(txn: RawTransaction, accountIdentity?: string | null): string {
   return computeDedupHash({
     accountNumber: txn.accountNumber,
     date: txn.date,
@@ -53,6 +53,7 @@ function dedupHashFor(txn: RawTransaction): string {
     identifier: txn.identifier,
     installmentNumber: txn.installmentNumber,
     installmentTotal: txn.installmentTotal,
+    accountIdentity,
   });
 }
 
@@ -98,8 +99,11 @@ export function insertTransactions(
     return id;
   };
 
-  const existingCountStmt = db.prepare(
-    "SELECT COUNT(*) as count FROM transactions WHERE workspace_id = ? AND dedup_hash = ?",
+  const existingLinkedCountStmt = db.prepare(
+    "SELECT COUNT(*) as count FROM transactions WHERE workspace_id = ? AND dedup_hash = ? AND account_id IS ?",
+  );
+  const existingUnlinkedCountStmt = db.prepare(
+    "SELECT COUNT(*) as count FROM transactions WHERE workspace_id = ? AND dedup_hash = ? AND account_id IS NULL AND account_number = ? AND provider = ?",
   );
 
   const insertStmt = db.prepare(`
@@ -134,7 +138,9 @@ export function insertTransactions(
   const adoptStmt = db.prepare(`
     UPDATE transactions SET
       date = @date, processed_date = @processedDate, original_amount = @originalAmount, original_currency = @originalCurrency,
-      charged_amount = @chargedAmount, charged_currency = @chargedCurrency, description = @description, memo = @memo,
+      charged_amount = @chargedAmount, charged_currency = @chargedCurrency, description = @description,
+      memo = CASE WHEN transactions.memo_source = 'user' THEN transactions.memo ELSE @memo END,
+      memo_source = CASE WHEN transactions.memo_source = 'user' THEN 'user' ELSE 'sync' END,
       type = @type, status = @status, identifier = @identifier, installment_number = @installmentNumber,
       installment_total = @installmentTotal, provider = @provider, credential_id = @credentialId,
       sync_run_id = @syncRunId, dedup_hash = @dedupHash, dedup_sequence = @dedupSequence, updated_at = datetime('now'),
@@ -147,14 +153,37 @@ export function insertTransactions(
 
   const batchInsert = db.transaction(() => {
     for (const txn of transactions) {
-      const hash = dedupHashFor(txn);
+      const accountId = accountIdFor(txn.accountNumber);
+      const existingCountFor = (hash: string): number => {
+        const linked =
+          accountId == null
+            ? 0
+            : (
+                existingLinkedCountStmt.get(workspaceId, hash, accountId) as {
+                  count: number;
+                }
+              ).count;
+        const unlinked = (
+          existingUnlinkedCountStmt.get(workspaceId, hash, txn.accountNumber, provider) as {
+            count: number;
+          }
+        ).count;
+        return linked + unlinked;
+      };
+      // Keep the legacy account-number hash when this account already has such a row, so an
+      // upgrade does not duplicate history. New rows hash the account identity so two providers
+      // with the same number no longer collide.
+      const legacyHash = dedupHashFor(txn);
+      const identityHash =
+        accountId == null ? legacyHash : dedupHashFor(txn, `${accountId}:${provider}`);
+      const legacyCount = existingCountFor(legacyHash);
+      const identityCount =
+        identityHash === legacyHash ? legacyCount : existingCountFor(identityHash);
+      const hash = identityCount > 0 || legacyCount === 0 ? identityHash : legacyHash;
+      const existingCount = hash === identityHash ? identityCount : legacyCount;
 
       const batchCount = (hashCounts.get(hash) ?? 0) + 1;
       hashCounts.set(hash, batchCount);
-
-      const { count: existingCount } = existingCountStmt.get(workspaceId, hash) as {
-        count: number;
-      };
 
       const sequence = batchCount - 1;
       const kind = detectKind(txn.description, provider, txn.chargedAmount, { cardExplainsBill });
@@ -162,7 +191,7 @@ export function insertTransactions(
       const params = {
         workspaceId,
         accountNumber: txn.accountNumber,
-        accountId: accountIdFor(txn.accountNumber),
+        accountId,
         // Scrapers send UTC instants (Israeli midnight is 21:00/22:00Z the day before); stored as the Israeli day so
         // every date-range query and month grouping sees the right day. The dedup hash above still uses the raw value.
         date: israelDay(txn.date),
@@ -1078,12 +1107,25 @@ export function saveSyncTransactions(
     const accounts = [...new Set(scrapedAccounts)];
     let prunedPending = 0;
     if (accounts.length > 0) {
-      const keep = [
-        ...new Set(transactions.filter((t) => t.status === "pending").map(dedupHashFor)),
-      ];
+      // Keep the hashes of rows that are still pending in *this* scrape. Do not query by
+      // sync_run_id: a test or a retry can reuse the run, and then an older pending row would
+      // keep itself alive forever.
+      const accountIdStmt = db.prepare(
+        "SELECT id FROM accounts WHERE workspace_id = ? AND provider = ? AND number = ? LIMIT 1",
+      );
+      const keep = new Set<string>();
+      for (const txn of transactions) {
+        if (txn.status !== "pending") continue;
+        keep.add(dedupHashFor(txn));
+        const accountId = (
+          accountIdStmt.get(workspaceId, provider, txn.accountNumber) as { id: number } | undefined
+        )?.id;
+        if (accountId != null) keep.add(dedupHashFor(txn, `${accountId}:${provider}`));
+      }
+      const keepList = [...keep];
       const accountList = accounts.map(() => "?").join(",");
-      const keepClause = keep.length
-        ? `AND dedup_hash NOT IN (${keep.map(() => "?").join(",")})`
+      const keepClause = keepList.length
+        ? `AND dedup_hash NOT IN (${keepList.map(() => "?").join(",")})`
         : "";
       prunedPending = db
         .prepare(
@@ -1092,7 +1134,7 @@ export function saveSyncTransactions(
              AND dedup_hash NOT LIKE '${CAPTURED_PREFIX}%'
              AND account_number IN (${accountList}) ${keepClause}`,
         )
-        .run(workspaceId, credentialId, ...accounts, ...keep).changes;
+        .run(workspaceId, credentialId, ...accounts, ...keepList).changes;
     }
 
     let postProcessJobId: number | null = null;
@@ -1353,7 +1395,7 @@ export function insertFileImport(
       label: account,
       create: true,
     });
-    const accountId = resolved?.account.id ?? null;
+    const accountId = resolved?.ambiguous ? null : (resolved?.account.id ?? null);
     const stmt = db.prepare(
       `INSERT INTO transactions (workspace_id, account_number, account_id, date, processed_date, original_amount, original_currency,
          charged_amount, charged_currency, description, type, status, provider, sync_run_id, dedup_hash, dedup_sequence, kind,

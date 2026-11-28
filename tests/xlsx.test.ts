@@ -100,3 +100,22 @@ describe("readXlsx", () => {
     await expect(readXlsx(new TextEncoder().encode("a,b\n1,2"))).rejects.toThrow();
   });
 });
+
+describe("readXlsx decompression limits", () => {
+  it("enforces the actual decompressed size when the central directory lies", async () => {
+    const sheetXml =
+      '<worksheet><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>this is more than ten bytes</t></is></c></row></sheetData></worksheet>';
+    const bytes = await zip({ "xl/worksheets/sheet1.xml": sheetXml }, ["xl/worksheets/sheet1.xml"]);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let patched = false;
+    for (let i = 0; i < bytes.length - 46; i++) {
+      if (view.getUint32(i, true) === 0x02014b50) {
+        view.setUint32(i + 24, 1, true);
+        patched = true;
+        break;
+      }
+    }
+    expect(patched).toBe(true);
+    await expect(readXlsx(bytes, { maxUncompressed: 10 })).rejects.toThrow("zipBomb");
+  });
+});

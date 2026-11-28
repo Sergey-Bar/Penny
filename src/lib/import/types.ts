@@ -91,6 +91,9 @@ export interface ImportDraftRow {
   installmentTotal: number | null;
   identifier: string | null;
   balance: string | null;
+  /** Raw debit/credit cells when the file has those columns, so direction survives normalization. */
+  debit?: string | null;
+  credit?: string | null;
   sourceRef: string;
 }
 

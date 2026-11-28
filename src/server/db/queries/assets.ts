@@ -202,19 +202,39 @@ export function saveAccountBalances(
   windowStart = "9999-12-31",
 ) {
   const db = getDb();
-  const prevStmt = db.prepare(
-    "SELECT balance, drift, updated_at as updatedAt FROM account_balances WHERE workspace_id = ? AND provider = ? AND account_number = ?",
+  const accountStmt = db.prepare(
+    "SELECT id FROM accounts WHERE workspace_id = ? AND provider = ? AND number = ? ORDER BY id LIMIT 2",
   );
-  const stmt = db.prepare(
-    `INSERT INTO account_balances (workspace_id, provider, account_number, balance, drift, updated_at) VALUES (?, ?, ?, ?, ?, datetime('now'))
-     ON CONFLICT(workspace_id, provider, account_number) DO UPDATE SET balance = excluded.balance, drift = excluded.drift, updated_at = excluded.updated_at`,
+  const prevLinked = db.prepare(
+    "SELECT balance, drift, updated_at as updatedAt FROM account_balances WHERE workspace_id = ? AND account_id = ?",
+  );
+  const prevLegacy = db.prepare(
+    "SELECT balance, drift, updated_at as updatedAt FROM account_balances WHERE workspace_id = ? AND provider = ? AND account_number = ? AND account_id IS NULL",
+  );
+  const upsertLinked = db.prepare(
+    `INSERT INTO account_balances (workspace_id, provider, account_number, account_id, balance, drift, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(workspace_id, account_id) WHERE account_id IS NOT NULL DO UPDATE SET
+       provider = excluded.provider, account_number = excluded.account_number,
+       balance = excluded.balance, drift = excluded.drift, updated_at = excluded.updated_at`,
+  );
+  const upsertLegacy = db.prepare(
+    `INSERT INTO account_balances (workspace_id, provider, account_number, balance, drift, updated_at)
+     VALUES (?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(workspace_id, provider, account_number) WHERE account_id IS NULL DO UPDATE SET
+       balance = excluded.balance, drift = excluded.drift, updated_at = excluded.updated_at`,
   );
   const today = israelDay(new Date().toISOString());
   db.transaction(() => {
     for (const a of accounts) {
       if (a.balance == null) continue;
-      const prev = prevStmt.get(workspaceId, provider, a.accountNumber) as
-        { balance: number; drift: number | null; updatedAt: string } | undefined;
+      const matches = accountStmt.all(workspaceId, provider, a.accountNumber) as { id: number }[];
+      const accountId = matches.length === 1 ? matches[0].id : null;
+      const prev = (
+        accountId == null
+          ? prevLegacy.get(workspaceId, provider, a.accountNumber)
+          : prevLinked.get(workspaceId, accountId)
+      ) as { balance: number; drift: number | null; updatedAt: string } | undefined;
       const prevDay = prev ? israelDay(`${prev.updatedAt.replace(" ", "T")}Z`) : "";
       const checked = balanceDrift(
         prev ? { balance: prev.balance, day: prevDay } : null,
@@ -229,7 +249,11 @@ export function saveAccountBalances(
       );
       // A second sync the same day can't re-check (no clean day boundary), so it keeps the day's finding.
       const drift = checked ?? (prevDay === today ? (prev?.drift ?? null) : null);
-      stmt.run(workspaceId, provider, a.accountNumber, a.balance, drift);
+      if (accountId == null) {
+        upsertLegacy.run(workspaceId, provider, a.accountNumber, a.balance, drift);
+      } else {
+        upsertLinked.run(workspaceId, provider, a.accountNumber, accountId, a.balance, drift);
+      }
     }
   })();
 }
@@ -392,23 +416,41 @@ export interface BankSecurityInput {
   details?: Record<string, unknown>;
 }
 
+export interface BankSecurityScope {
+  /** The bank credential that produced this scrape; encoded in the asset key for stale reconciliation. */
+  credentialId?: number | null;
+  /** Accounts covered by the completed scrape, including accounts with no holdings. */
+  accountNumbers?: readonly string[];
+}
+
 /**
  * Upserts securities holdings synced from a bank's capital-market portal (e.g. Hapoalim myTrade)
- * and records today's snapshot for each holding. Stale holdings are zeroed if they have history
- * or deleted otherwise.
+ * and records today's snapshot for each holding. Stale holdings in the same credential/account
+ * scope are zeroed if they have history or deleted otherwise; other credentials are untouched.
  */
 export function saveBankSecurities(
   workspaceId: number,
   provider: string,
   securities: BankSecurityInput[],
+  scope: BankSecurityScope = {},
 ): void {
   const db = getDb();
   const today = israelToday();
   const prefix = `bank-securities:${provider}:`;
+  const credentialId =
+    scope.credentialId != null && Number.isInteger(scope.credentialId) ? scope.credentialId : null;
+  const hasAccountScope = Array.isArray(scope.accountNumbers);
+  const accountsInScope = new Set(
+    (scope.accountNumbers ?? []).map((n) => n.trim()).filter(Boolean),
+  );
+  const noteFor = (s: BankSecurityInput) =>
+    credentialId == null
+      ? `${prefix}${s.accountNumber}:${s.equityNumber}`
+      : `${prefix}${credentialId}:${s.accountNumber}:${s.equityNumber}`;
   const find = db.prepare(`SELECT id FROM assets WHERE workspace_id = ? AND note = ?`);
   const update = db.prepare(
     `UPDATE assets SET name = ?, type = ?, currency = ?, symbol = ?, quantity = ?,
-       manual_value = ?, cost_basis = ?, liquid = 1, is_liability = 0, details = ?
+       manual_value = ?, cost_basis = ?, liquid = 1, is_liability = 0, note = ?, details = ?
      WHERE id = ?`,
   );
   const insert = db.prepare(
@@ -424,6 +466,12 @@ export function saveBankSecurities(
        value_native = excluded.value_native,
        currency = excluded.currency`,
   );
+  const zeroSnapshot = db.prepare(
+    `INSERT INTO asset_snapshots (asset_id, date, value_ils, cost_basis_ils, value_native)
+     VALUES (?, ?, 0, 0, 0)
+     ON CONFLICT(asset_id, date) DO UPDATE SET
+       value_ils = 0, cost_basis_ils = 0, value_native = 0`,
+  );
   const stale = db.prepare(
     `SELECT id, note, EXISTS (SELECT 1 FROM asset_snapshots s WHERE s.asset_id = assets.id) AS hasHistory
      FROM assets WHERE workspace_id = ? AND substr(note, 1, ?) = ?`,
@@ -434,10 +482,24 @@ export function saveBankSecurities(
   db.transaction(() => {
     const keep = new Set<string>();
     for (const s of securities) {
-      const note = `${prefix}${s.accountNumber}:${s.equityNumber}`;
+      const note = noteFor(s);
       keep.add(note);
-      const detailsJson = s.details ? JSON.stringify({ ...s.details, provider }) : null;
-      const existing = find.get(workspaceId, note) as { id: number } | undefined;
+      const detailsJson = s.details
+        ? JSON.stringify({
+            ...s.details,
+            provider,
+            ...(credentialId == null ? {} : { credentialId }),
+          })
+        : credentialId == null
+          ? null
+          : JSON.stringify({ provider, credentialId });
+      // Adopt a holding written before credential ownership was encoded, so one-time rows do
+      // not duplicate and become owned by the credential that just synced them.
+      let existing = find.get(workspaceId, note) as { id: number } | undefined;
+      const legacyNote = `${prefix}${s.accountNumber}:${s.equityNumber}`;
+      if (!existing && legacyNote !== note) {
+        existing = find.get(workspaceId, legacyNote) as { id: number } | undefined;
+      }
       let assetId: number;
       if (existing) {
         update.run(
@@ -448,6 +510,7 @@ export function saveBankSecurities(
           s.quantity,
           s.value,
           s.costBasis,
+          note,
           detailsJson,
           existing.id,
         );
@@ -481,8 +544,36 @@ export function saveBankSecurities(
     }[];
     for (const row of existingRows) {
       if (keep.has(row.note)) continue;
-      if (row.hasHistory) zero.run(row.id);
-      else remove.run(row.id);
+      if (!rowOwnedByScope(row.note, prefix, credentialId, accountsInScope, hasAccountScope))
+        continue;
+      if (row.hasHistory) {
+        zero.run(row.id);
+        zeroSnapshot.run(row.id, today);
+      } else {
+        remove.run(row.id);
+      }
     }
   })();
+}
+
+/**
+ * A row belongs to the syncing credential when its key carries that credential id, or when it is
+ * a legacy key (provider:account:equity) for an account the completed scrape covered.
+ */
+function rowOwnedByScope(
+  note: string,
+  prefix: string,
+  credentialId: number | null,
+  accountsInScope: ReadonlySet<string>,
+  hasAccountScope: boolean,
+): boolean {
+  if (credentialId == null && !hasAccountScope) {
+    // Caller did not identify a scope: retain the previous provider-wide behavior.
+    return true;
+  }
+  const rest = note.slice(prefix.length).split(":");
+  if (rest.length >= 3 && credentialId != null && rest[0] === String(credentialId)) {
+    return !hasAccountScope || accountsInScope.has(rest[1]);
+  }
+  return rest.length === 2 && accountsInScope.has(rest[0]);
 }

@@ -77,3 +77,15 @@ describe("sync and imported files", () => {
     expect(storedForImport(ws, "1234", "2026-11-04", "2026-11-10")).toEqual([]);
   });
 });
+it("keeps a person's memo when a sync adopts the file row", () => {
+  const { db, ws, run } = fixture();
+  db.prepare(
+    "UPDATE transactions SET memo = 'keep me', memo_source = 'user' WHERE dedup_hash = 'f1'",
+  ).run();
+  insertTransactions(ws, [synced("2026-11-01T22:00:00.000Z", -80) as never], "max", 1, run);
+  expect(
+    db
+      .prepare("SELECT memo, memo_source AS source FROM transactions WHERE adopted_at IS NOT NULL")
+      .get(),
+  ).toEqual({ memo: "keep me", source: "user" });
+});

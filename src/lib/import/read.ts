@@ -36,6 +36,14 @@ export class ImportReadError extends Error {
   }
 }
 
+/** A hostile cell cannot ask the expander to allocate millions of columns. */
+const MAX_HTML_SPAN = 1000;
+const spanValue = (attrs: string, name: "colspan" | "rowspan"): number => {
+  const raw = new RegExp(`\\b${name}\\s*=\\s*"?([^"\\s>]+)`, "i").exec(attrs)?.[1];
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? Math.min(MAX_HTML_SPAN, Math.max(1, Math.trunc(parsed))) : 1;
+};
+
 /** Real tables only. HTML from a bank is flat; rowspan and colspan are expanded like Excel. */
 export function parseHtmlTableAdvanced(html: string): string[][] {
   const text = (s: string) =>
@@ -78,8 +86,8 @@ export function parseHtmlTableAdvanced(html: string): string[][] {
     for (const cell of tr[1].matchAll(/<t([dh])\b([^>]*)>([\s\S]*?)<\/t\1>/gi)) {
       const attrs = cell[2];
       const value = text(cell[3]);
-      const colspan = Math.max(1, Number(/\bcolspan\s*=\s*"?(\d+)/i.exec(attrs)?.[1] ?? 1));
-      const rowspan = Math.max(1, Number(/\browspan\s*=\s*"?(\d+)/i.exec(attrs)?.[1] ?? 1));
+      const colspan = spanValue(attrs, "colspan");
+      const rowspan = spanValue(attrs, "rowspan");
       for (let k = 0; k < colspan; k++) {
         put(k === 0 ? value : "");
         if (rowspan > 1)

@@ -56,6 +56,15 @@ describe("dictionaryCategory", () => {
     expect(dictionaryCategoryKey("שופרסל דיל", "expense")).toBe("groceries");
     expect(dictionaryCategoryKey("משכורת", "income")).toBe("salary");
   });
+
+  it("does not confuse a foreign purchase with its fee", () => {
+    expect(dictionaryCategory('עסקה בחו"ל', "expense")).not.toBe("Bank Fees");
+    expect(dictionaryCategory("עמלת המרה", "expense")).toBe("Bank Fees");
+  });
+
+  it("treats mortgage insurance as property insurance, not life insurance", () => {
+    expect(dictionaryCategory("ביטוח משכנתא", "expense")).toBe("Insurance");
+  });
 });
 
 describe("dictionary coverage", () => {

@@ -96,8 +96,8 @@ Be honest about the edges:
 - Routes that talk to a model provider, Telegram, market data or Chromium are contract-
   exempt for the same reason.
 - Coverage is a floor, not a target. `npm run test:coverage` measures `src/lib`, `src/server`
-  and `src/proxy.ts` (the layers this suite owns) and fails below 74% statements / 66%
-  branches / 71% functions / 75% lines. React components and pages are measured by `e2e/`
+  and `src/proxy.ts` (the layers this suite owns) and fails below 76% statements / 67%
+  branches / 74% functions / 78% lines. React components and pages are measured by `e2e/`
   instead, so counting them here would only dilute the number.
 
 ## Adding a route

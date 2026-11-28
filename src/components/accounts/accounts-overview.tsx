@@ -14,6 +14,8 @@ import { CardError, CardSkeleton } from "@/components/home/card-shell";
 
 import { GROUP_ICON, TYPE_ICON } from "./account-icons";
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /** All accounts on one page: net total, the bank connections, then every group with its accounts. */
 export function AccountsOverview() {
   const t = useTranslations("accountsView");
@@ -123,7 +125,7 @@ export function AccountsOverview() {
                   </bdi>
                 </summary>
                 <ul className="border-t border-border/60 bg-background/30">
-                  {groupItemsByProvider(g.items).map((entry) => {
+                  {groupItemsByProvider(g.items, g.key === "investments").map((entry) => {
                     if (entry.kind === "item") {
                       const a = entry.item;
                       const full = assets.data!.assets.find((x) => x.id === a.id);
@@ -170,9 +172,13 @@ export function AccountsOverview() {
                     const houseName =
                       house?.name[locale === "he" ? "he" : "en"] ?? entry.providerKey;
                     const stripPrefix = (n: string) =>
-                      n
-                        .replace(/^אקסלנס\s*-\s*/, "")
-                        .replace(new RegExp(`^${houseName}\\s*-\\s*`), "");
+                      [house?.name.he, house?.name.en]
+                        .filter((name): name is string => Boolean(name))
+                        .reduce(
+                          (value, name) =>
+                            value.replace(new RegExp(`^${escapeRegExp(name)}\\s*-\\s*`), ""),
+                          n,
+                        );
                     return (
                       <li key={`provider:${entry.providerKey}`}>
                         <details className="group/prov">

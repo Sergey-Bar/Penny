@@ -8,9 +8,10 @@ import {
   mappingComplete,
 } from "@/lib/import/detect";
 import { tableToDrafts } from "@/lib/import/draft";
+import { normalizeImportRow } from "@/lib/import/normalize";
 import { extractFromCell, isSafeRegex, namedGroups } from "@/lib/import/extract";
 import { migrateProfileV1, importProfileKey, parseImportProfile } from "@/lib/import/profile";
-import { detectPreset, presetMapping } from "@/lib/import/presets";
+import { detectPreset, presetMapping, type ImportPreset } from "@/lib/import/presets";
 import { parseHtmlTableAdvanced, readImportSource, ImportReadError } from "@/lib/import/read";
 import { parseStatementText } from "@/lib/import/text";
 
@@ -242,5 +243,118 @@ describe("text statements", () => {
     const parsed = parseStatementText("שלום, זה לא דוח.");
     expect(parsed.rows).toHaveLength(0);
     expect(parsed.looksTabular).toBe(false);
+  });
+});
+
+describe("regressions", () => {
+  it("keeps the credit when the debit cell is zero", () => {
+    const mapping = guessImportMapping(["Date", "Description", "Debit", "Credit"]);
+    const { drafts } = tableToDrafts([["2024-02-01", "Refund", "0", "125.00"]], {
+      ...mapping,
+      debit: 2,
+      credit: 3,
+      amount: null,
+    });
+    expect(drafts[0]).toMatchObject({ amount: "125.00", debit: "0", credit: "125.00" });
+  });
+
+  it("does not let a short header alias match inside a longer word", () => {
+    const mapping = guessImportMapping(["income", "out", "transaction date", "description"]);
+    expect(mapping.credit).toBeNull();
+  });
+
+  it("resolves preset exact words before loose matches", () => {
+    const preset = {
+      id: "test",
+      provider: "test",
+      kind: "bank",
+      label: { he: "test", en: "test" },
+      fileHints: [],
+      headerHints: [],
+      dateOrder: "dmy",
+      signConvention: "bankSigned",
+      mappingWords: { description: ["merchant name", "merchant", "description"] },
+    } as ImportPreset;
+    const mapping = presetMapping(preset, ["merchant name extended", "description"]);
+    expect(mapping.description).toBe(1);
+  });
+
+  it("detects a mixed card file by refund wording", () => {
+    const mapping = guessImportMapping(["Date", "Description", "Amount"]);
+    expect(
+      detectSignConvention({
+        amounts: [120, -30],
+        mapping,
+        accountKind: "card",
+        rows: [
+          { amount: 120, description: "Supermarket" },
+          { amount: -30, description: "Store refund" },
+        ],
+      }),
+    ).toBe("cardPositive");
+    expect(
+      detectSignConvention({
+        amounts: [-120, 30],
+        mapping,
+        accountKind: "card",
+        rows: [
+          { amount: -120, description: "Supermarket" },
+          { amount: 30, description: "Store refund" },
+        ],
+      }),
+    ).toBe("cardNegative");
+  });
+
+  it("clamps a hostile HTML colspan", () => {
+    const rows = parseHtmlTableAdvanced(`<table><tr><td colspan="99999999">A</td></tr></table>`);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveLength(1000);
+  });
+
+  it("keeps a DR marker as an expense in pasted text", () => {
+    const parsed = parseStatementText("01/02/2024 Shop 50.00 DR");
+    expect(parsed.rows[0]).toMatchObject({ amount: 50, kind: "expense" });
+  });
+});
+
+describe("debit/credit editing", () => {
+  it("uses the amount cell when both raw debit/credit cells are blank", () => {
+    const result = normalizeImportRow(
+      {
+        rowIndex: 1,
+        include: true,
+        date: "2024-02-01",
+        processedDate: null,
+        description: "Coffee",
+        amount: "42",
+        kind: "auto",
+        accountId: 1,
+        accountRaw: "",
+        categoryId: null,
+        categoryName: null,
+        categoryRaw: null,
+        tags: [],
+        owner: null,
+        businessSharePct: 0,
+        memo: null,
+        originalAmount: null,
+        originalCurrency: null,
+        installmentNumber: null,
+        installmentTotal: null,
+        identifier: null,
+        balance: null,
+        debit: null,
+        credit: null,
+        sourceRef: "test#1",
+      },
+      {
+        dateOrder: "dmy",
+        signConvention: "explicit",
+        accountKind: "bank",
+        accountId: 1,
+        accountCurrency: "ILS",
+      },
+    );
+    expect(result.row).toMatchObject({ amount: 42, signedAmount: 42, kind: "income" });
   });
 });

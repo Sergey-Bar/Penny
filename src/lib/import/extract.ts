@@ -19,7 +19,7 @@ export function isSafeRegex(pattern: string): boolean {
     else if (c === "(") open.push(i);
     else if (c === ")") {
       const from = open.pop() ?? 0;
-      if (/[+*{]/.test(pattern[i + 1] ?? "") && /[+*{|]/.test(pattern.slice(from + 1, i)))
+      if (/[+*{|?]/.test(pattern[i + 1] ?? "") && /[+*{|?]/.test(pattern.slice(from + 1, i)))
         return false;
     }
   }

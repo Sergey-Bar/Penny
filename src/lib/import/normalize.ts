@@ -207,14 +207,20 @@ export function normalizeImportRow(
     reasons.push({ code: "descriptionMissing", field: "description" });
   }
 
-  const debit = extras.debit == null || extras.debit === "" ? null : parseAmount(extras.debit);
-  const credit = extras.credit == null || extras.credit === "" ? null : parseAmount(extras.credit);
-  const hasDebitCredit = extras.debit !== undefined || extras.credit !== undefined;
+  const debitRaw = extras.debit !== undefined ? extras.debit : (draft.debit ?? null);
+  const creditRaw = extras.credit !== undefined ? extras.credit : (draft.credit ?? null);
+  const debit = debitRaw == null || debitRaw === "" ? null : parseAmount(debitRaw);
+  const credit = creditRaw == null || creditRaw === "" ? null : parseAmount(creditRaw);
+  const hasDebitCredit =
+    extras.debit !== undefined ||
+    extras.credit !== undefined ||
+    draft.debit !== undefined ||
+    draft.credit !== undefined;
   let debitCreditKind: "expense" | "income" | null = null;
   if (hasDebitCredit) {
     if (debit != null && credit != null) {
       reasons.push({ code: "debitCredit", detail: "both" });
-      debitCreditKind = credit - Math.abs(debit) >= 0 ? "income" : "expense";
+      debitCreditKind = Math.abs(credit) - Math.abs(debit) >= 0 ? "income" : "expense";
     } else if (debit != null) debitCreditKind = "expense";
     else if (credit != null) debitCreditKind = "income";
   }
@@ -224,14 +230,17 @@ export function normalizeImportRow(
     const d = debit == null ? null : Math.abs(debit);
     const c = credit == null ? null : Math.abs(credit);
     if (d != null || c != null) rawSigned = (c ?? 0) - (d ?? 0);
-  } else {
+  }
+  // A row with debit/credit columns can still be edited in the amount cell; when both raw cells
+  // are blank, use the edited amount instead of declaring the row invalid.
+  if (rawSigned == null) {
     const parsed = parseAmount(draft.amount);
     if (parsed != null) {
       const explicit = draft.kind;
       if (explicit === "expense") rawSigned = -Math.abs(parsed);
       else if (explicit === "income") rawSigned = Math.abs(parsed);
       else if (explicit === "transfer") rawSigned = parsed;
-      else if (context.signConvention === "cardPositive") rawSigned = Math.abs(parsed);
+      else if (context.signConvention === "cardPositive") rawSigned = parsed;
       else if (context.signConvention === "cardNegative") rawSigned = parsed;
       else if (context.signConvention === "explicit") rawSigned = parsed;
       else rawSigned = parsed;

@@ -142,6 +142,10 @@ const norm = (value: string) =>
     .trim()
     .toLowerCase();
 
+const matchesHeader = (cell: string, key: string): boolean =>
+  cell === key ||
+  (key.length <= 3 ? cell.split(" ").includes(key) : cell.length <= 40 && cell.includes(key));
+
 /** Header words -> column index, using the preset's exact words before a loose match. */
 export function presetMapping(preset: ImportPreset, header: readonly string[]): ImportMapping {
   const map = emptyImportMapping();
@@ -151,10 +155,22 @@ export function presetMapping(preset: ImportPreset, header: readonly string[]): 
     MappingField,
     readonly string[],
   ][]) {
+    // Resolve every exact word first: a loose match for an earlier word must not shadow an
+    // exact header that appears in a later alias.
+    let exact = -1;
     for (const word of words) {
       const key = norm(word);
-      const exact = cols.findIndex((c, i) => !used.has(i) && c === key);
-      const loose = exact >= 0 ? exact : cols.findIndex((c, i) => !used.has(i) && c.includes(key));
+      exact = cols.findIndex((c, i) => !used.has(i) && c === key);
+      if (exact >= 0) {
+        map[field] = exact;
+        used.add(exact);
+        break;
+      }
+    }
+    if (exact >= 0) continue;
+    for (const word of words) {
+      const key = norm(word);
+      const loose = cols.findIndex((c, i) => !used.has(i) && matchesHeader(c, key));
       if (loose >= 0) {
         map[field] = loose;
         used.add(loose);

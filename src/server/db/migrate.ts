@@ -77,6 +77,8 @@ export function runMigrations(db: Database.Database): void {
       "084_pension_sync_logs.sql",
       "085_pension_multi_connections.sql",
       "087_asset_snapshots_details.sql",
+      "088_import_dedup_account_identity.sql",
+      "089_account_balance_identity.sql",
     ].some((f) => !applied.has(f) && files.includes(f))
       ? backupBeforeProfiles(db)
       : null;

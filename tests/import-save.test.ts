@@ -220,3 +220,129 @@ describe("saveImport", () => {
 });
 
 // Type-only import guard used by older TS settings.
+it("keeps equal rows on two providers with the same account number", () => {
+  const leumi = resolveAccount(1, {
+    provider: "leumi",
+    kind: "bank",
+    number: "9999",
+    label: "Leumi 9999",
+    create: true,
+  })!.account;
+  const hapoalim = resolveAccount(1, {
+    provider: "hapoalim",
+    kind: "bank",
+    number: "9999",
+    label: "Hapoalim 9999",
+    create: true,
+  })!.account;
+  const rowFor = (accountId: number) => {
+    const normalized = normalizeImportRow(draft("04/02/2024", "Same row", "-30"), {
+      dateOrder: "dmy",
+      signConvention: "bankSigned",
+      accountKind: "bank",
+      accountId,
+      accountCurrency: "ILS",
+      today: "2026-11-26",
+    }).row!;
+    return [{ ...normalized, rowIndex: 1, accountId }];
+  };
+
+  const first = saveImport({
+    workspaceId: 1,
+    accountId: leumi.id,
+    origin: "upload",
+    rows: rowFor(leumi.id),
+  });
+  const second = saveImport({
+    workspaceId: 1,
+    accountId: hapoalim.id,
+    origin: "upload",
+    rows: rowFor(hapoalim.id),
+  });
+
+  expect(first.added).toBe(1);
+  expect(second.added).toBe(1);
+  const hashes = getDb()
+    .prepare(
+      "SELECT dedup_hash AS hash, dedup_hash_legacy AS legacy FROM transactions WHERE account_id IN (?, ?)",
+    )
+    .all(leumi.id, hapoalim.id) as { hash: string; legacy: string }[];
+  expect(hashes).toHaveLength(2);
+  expect(hashes[0].hash).not.toBe(hashes[1].hash);
+  expect(hashes[0].legacy).toBe(hashes[1].legacy);
+});
+describe("saveImport replay and atomicity", () => {
+  it("resolves a client token before the file hash and reruns failed post-commit work", () => {
+    const account = resolveAccount(1, {
+      provider: "leumi",
+      kind: "bank",
+      number: "token-account",
+      label: "Token account",
+      create: true,
+    })!.account;
+    const rows = rowsFor(account.id);
+    const first = saveImport({
+      workspaceId: 1,
+      accountId: account.id,
+      origin: "upload",
+      rows,
+      clientToken: "token-before-hash",
+      fileSha256: "sha-token-before-hash",
+    });
+    expect(first.added).toBe(3);
+
+    getDb()
+      .prepare("UPDATE import_batches SET post_commit_status = 'failed' WHERE id = ?")
+      .run(first.batchId);
+    const replay = saveImport({
+      workspaceId: 1,
+      accountId: account.id,
+      origin: "upload",
+      rows,
+      clientToken: "token-before-hash",
+      fileSha256: "sha-token-before-hash",
+    });
+    expect(replay.batchId).toBe(first.batchId);
+    expect(getImportBatch(1, first.batchId)?.postCommitStatus).toBe("completed");
+    expect(
+      getDb()
+        .prepare("SELECT COUNT(*) AS n FROM transactions WHERE import_batch_id = ?")
+        .get(first.batchId),
+    ).toEqual({ n: 3 });
+  });
+
+  it("rolls back the batch marker when a row write fails", () => {
+    const account = resolveAccount(1, {
+      provider: "leumi",
+      kind: "bank",
+      number: "rollback-account",
+      label: "Rollback account",
+      create: true,
+    })!.account;
+    const rows = rowsFor(account.id);
+    rows[0].description = "__force_insert_failure__";
+    getDb().exec(
+      `CREATE TRIGGER IF NOT EXISTS force_import_failure BEFORE INSERT ON transactions
+       WHEN NEW.description = '__force_insert_failure__'
+       BEGIN SELECT RAISE(ABORT, 'forced failure'); END;`,
+    );
+    try {
+      expect(() =>
+        saveImport({
+          workspaceId: 1,
+          accountId: account.id,
+          origin: "upload",
+          rows,
+          clientToken: "atomic-failure-token",
+        }),
+      ).toThrow();
+    } finally {
+      getDb().exec("DROP TRIGGER IF EXISTS force_import_failure");
+    }
+    expect(
+      getDb()
+        .prepare("SELECT COUNT(*) AS n FROM import_batches WHERE client_token = ?")
+        .get("atomic-failure-token"),
+    ).toEqual({ n: 0 });
+  });
+});

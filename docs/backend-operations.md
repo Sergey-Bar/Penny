@@ -22,6 +22,22 @@ New workspaces start `off`. Enabling a workspace queues one `reclassify.workspac
 `integrity.check` and `intelligence.refresh`; after validation the default can be raised to
 `on`. Roll back by setting the workspace to `off` (or the env override).
 
+## Import migrations 088/089 (0.7.0)
+
+- `088_import_dedup_account_identity.sql` adds `transactions.dedup_hash_legacy`, backfills it
+  from the old hash, and indexes it. New imports hash the account identity into `dedup_hash`
+  while keeping the old hash in the legacy column. It also adds `import_batches.post_commit_status`
+  /`post_commit_error` and the `pending_file_cleanup` queue.
+- `089_account_balance_identity.sql` rebuilds `account_balances` with one row per linked account
+  and a separate legacy row per provider+number until the account is known. Duplicate linked
+  rows keep the newest balance. **This migration is one-way:** an image rollback cannot write
+  against the new partial indexes, so roll back by restoring the pre-migration database backup
+  (the updater keeps the previous backup).
+- A batch with `post_commit_status` of `pending`/`running`/`failed` is rerun by a client-token
+  retry. `pending_file_cleanup` is swept after every undo; failed unlinks stay queued with an
+  attempt count and error.
+
+
 ## Migration 082
 
 `082_backend_jobs.sql` is additive. It creates:

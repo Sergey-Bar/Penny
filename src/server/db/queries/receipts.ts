@@ -72,20 +72,71 @@ export function getReceipt(workspaceId: number, id: number): Receipt | null {
 
 /** The file on disk, or null. The path is built from stored values only and must stay inside the folder. */
 export function receiptFile(workspaceId: number, r: Receipt): string | null {
+  const file = receiptPath(workspaceId, r);
+  return file && fs.existsSync(file) ? file : null;
+}
+
+/** The file's expected path even if it is already missing, for post-commit cleanup. */
+export function receiptPath(workspaceId: number, r: Receipt): string | null {
   const folder = path.resolve(folderOf(workspaceId, r.transactionId));
   const file = path.resolve(folder, r.fileName);
   if (!file.startsWith(folder + path.sep)) return null;
-  return fs.existsSync(file) ? file : null;
+  return file;
+}
+
+/** Delete the record only; the caller queues the file for cleanup after its transaction commits. */
+export function deleteReceiptRecord(workspaceId: number, id: number): Receipt | null {
+  const r = getReceipt(workspaceId, id);
+  if (!r) return null;
+  getDb()
+    .prepare("DELETE FROM transaction_receipts WHERE workspace_id = ? AND id = ?")
+    .run(workspaceId, id);
+  return r;
+}
+
+export function queueFileCleanup(filePath: string): void {
+  getDb().prepare("INSERT OR IGNORE INTO pending_file_cleanup (path) VALUES (?)").run(filePath);
+}
+
+/** Retry queued unlinks. A failure keeps the row for the next sweep instead of losing the path. */
+export function processFileCleanup(limit = 200): number {
+  const db = getDb();
+  const receiptsRoot = path.resolve(dataDir(), "receipts");
+  const rows = db
+    .prepare("SELECT id, path FROM pending_file_cleanup ORDER BY id LIMIT ?")
+    .all(limit) as { id: number; path: string }[];
+  if (rows.length === 0) return 0;
+  let removed = 0;
+  for (const row of rows) {
+    const target = path.resolve(row.path);
+    // A restored or crafted database must not be able to unlink arbitrary host files through the
+    // cleanup queue. Only paths under data/receipts are removable.
+    if (!target.startsWith(receiptsRoot + path.sep)) {
+      db.prepare("DELETE FROM pending_file_cleanup WHERE id = ?").run(row.id);
+      continue;
+    }
+    try {
+      fs.rmSync(target, { force: true });
+      db.prepare("DELETE FROM pending_file_cleanup WHERE id = ?").run(row.id);
+      removed++;
+    } catch (error) {
+      db.prepare(
+        "UPDATE pending_file_cleanup SET attempts = attempts + 1, last_error = ? WHERE id = ?",
+      ).run(error instanceof Error ? error.message.slice(0, 300) : "unlink failed", row.id);
+    }
+  }
+  return removed;
 }
 
 export function deleteReceipt(workspaceId: number, id: number): boolean {
-  const r = getReceipt(workspaceId, id);
-  if (!r) return false;
-  const file = receiptFile(workspaceId, r);
-  if (file) fs.rmSync(file, { force: true });
-  return (
-    getDb()
-      .prepare("DELETE FROM transaction_receipts WHERE workspace_id = ? AND id = ?")
-      .run(workspaceId, id).changes > 0
-  );
+  const db = getDb();
+  const deleted = db.transaction(() => {
+    const r = deleteReceiptRecord(workspaceId, id);
+    if (!r) return false;
+    const file = receiptPath(workspaceId, r);
+    if (file) queueFileCleanup(file);
+    return true;
+  })();
+  if (deleted) processFileCleanup();
+  return deleted;
 }

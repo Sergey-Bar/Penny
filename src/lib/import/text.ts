@@ -30,10 +30,22 @@ const AMOUNT_PATTERN =
   /(?:\(|-)?(?:\d{1,3}(?:[,\s]\d{3})+|\d+)(?:\.\d{1,2})?(?:\)|-)?(?:\s*(?:₪|ש"ח|ILS|CR|DR))?/g;
 
 /** The last money-looking token on a line, with its sign and CR/DR marker. */
-function findAmounts(
-  line: string,
-): { raw: string; start: number; end: number; negative: boolean; credit: boolean }[] {
-  const out: { raw: string; start: number; end: number; negative: boolean; credit: boolean }[] = [];
+function findAmounts(line: string): {
+  raw: string;
+  start: number;
+  end: number;
+  negative: boolean;
+  credit: boolean;
+  debit: boolean;
+}[] {
+  const out: {
+    raw: string;
+    start: number;
+    end: number;
+    negative: boolean;
+    credit: boolean;
+    debit: boolean;
+  }[] = [];
   for (const match of line.matchAll(AMOUNT_PATTERN)) {
     const raw = match[0].trim();
     if (!raw || !/\d/.test(raw)) continue;
@@ -45,6 +57,7 @@ function findAmounts(
       end: (match.index ?? 0) + raw.length,
       negative,
       credit: /\bCR\b/i.test(raw),
+      debit: /\bDR\b/i.test(raw),
     });
   }
   return out;
@@ -92,13 +105,14 @@ export function parseStatementText(
       cleanDescription(rest.slice(0, chosen.start)) ||
       cleanDescription(rest.replace(chosen.raw, ""));
     if (!description || /^\d+$/.test(description)) continue;
-    const positive = !chosen.negative;
+    const negative = value < 0 || chosen.negative;
+    const positive = chosen.debit ? false : chosen.credit ? true : !negative;
     rows.push({
       date,
       description,
       amount: roundCents(Math.abs(value)),
       // A bank credit is income in the text path; a card export is handled by the file importer.
-      kind: positive || chosen.credit ? "income" : "expense",
+      kind: positive ? "income" : "expense",
       confidence: description.length >= 3 && amounts.length <= 4 ? 0.85 : 0.6,
     });
   }

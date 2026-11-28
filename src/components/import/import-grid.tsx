@@ -65,9 +65,13 @@ export function ImportGrid({
 }: Props) {
   const [page, setPage] = useState(0);
   const pages = Math.max(1, Math.ceil(drafts.length / PAGE));
+  const currentPage = Math.min(page, pages - 1);
   const visible = useMemo(
-    () => drafts.map((draft, index) => ({ draft, index })).slice(page * PAGE, page * PAGE + PAGE),
-    [drafts, page],
+    () =>
+      drafts
+        .map((draft, index) => ({ draft, index }))
+        .slice(currentPage * PAGE, currentPage * PAGE + PAGE),
+    [drafts, currentPage],
   );
 
   const categoriesFor = (kind: string) =>
@@ -137,7 +141,13 @@ export function ImportGrid({
                     <Input
                       value={draft.amount}
                       aria-label={labels.amount}
-                      onChange={(event) => onChange(index, { amount: event.target.value })}
+                      onChange={(event) =>
+                        onChange(index, {
+                          amount: event.target.value,
+                          debit: null,
+                          credit: null,
+                        })
+                      }
                       className="h-8 w-24 px-2 text-end tabular-nums"
                       dir="ltr"
                     />
@@ -243,19 +253,10 @@ export function ImportGrid({
                     />
                   </td>
                   <td className="px-1 py-1">
-                    <Input
-                      aria-label={labels.tags}
-                      value={draft.tags.join(", ")}
-                      onChange={(event) =>
-                        onChange(index, {
-                          tags: event.target.value
-                            .split(",")
-                            .map((tag) => tag.trim())
-                            .filter(Boolean)
-                            .slice(0, 20),
-                        })
-                      }
-                      className="h-8 min-w-28 px-2"
+                    <TagsInput
+                      label={labels.tags}
+                      value={draft.tags}
+                      onCommit={(tags) => onChange(index, { tags })}
                     />
                   </td>
                   <td className="px-1 py-1">
@@ -297,23 +298,61 @@ export function ImportGrid({
             type="button"
             variant="outline"
             size="sm"
-            disabled={page === 0}
-            onClick={() => setPage((p) => p - 1)}
+            disabled={currentPage === 0}
+            onClick={() => setPage(Math.max(0, currentPage - 1))}
           >
             {labels.prev}
           </Button>
-          <span>{labels.page(page + 1, pages)}</span>
+          <span>{labels.page(currentPage + 1, pages)}</span>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={page + 1 >= pages}
-            onClick={() => setPage((p) => p + 1)}
+            disabled={currentPage + 1 >= pages}
+            onClick={() => setPage(Math.min(pages - 1, currentPage + 1))}
           >
             {labels.next}
           </Button>
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Local text buffer so a comma or a trailing space can be typed. Parsing on every keystroke
+ * would immediately rewrite "food, " to "food" and make a second tag impossible to enter.
+ */
+function TagsInput({
+  value,
+  label,
+  onCommit,
+}: {
+  value: string[];
+  label: string;
+  onCommit: (tags: string[]) => void;
+}) {
+  const joined = value.join(", ");
+  const [draft, setDraft] = useState({ source: joined, text: joined });
+  const text = draft.source === joined ? draft.text : joined;
+  const commit = () =>
+    onCommit(
+      text
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+        .slice(0, 20),
+    );
+  return (
+    <Input
+      aria-label={label}
+      value={text}
+      onChange={(event) => setDraft({ source: joined, text: event.target.value })}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") event.currentTarget.blur();
+      }}
+      className="h-8 min-w-28 px-2"
+    />
   );
 }

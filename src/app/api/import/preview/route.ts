@@ -19,7 +19,7 @@ export const POST = handle("import/preview", async (request: Request) => {
   const body = await readBody<{ accountId?: number; rows?: unknown }>(request);
   if (typeof body.accountId !== "number" || !Number.isInteger(body.accountId))
     throw new ApiError("account is required", 400, "accountMissing");
-  const rows = coerceNormalizedRows(body.rows);
+  const rows = coerceNormalizedRows(body.rows, { accountId: body.accountId });
   const members = getAppSettings(workspaceId).household.members.map((m) => m.id);
   return NextResponse.json(previewImport(workspaceId, body.accountId, rows, { members }));
 });

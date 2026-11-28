@@ -6472,6 +6472,7 @@
     "seriesDeleted": "Recurring item removed"
   },
   "importV2": {
+    "partialEditBlocked": "This import was partially saved. Retry the unchanged rows, or cancel and undo the partial batch before editing.",
     "source": {
       "title": "File",
       "drop": "Drop a file here or click to choose",

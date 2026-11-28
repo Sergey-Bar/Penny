@@ -2,10 +2,15 @@ import { ApiError, handle } from "@/server/lib/api-error";
 import { NextResponse } from "next/server";
 import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
 import { getPendingFile } from "@/server/db/queries/imports";
-import { ignorePending, parsePending, retryPending } from "@/server/lib/import/pending";
+import {
+  finishPending,
+  ignorePending,
+  parsePending,
+  retryPending,
+} from "@/server/lib/import/pending";
 import { requireImportEditor, readBody } from "@/server/lib/import/request";
 
-type Action = "import" | "open" | "ignore" | "retry";
+type Action = "import" | "open" | "ignore" | "retry" | "finish";
 
 /** POST /api/import/pending/:id — open/import (parse into the workbench), ignore, retry. */
 export const POST = handle(
@@ -30,6 +35,10 @@ export const POST = handle(
     if (action === "retry") {
       retryPending(workspaceId, pendingId);
       return NextResponse.json({ ok: true, status: "pending" });
+    }
+    if (action === "finish") {
+      finishPending(workspaceId, pendingId);
+      return NextResponse.json({ ok: true, status: "imported" });
     }
     const parsed = await parsePending(workspaceId, pendingId, {
       sheetName: body.sheetName ?? null,

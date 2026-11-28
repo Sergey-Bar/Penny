@@ -20,29 +20,44 @@ interface ReclassifyRow {
 
 const SAFE_SOURCES = new Set(["default", "sign", "pattern", "sync"]);
 
-function hasCardCoverage(workspaceId: number, date: string): boolean {
+function hasCardCoverage(workspaceId: number, id: number, date: string, amount: number): boolean {
+  const tolerance = Math.max(0.05, Math.abs(amount) * 0.005);
   return (
     getDb()
       .prepare(
         `SELECT 1 FROM transactions t JOIN accounts a ON a.id = t.account_id
-         WHERE t.workspace_id = ? AND a.kind = 'card'
+         WHERE t.workspace_id = ? AND t.id != ? AND a.kind = 'card'
            AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(?, 1, 10))) <= 45
+           AND (
+             t.linked_txn_id = ? OR t.transfer_pair_id = ?
+             OR abs(abs(t.charged_amount) - ?) <= ?
+           )
          LIMIT 1`,
       )
-      .get(workspaceId, date) !== undefined
+      .get(workspaceId, id, date, id, id, Math.abs(amount), tolerance) !== undefined
   );
 }
 
-function hasTransferPair(workspaceId: number, id: number, date: string, amount: number): boolean {
+function hasTransferPair(
+  workspaceId: number,
+  id: number,
+  accountId: number | null,
+  accountNumber: string,
+  date: string,
+  amount: number,
+): boolean {
   return (
     getDb()
       .prepare(
         `SELECT 1 FROM transactions
          WHERE workspace_id = ? AND id != ? AND charged_amount = ?
+           AND (? IS NULL OR account_id IS NULL OR account_id != ?)
+           AND (? IS NOT NULL OR account_number != ?)
            AND abs(julianday(substr(date, 1, 10)) - julianday(substr(?, 1, 10))) <= 2
          LIMIT 1`,
       )
-      .get(workspaceId, id, -amount, date) !== undefined
+      .get(workspaceId, id, -amount, accountId, accountId, accountId, accountNumber, date) !==
+    undefined
   );
 }
 
@@ -99,7 +114,8 @@ function reclassifyTransactions(
               accountKindStmt.get(workspaceId, row.account_id) as
                 { kind: "bank" | "card" | "other" } | undefined
             )?.kind ?? "bank");
-      const signConvention: SignConvention = accountKind === "card" ? "cardPositive" : "bankSigned";
+      // Stored card rows are already normalized: charges are negative and refunds positive.
+      const signConvention: SignConvention = accountKind === "card" ? "cardNegative" : "bankSigned";
       const result = classifyKind({
         description: row.description,
         rawSigned: row.charged_amount,
@@ -107,8 +123,15 @@ function reclassifyTransactions(
         explicitKind: "auto",
         accountKind,
         signConvention,
-        hasCardCoverage: hasCardCoverage(workspaceId, row.date),
-        hasTransferPair: hasTransferPair(workspaceId, row.id, row.date, row.charged_amount),
+        hasCardCoverage: hasCardCoverage(workspaceId, row.id, row.date, row.charged_amount),
+        hasTransferPair: hasTransferPair(
+          workspaceId,
+          row.id,
+          row.account_id,
+          row.account_number,
+          row.date,
+          row.charged_amount,
+        ),
         allPositive: false,
       });
       const changedKind = result.kind !== row.kind;
@@ -132,10 +155,6 @@ function reclassifyTransactions(
   // Pairing writes flow_type and the transfer links; it must run after the kinds settle.
   reconcileFlows(workspaceId);
   return { checked, changed };
-}
-
-export function reclassifyAccount(workspaceId: number, accountId: number) {
-  return reclassifyTransactions(workspaceId, { accountId });
 }
 
 export function reclassifyBatch(workspaceId: number, batchId: number) {

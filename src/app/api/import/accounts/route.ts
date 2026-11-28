@@ -2,13 +2,30 @@ import { ApiError, handle } from "@/server/lib/api-error";
 import { NextResponse } from "next/server";
 import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
 import {
-  createAccount,
+  createAccountResult,
   getAccountBalance,
   listAccounts,
   mergeAccounts,
   resolveAccount,
 } from "@/server/db/queries/accounts";
 import { requireImportEditor, readBody } from "@/server/lib/import/request";
+import { z } from "zod";
+
+const accountBodySchema = z
+  .object({
+    action: z.enum(["create", "resolve", "merge"]).optional(),
+    provider: z.string().max(60).optional(),
+    kind: z.enum(["bank", "card", "other"]).optional(),
+    number: z.string().max(100).optional(),
+    label: z.string().max(200).optional(),
+    currency: z.string().max(12).optional(),
+    aliases: z.array(z.string().max(200)).max(20).optional(),
+    accountId: z.number().int().positive().optional(),
+    sourceId: z.number().int().positive().optional(),
+    targetId: z.number().int().positive().optional(),
+    create: z.boolean().optional(),
+  })
+  .strict();
 
 /** GET /api/import/accounts — the workspace's accounts and their latest balance. */
 export const GET = handle("import/accounts", async (request: Request) => {
@@ -39,7 +56,10 @@ interface AccountBody {
 export const POST = handle("import/accounts", async (request: Request) => {
   const workspaceId = getWorkspaceIdFromRequest(request);
   requireImportEditor(request, workspaceId);
-  const body = await readBody<AccountBody>(request);
+  const raw = await readBody<AccountBody>(request);
+  const parsed = accountBodySchema.safeParse(raw);
+  if (!parsed.success) throw new ApiError("Invalid account request", 400, "bad_json");
+  const body = parsed.data;
   if (body.action === "merge") {
     if (typeof body.sourceId !== "number" || typeof body.targetId !== "number")
       throw new ApiError("sourceId and targetId are required", 400, "bad_json");
@@ -59,15 +79,13 @@ export const POST = handle("import/accounts", async (request: Request) => {
   }
   if (!body.label && !body.number)
     throw new ApiError("label or number is required", 400, "bad_json");
-  return NextResponse.json({
-    account: createAccount(workspaceId, {
-      provider: body.provider,
-      kind: body.kind,
-      number: body.number,
-      label: body.label ?? body.number ?? "",
-      currency: body.currency,
-      aliases: body.aliases,
-    }),
-    created: true,
+  const created = createAccountResult(workspaceId, {
+    provider: body.provider,
+    kind: body.kind,
+    number: body.number,
+    label: body.label ?? body.number ?? "",
+    currency: body.currency,
+    aliases: body.aliases,
   });
+  return NextResponse.json(created);
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -126,12 +126,56 @@ const post = <T,>(url: string, body: unknown) =>
     body: JSON.stringify(body),
   });
 
+function emptyPreviewSummary(): ImportSummary {
+  return {
+    ready: 0,
+    duplicates: 0,
+    possibleDuplicates: 0,
+    errors: 0,
+    skipped: 0,
+    needsReview: 0,
+    autoCategorized: 0,
+    expenses: 0,
+    income: 0,
+    transfers: 0,
+    net: 0,
+    byAccount: [],
+  };
+}
+
+function addPreviewSummary(target: ImportSummary, source: ImportSummary): void {
+  target.ready += source.ready;
+  target.duplicates += source.duplicates;
+  target.possibleDuplicates += source.possibleDuplicates;
+  target.errors += source.errors;
+  target.skipped += source.skipped;
+  target.needsReview += source.needsReview;
+  target.autoCategorized += source.autoCategorized;
+  target.expenses += source.expenses;
+  target.income += source.income;
+  target.transfers += source.transfers;
+  target.net += source.net;
+  const byAccount = new Map(target.byAccount.map((entry) => [entry.accountId, entry] as const));
+  for (const entry of source.byAccount) {
+    const existing = byAccount.get(entry.accountId);
+    if (existing) {
+      existing.count += entry.count;
+      existing.net += entry.net;
+    } else {
+      target.byAccount.push({ ...entry });
+    }
+  }
+}
+
 /** The v2 import workbench: parse, map, edit, preview, save, undo. */
 export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?: string }) {
   const t = useTranslations("importV2");
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [pasteText, setPasteText] = useState("");
+  const [sourceText, setSourceText] = useState<string | null>(null);
+  const [sourceName, setSourceName] = useState<string | null>(null);
+  const [documentName, setDocumentName] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<number | null>(null);
   const [parse, setParse] = useState<ParseDto | null>(null);
   const [drafts, setDrafts] = useState<ImportDraftRow[]>([]);
@@ -157,6 +201,14 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
     number: string;
     kind: "bank" | "card" | "other";
   }>({ label: defaultAccountLabel ?? "", number: "", kind: "bank" });
+  const [pendingSave, setPendingSave] = useState<{
+    groupId: string | null;
+    token: string;
+    fingerprint: string;
+  } | null>(null);
+  const [showNewAccount, setShowNewAccount] = useState(false);
+  const parseSequence = useRef(0);
+  const previewSequence = useRef(0);
 
   const accountsQuery = useQuery({
     queryKey: ["import-v2-accounts"],
@@ -225,8 +277,9 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
   }, []);
 
   const applyParse = useCallback(
-    async (result: ParseDto, pending: number | null) => {
+    async (result: ParseDto, pending: number | null, isCurrent: () => boolean) => {
       const allDrafts = await loadAll(result);
+      if (!isCurrent()) return;
       setParse(result);
       setMapping(result.mapping);
       setDateOrder(result.dateOrder);
@@ -249,19 +302,28 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
 
   const parseSource = useCallback(
     async (
-      source: { file?: File; text?: string; name?: string; pending?: number },
+      source: { file?: File; text?: string; name?: string; pending?: number; displayName?: string },
       options: Record<string, unknown> = {},
     ) => {
+      const request = ++parseSequence.current;
+      const isCurrent = () => request === parseSequence.current;
       setParsing(true);
       setError(null);
       try {
         if (source.pending != null) {
+          setSourceText(null);
+          setSourceName(null);
+          setDocumentName(null);
           const result = await post<ParseDto>(`/api/import/pending/${source.pending}`, {
             action: "open",
             ...options,
           });
-          await applyParse(result, source.pending);
+          if (!isCurrent()) return;
+          await applyParse(result, source.pending, isCurrent);
         } else if (source.file) {
+          setSourceText(null);
+          setSourceName(null);
+          setDocumentName(null);
           const form = new FormData();
           form.append("file", source.file);
           form.append("options", JSON.stringify({ limit: 1000, ...options }));
@@ -269,8 +331,12 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
             method: "POST",
             body: form,
           });
-          await applyParse(result, null);
+          if (!isCurrent()) return;
+          await applyParse(result, null, isCurrent);
         } else if (source.text) {
+          setSourceText(source.text);
+          setSourceName(source.name ?? source.displayName ?? "הודבק.csv");
+          setDocumentName(source.displayName ?? null);
           const virtual = new File([source.text], source.name ?? "הודבק.csv", {
             type: "text/plain",
           });
@@ -281,12 +347,13 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
             method: "POST",
             body: form,
           });
-          await applyParse(result, null);
+          if (!isCurrent()) return;
+          await applyParse(result, null, isCurrent);
         }
       } catch (cause) {
-        parseError(cause);
+        if (isCurrent()) parseError(cause);
       } finally {
-        setParsing(false);
+        if (isCurrent()) setParsing(false);
       }
     },
     [applyParse, parseError],
@@ -312,6 +379,7 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
       await parseSource({
         text: lines.join("\n"),
         name: file.name.replace(/\.[^.]+$/, ".csv"),
+        displayName: file.name,
       });
     } catch (cause) {
       parseError(cause);
@@ -332,53 +400,116 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
     };
     if (file) void parseSource({ file }, options);
     else if (pendingId != null) void parseSource({ pending: pendingId }, options);
+    else if (sourceText)
+      void parseSource(
+        {
+          text: sourceText,
+          name: sourceName ?? undefined,
+          displayName: documentName ?? undefined,
+        },
+        options,
+      );
     else if (pasteText) void parseSource({ text: pasteText }, options);
   };
 
-  const normalized = useMemo<NormalizedRow[]>(() => {
-    if (!account) return [];
-    return drafts
-      .filter((row) => row.include)
-      .map((row) =>
-        normalizeImportRow(
-          { ...row, accountId: account.id },
-          {
-            dateOrder,
-            signConvention,
-            accountKind: account.kind,
-            accountId: account.id,
-            accountCurrency: account.currency,
-            today: israelToday(),
-            hasCardCoverage: accounts.some((candidate) => candidate.kind === "card"),
-            hasTransferPair: false,
-          },
-        ),
-      )
-      .map((result) => result.row)
-      .filter((row): row is NormalizedRow => row != null);
-  }, [drafts, account, dateOrder, signConvention, accounts]);
+  const { normalized, localErrors } = useMemo<{
+    normalized: NormalizedRow[];
+    localErrors: PreviewRow[];
+  }>(() => {
+    if (!account) return { normalized: [], localErrors: [] };
+    const accountsById = new Map(accounts.map((candidate) => [candidate.id, candidate] as const));
+    const rows: NormalizedRow[] = [];
+    const errors: PreviewRow[] = [];
+    for (const row of drafts) {
+      if (!row.include) continue;
+      const rowAccount = accountsById.get(row.accountId ?? account.id) ?? account;
+      const result = normalizeImportRow(
+        { ...row, accountId: rowAccount.id },
+        {
+          dateOrder,
+          signConvention,
+          accountKind: rowAccount.kind,
+          accountId: rowAccount.id,
+          accountCurrency: rowAccount.currency,
+          today: israelToday(),
+          hasCardCoverage: accounts.some((candidate) => candidate.kind === "card"),
+          hasTransferPair: false,
+        },
+      );
+      if (result.row) {
+        rows.push(result.row);
+        continue;
+      }
+      // A row the normalizer rejects must not look "valid" in the grid just because the server
+      // preview never saw it.
+      const code = result.reasons.find((reason) =>
+        [
+          "dateMissing",
+          "dateInvalid",
+          "amountMissing",
+          "amountInvalid",
+          "amountZero",
+          "amountRange",
+        ].includes(reason.code),
+      )?.code;
+      errors.push({
+        rowIndex: row.rowIndex,
+        status: "error",
+        code: code ?? result.reasons[0]?.code ?? null,
+        kind: row.kind === "income" ? "income" : row.kind === "transfer" ? "transfer" : "expense",
+        kindSource: "default",
+        categoryId: null,
+        categorySource: null,
+        confidence: 0,
+        reasons: result.reasons,
+      });
+    }
+    return { normalized: rows, localErrors: errors };
+  }, [drafts, account, accounts, dateOrder, signConvention]);
 
   useEffect(() => {
     let cancelled = false;
-    const timer = setTimeout(() => {
-      if (!account || normalized.length === 0) {
-        if (!cancelled) {
+    const request = ++previewSequence.current;
+    const isCurrent = () => !cancelled && request === previewSequence.current;
+    const runPreview = async () => {
+      if (!account || (normalized.length === 0 && localErrors.length === 0)) {
+        if (isCurrent()) {
           setPreview(null);
           setChecking(false);
         }
         return;
       }
-      if (!cancelled) setChecking(true);
-      post<PreviewDto>("/api/import/preview", { accountId: account.id, rows: normalized })
-        .then((result) => {
-          if (!cancelled) setPreview(result);
-        })
-        .catch((cause) => {
-          if (!cancelled) parseError(cause);
-        })
-        .finally(() => {
-          if (!cancelled) setChecking(false);
-        });
+      if (isCurrent()) setChecking(true);
+      try {
+        const groups = new Map<number, NormalizedRow[]>();
+        for (const row of normalized) {
+          const list = groups.get(row.accountId) ?? [];
+          list.push(row);
+          groups.set(row.accountId, list);
+        }
+        const rows: PreviewRow[] = [...localErrors];
+        const summary = emptyPreviewSummary();
+        summary.errors += localErrors.length;
+        for (const [groupId, groupRows] of groups) {
+          for (let offset = 0; offset < groupRows.length; offset += 5000) {
+            const result = await post<PreviewDto>("/api/import/preview", {
+              accountId: groupId,
+              rows: groupRows.slice(offset, offset + 5000),
+            });
+            if (!isCurrent()) return;
+            rows.push(...result.rows);
+            addPreviewSummary(summary, result.summary);
+          }
+        }
+        if (isCurrent()) setPreview({ rows, summary });
+      } catch (cause) {
+        if (isCurrent()) parseError(cause);
+      } finally {
+        if (isCurrent()) setChecking(false);
+      }
+    };
+    const timer = setTimeout(() => {
+      void runPreview();
     }, 600);
     return () => {
       cancelled = true;
@@ -386,12 +517,14 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
     };
     // parseError is stable; the serialized rows make this one dependency for 5000-row grids.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(normalized), account?.id]);
+  }, [JSON.stringify(normalized), JSON.stringify(localErrors), account?.id]);
 
-  const previewMap = useMemo(
-    () => new Map((preview?.rows ?? []).map((row) => [row.rowIndex, row])),
-    [preview],
-  );
+  const previewMap = useMemo(() => {
+    const map = new Map((preview?.rows ?? []).map((row) => [row.rowIndex, row]));
+    // Show a local normalization failure immediately, before the debounced server preview.
+    for (const error of localErrors) if (!map.has(error.rowIndex)) map.set(error.rowIndex, error);
+    return map;
+  }, [preview, localErrors]);
 
   const updateRow = (index: number, patch: Partial<ImportDraftRow>) =>
     setDrafts((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -411,6 +544,7 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
       await queryClient.invalidateQueries({ queryKey: ["import-v2-accounts"] });
       setAccountId(result.account.id);
       setNewAccount({ label: "", number: "", kind: "bank" });
+      setShowNewAccount(false);
     } catch (cause) {
       parseError(cause);
     }
@@ -420,42 +554,65 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
     if (!account || normalized.length === 0) return;
     setSaving(true);
     setError(null);
+    const fingerprint = JSON.stringify({ rows: normalized, includePossible });
+    if (pendingSave && pendingSave.fingerprint !== fingerprint) {
+      parseError(new Error(t("partialEditBlocked")));
+      setSaving(false);
+      return;
+    }
     try {
       const chunkSize = 5000;
-      const groupId = normalized.length > chunkSize ? `g_${crypto.randomUUID()}` : null;
-      const token = crypto.randomUUID();
+      const groups = new Map<number, NormalizedRow[]>();
+      for (const row of normalized) {
+        const list = groups.get(row.accountId) ?? [];
+        list.push(row);
+        groups.set(row.accountId, list);
+      }
+      const needsGroup = normalized.length > chunkSize || groups.size > 1;
+      const groupId = pendingSave?.groupId ?? (needsGroup ? `g_${crypto.randomUUID()}` : null);
+      const token = pendingSave?.token ?? crypto.randomUUID();
+      // Keep the same token and group across a retry so already-committed chunks replay instead
+      // of becoming a second batch.
+      setPendingSave({ groupId, token, fingerprint });
       let firstBatch = 0;
       let added = 0;
       let duplicates = 0;
-      for (let offset = 0; offset < normalized.length; offset += chunkSize) {
-        const chunk = normalized.slice(offset, offset + chunkSize);
-        const isFirst = offset === 0;
-        const isLast = offset + chunkSize >= normalized.length;
-        const result = await post<{ batchId: number; added: number; duplicates: number }>(
-          "/api/import/save",
-          {
-            accountId: account.id,
-            origin: pendingId != null ? "folder" : pasteText ? "paste" : "upload",
-            rows: chunk,
-            fileName: parse?.file.name ?? file?.name ?? null,
-            fileSha256: isFirst ? (parse?.file.sha256 ?? null) : null,
-            fileSize: parse?.file.size ?? file?.size ?? null,
-            sourceFormat: parse?.format ?? null,
-            balance: isFirst ? parse?.balance : null,
-            mapping,
-            header: parse?.header.cells,
-            parseId: isLast ? parse?.parseId : null,
-            pendingId: isLast ? pendingId : null,
-            clientToken: `${token}-${offset / chunkSize}`,
-            groupId,
-            chunkIndex: offset / chunkSize,
-            includePossible,
-            force,
-          },
-        );
-        if (firstBatch === 0) firstBatch = result.batchId;
-        added += result.added;
-        duplicates += result.duplicates;
+      let chunkIndex = 0;
+      for (const [targetAccountId, groupRows] of groups) {
+        for (let offset = 0; offset < groupRows.length; offset += chunkSize) {
+          const chunk = groupRows.slice(offset, offset + chunkSize);
+          const isFirstChunk = chunkIndex === 0;
+          const result = await post<{ batchId: number; added: number; duplicates: number }>(
+            "/api/import/save",
+            {
+              accountId: targetAccountId,
+              origin: pendingId != null ? "folder" : pasteText ? "paste" : "upload",
+              rows: chunk,
+              fileName: parse?.file.name ?? file?.name ?? null,
+              fileSha256: offset === 0 ? (parse?.file.sha256 ?? null) : null,
+              fileSize: parse?.file.size ?? file?.size ?? null,
+              sourceFormat: parse?.format ?? null,
+              balance: isFirstChunk ? parse?.balance : null,
+              mapping,
+              header: parse?.header.cells,
+              parseId: null,
+              pendingId: null,
+              clientToken: `${token}-${targetAccountId}-${offset / chunkSize}`,
+              groupId,
+              chunkIndex,
+              includePossible,
+              force,
+            },
+          );
+          chunkIndex++;
+          if (firstBatch === 0) firstBatch = result.batchId;
+          added += result.added;
+          duplicates += result.duplicates;
+        }
+      }
+      // A fully successful save finishes the pending file once, after every account/chunk.
+      if (pendingId != null) {
+        await post(`/api/import/pending/${pendingId}`, { action: "finish" }).catch(() => null);
       }
       const result = { batchId: firstBatch, added, duplicates };
       for (const key of [
@@ -472,8 +629,12 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
       setDrafts([]);
       setFile(null);
       setPasteText("");
+      setSourceText(null);
+      setSourceName(null);
+      setDocumentName(null);
       setPendingId(null);
       setPreview(null);
+      setPendingSave(null);
       toast.success(t("savedToast", { added: result.added, duplicates: result.duplicates }));
     } catch (cause) {
       const coded = cause as { code?: string; batchId?: number };
@@ -598,7 +759,7 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/30 px-3 py-2">
             <div className="min-w-0 text-footnote">
-              <span className="font-medium">{parse.file.name}</span>
+              <span className="font-medium">{documentName ?? parse.file.name}</span>
               <span className="ms-2 text-muted-foreground">
                 {t("mapping.rows", { count: drafts.length })}
               </span>
@@ -616,6 +777,13 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
                   setParse(null);
                   setDrafts([]);
                   setPreview(null);
+                  setFile(null);
+                  setPasteText("");
+                  setSourceText(null);
+                  setSourceName(null);
+                  setDocumentName(null);
+                  setPendingId(null);
+                  setPendingSave(null);
                 }}
               >
                 {t("mapping.cancel")}
@@ -689,24 +857,35 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
                 </div>
                 <div className="space-y-1.5">
                   <Label>{t("mapping.account")}</Label>
-                  <select
-                    value={effectiveAccountId ?? ""}
-                    onChange={(event) =>
-                      setAccountId(event.target.value ? Number(event.target.value) : null)
-                    }
-                    className="h-9 w-full rounded-md border border-input bg-background px-2 text-footnote"
-                  >
-                    <option value="">{t("mapping.none")}</option>
-                    {accounts.map((candidate) => (
-                      <option key={candidate.id} value={candidate.id}>
-                        {candidate.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex gap-1">
+                    <select
+                      value={effectiveAccountId ?? ""}
+                      onChange={(event) =>
+                        setAccountId(event.target.value ? Number(event.target.value) : null)
+                      }
+                      className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-footnote"
+                    >
+                      <option value="">{t("mapping.none")}</option>
+                      {accounts.map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {candidate.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      aria-label={t("mapping.createAccount")}
+                      onClick={() => setShowNewAccount((value) => !value)}
+                    >
+                      <Plus className="size-3.5" aria-hidden />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
-              {accounts.length === 0 && (
+              {(accounts.length === 0 || showNewAccount) && (
                 <div className="grid gap-2 rounded-lg border border-dashed p-2 sm:grid-cols-4">
                   <Input
                     placeholder={t("mapping.accountLabel")}
@@ -850,6 +1029,14 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
               else {
                 setParse(null);
                 setDrafts([]);
+                setPreview(null);
+                setFile(null);
+                setPasteText("");
+                setSourceText(null);
+                setSourceName(null);
+                setDocumentName(null);
+                setPendingId(null);
+                setPendingSave(null);
               }
             }}
             labels={{

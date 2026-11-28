@@ -328,7 +328,10 @@ async function syncOneCredential(
       saveAccountBalances(workspaceId, provider, result.accounts, toLocalISODate(startDate));
     }
     if (result.securities) {
-      saveBankSecurities(workspaceId, provider, result.securities);
+      saveBankSecurities(workspaceId, provider, result.securities, {
+        credentialId: meta.id,
+        accountNumbers: result.securitiesAccounts,
+      });
     }
     // Off and shadow still run the safe inline steps; the durable path runs them in the job.
     if (!durable || shadow) {

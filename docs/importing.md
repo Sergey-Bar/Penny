@@ -22,10 +22,25 @@ An agent's or advisor's periodic report (pension, study fund, provident and the 
 The new workbench is behind the `import_v2` workspace setting (`PENNY_IMPORT_V2=1` forces it on; new workspaces start with it). It replaces the file card, not the smart sheet.
 
 1. **Choose a source.** Upload CSV/XLSX/HTML or a real `.xls` that is actually HTML, paste statement text, or send a PDF/photo through the AI-assisted document route. Uploads parse in the browser when possible and fall back to the server; folder files are read only from the import folder.
-2. **Map once.** The header row is detected, but every column can be remapped: date, processed date, description, amount, debit/credit, kind, memo, balance, reference, original amount/currency and installments. A card file gets the original amount from "???? ????" and the charged amount from "???? ????"; a bank file can be day-first, month-first or ISO, and the direction can be flipped before saving. A mapping is stored per workspace, not per browser, keyed by format + sheet + header fingerprint.
+2. **Map once.** The header row is detected, but every column can be remapped: date, processed date, description, amount, debit/credit, kind, memo, balance, reference, original amount/currency and installments. A card file gets the original amount from "סכום מקורי" and the charged amount from "סכום חיוב"; a bank file can be day-first, month-first or ISO, and the direction can be flipped before saving. A mapping is stored per workspace, not per browser, keyed by format + sheet + header fingerprint.
 3. **Check the grid.** Every cell is editable: include, kind (expense/income/transfer/refund), account, category, memo. Transfers get no category. A category of the wrong kind is rejected. The status column explains why a row is ready, a duplicate, a possible duplicate or an error.
-4. **Preview.** Duplicates are matched one-to-one by account, amount, date �1, description similarity and reference; a possible duplicate is never skipped silently. Categories come from your own choice, rules, merchant memory, the file's category column, the built-in dictionary (through a stable category key) and patterns, in that order. A generic description like "?????" is not guessed.
+4. **Preview.** Duplicates are matched one-to-one by account, amount, date ±1, description similarity and reference; a possible duplicate is never skipped silently. Categories come from your own choice, rules, merchant memory, the file's category column, the built-in dictionary (through a stable category key) and patterns, in that order. A generic description like "עסקה" is not guessed.
 5. **Save.** The server validates and re-classifies again, then writes the batch and its per-row outcomes. The same file hash returns 409 with the previous batch id unless you force it; the same client token is idempotent. A card bill becomes a transfer only when a card account explains it, and a loan deposit is never income.
 6. **Undo.** Undo one batch or every chunk of a large file. Rows a bank sync has adopted are kept (with your category, notes and tags); imported rows and their receipts are removed, and foreign-key checks stay clean.
 
 Folder files that cannot be parsed appear in the pending inbox, where you can open them in the workbench, retry or ignore. The review inbox now lets you add a memo and mark a row as an internal transfer.
+
+### Import identity and replay (0.7.0)
+
+- A stored row is deduplicated by account identity (provider + account row), not by the printed
+  account number alone, so two providers with the same last four digits can each keep the same
+  transaction. Existing rows keep their old hash readable.
+- A retry with the same client token returns the committed batch even when the file hash would
+  otherwise answer 409. The batch, its rows and the sync-run marker commit together; if
+  categorization or flow reconciliation is interrupted, the batch records `post_commit_status`
+  and the retry finishes it instead of reporting success early.
+- Batch URLs are namespaced: a plain number or `batch-<id>` is an import-v2 batch, `sync-<id>` is
+  a sync run and `sheet-<id>` is a legacy sheet import. A sync-run id can never resolve to a
+  same-numbered v2 batch.
+- Undo removes receipt rows inside the transaction and queued files only after commit; a failed
+  unlink stays in `pending_file_cleanup` for a later sweep.

@@ -57,3 +57,62 @@ describe("transaction receipts", () => {
     expect((await one.GET(new Request("http://127.0.0.1/"), ctx(created.id))).status).toBe(404);
   });
 });
+describe("receipt cleanup on batch undo", () => {
+  it("removes receipt records in the undo transaction and deletes files after commit", async () => {
+    const { getDb } = await import("@/server/db");
+    const { getWorkspaceIdFromRequest } = await import("@/server/lib/workspace-context");
+    const { createImportBatch, createLegacySyncRun, deleteImportBatch } =
+      await import("@/server/db/queries/imports");
+    const { addReceipt, receiptFile } = await import("@/server/db/queries/receipts");
+    const db = getDb();
+    const ws = getWorkspaceIdFromRequest(new Request("http://127.0.0.1/"));
+    const sync = createLegacySyncRun(ws, "undo.csv");
+    const batchId = createImportBatch({
+      workspaceId: ws,
+      accountId: null,
+      syncRunId: sync,
+      origin: "upload",
+      fileName: "undo.csv",
+    });
+    const txn = Number(
+      db
+        .prepare(
+          "INSERT INTO transactions (workspace_id,account_number,date,processed_date,original_amount,original_currency,charged_amount,description,type,status,provider,sync_run_id,dedup_hash,kind,origin,import_batch_id) VALUES (?,'123','2026-11-01','2026-11-01',-100,'ILS',-100,'Shop','normal','completed','file',?,'undo-r1','expense','file',?)",
+        )
+        .run(ws, sync, batchId).lastInsertRowid,
+    );
+    const receipt = addReceipt(ws, txn, {
+      name: "receipt.pdf",
+      mime: "application/pdf",
+      data: Buffer.from("%PDF-1.4"),
+    })!;
+    const file = receiptFile(ws, receipt);
+    expect(file && fs.existsSync(file)).toBe(true);
+
+    const undone = deleteImportBatch(ws, batchId);
+    expect(undone.removed).toBe(1);
+    expect(
+      db
+        .prepare("SELECT COUNT(*) AS n FROM transaction_receipts WHERE transaction_id = ?")
+        .get(txn),
+    ).toEqual({ n: 0 });
+    expect(file && fs.existsSync(file)).toBe(false);
+    expect(db.prepare("SELECT COUNT(*) AS n FROM pending_file_cleanup").get()).toEqual({ n: 0 });
+  });
+});
+
+describe("receipt cleanup path guard", () => {
+  it("does not unlink files outside the receipts directory", async () => {
+    const { getDb } = await import("@/server/db");
+    const { processFileCleanup } = await import("@/server/db/queries/receipts");
+    const victim = path.join(os.tmpdir(), `penny-cleanup-victim-${Date.now()}.txt`);
+    fs.writeFileSync(victim, "keep me");
+    getDb().prepare("INSERT INTO pending_file_cleanup (path) VALUES (?)").run(victim);
+    processFileCleanup();
+    expect(fs.existsSync(victim)).toBe(true);
+    expect(
+      getDb().prepare("SELECT COUNT(*) AS n FROM pending_file_cleanup WHERE path = ?").get(victim),
+    ).toEqual({ n: 0 });
+    fs.rmSync(victim, { force: true });
+  });
+});

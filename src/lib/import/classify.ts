@@ -92,6 +92,16 @@ export function classifyKind(input: ClassifyInput): ClassifyResult {
   }
   if (ruleKind) return result({ kind: ruleKind, kindSource: "rule", confidence: 0.97 });
   if (debitCreditKind) {
+    // A card credit column is a refund, not income: the card is still spending, just reversed.
+    if (accountKind === "card" && debitCreditKind === "income") {
+      return result({
+        kind: "expense",
+        refund: true,
+        kindSource: "column",
+        confidence: 0.95,
+        reasons: [{ code: "debitCredit" }],
+      });
+    }
     return result({
       kind: debitCreditKind,
       kindSource: "column",
@@ -104,7 +114,36 @@ export function classifyKind(input: ClassifyInput): ClassifyResult {
   const negative = rawSigned < 0;
 
   if (accountKind === "card") {
-    if (isRefundLike(description) && positive) {
+    const refundWord = isRefundLike(description);
+    if (input.signConvention === "cardPositive") {
+      // Charges are positive; a negative row (or a positive row the description calls a refund)
+      // is money coming back and must stay an expense with a positive signed amount.
+      if (negative || (positive && refundWord)) {
+        return result({
+          kind: "expense",
+          refund: true,
+          kindSource: "sign",
+          confidence: 0.9,
+          reasons: [{ code: "refundSuggested" }],
+        });
+      }
+      return result({ kind: "expense", kindSource: "sign", confidence: 0.97 });
+    }
+    if (input.signConvention === "cardNegative") {
+      // Charges are negative. A positive row is a credit/refund; a negative refund-worded row in a
+      // mixed statement is also a refund rather than a charge.
+      if (positive || (negative && refundWord)) {
+        return result({
+          kind: "expense",
+          refund: true,
+          kindSource: "sign",
+          confidence: 0.9,
+          reasons: [{ code: "refundSuggested" }],
+        });
+      }
+      return result({ kind: "expense", kindSource: "sign", confidence: 0.95 });
+    }
+    if (negative || (positive && refundWord)) {
       return result({
         kind: "expense",
         refund: true,
@@ -113,10 +152,7 @@ export function classifyKind(input: ClassifyInput): ClassifyResult {
         reasons: [{ code: "refundSuggested" }],
       });
     }
-    if (negative && input.signConvention === "cardNegative") {
-      return result({ kind: "expense", kindSource: "sign", confidence: 0.95 });
-    }
-    return result({ kind: "expense", kindSource: "sign", confidence: positive ? 0.97 : 0.9 });
+    return result({ kind: "expense", kindSource: "sign", confidence: positive ? 0.9 : 0.8 });
   }
 
   // Bank (and any other account): a positive amount can still be a refund or a transfer.

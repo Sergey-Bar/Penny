@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { normalizeMerchantV1, normalizeMerchantV2 } from "@/lib/merchant-normalize";
+import {
+  normalizeMerchant,
+  normalizeMerchantV1,
+  normalizeMerchantV2,
+} from "@/lib/merchant-normalize";
 
 describe("merchant normalization v2", () => {
   it("strips processor prefixes and legal suffixes", () => {
@@ -18,6 +22,10 @@ describe("merchant normalization v2", () => {
   it("folds Hebrew final letters and punctuation", () => {
     expect(normalizeMerchantV2("חנות,")).toBe(normalizeMerchantV2("חנות"));
     expect(normalizeMerchantV2("שופרסל.")).toBe("שופרסל");
+  });
+
+  it("falls back to v1 when v2 normalizes everything away", () => {
+    expect(normalizeMerchant("PAYPAL *")).toBe("paypal");
   });
 
   it("keeps v1 stable for dual reads", () => {

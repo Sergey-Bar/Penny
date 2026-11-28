@@ -37,6 +37,17 @@ export function categorizeLocally(workspaceId: number): number {
       workspaceId,
       txns.map((t) => t.description),
     );
+    // A remembered parent category is still a human decision: include it so it is not lost just
+    // because this pass only offers leaf categories for new suggestions.
+    const allCategories = getAllCategories(workspaceId);
+    const known = new Set(categories.map((category) => category.id));
+    for (const remembered of memory.values()) {
+      if (known.has(remembered.categoryId)) continue;
+      const parent = allCategories.find((category) => category.id === remembered.categoryId);
+      if (!parent || parent.kind !== kind) continue;
+      categories.push({ id: parent.id, name: parent.name, kind: parent.kind, key: parent.key });
+      known.add(parent.id);
+    }
     const updates: {
       id: number;
       categoryId: number;
@@ -57,8 +68,8 @@ export function categorizeLocally(workspaceId: number): number {
         { categories },
       );
       if (decision.categoryId == null) continue;
-      // Below the calibrated threshold the row is left for review instead of guessed.
-      if (decision.confidence < 0.7) continue;
+      // Every deterministic source categorizeRow applies here is at or above the 0.7 threshold;
+      // AI decisions are never applied in this local pass.
       updates.push({
         id: t.id,
         categoryId: decision.categoryId,

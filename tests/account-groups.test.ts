@@ -66,4 +66,12 @@ describe("account groups", () => {
       items: [items[0], items[1]],
     });
   });
+
+  it("leaves non-investment groups flat even when they share a provider key", () => {
+    const items = [
+      { id: 1, name: "Checking", value: 300, providerKey: "leumi" },
+      { id: 2, name: "Savings", value: 200, providerKey: "leumi" },
+    ];
+    expect(groupItemsByProvider(items, false).map((entry) => entry.kind)).toEqual(["item", "item"]);
+  });
 });

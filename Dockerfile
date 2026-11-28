@@ -1,7 +1,11 @@
 # Penny in a container: the app, its scrapers and Chromium are isolated from the host,
 # and the database and encryption key live in the /data volume.
 
-FROM node:24-bookworm-slim AS base
+# Pin the multi-architecture node:24-bookworm-slim manifest resolved on 2026-11-27.
+# The tag still ships libpam 1.5.2-6+deb12u2, which Trivy reports as CVE-2025-6020;
+# the runtime stage upgrades it to the fixed version from the Debian security suite. Refresh this digest
+# and the upgrade together when the base image is rebuilt with the fix.
+FROM node:24-bookworm-slim@sha256:873f586f3794f52281bd039bf02c048a0be08fde619338f9941bad1eb6b34530 AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1 \
     # The default scraper drives Chromium; use Debian's package instead of a downloaded browser.
@@ -19,6 +23,7 @@ RUN npm run build && npm prune --omit=dev --no-audit --no-fund
 FROM base AS runtime
 # The container never runs npm: removing it (and npx, corepack) removes the CVEs of its bundled dependencies.
 RUN apt-get update \
+ && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends chromium fonts-noto-core ca-certificates \
  && rm -rf /var/lib/apt/lists/* \
  && mkdir -p /data && chown node:node /data \
