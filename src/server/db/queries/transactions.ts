@@ -135,11 +135,15 @@ export function insertTransactions(
 
   // A row an imported statement already stored (same account and amount, a day apart at most) becomes this
   // synced row in place, so its category, notes and tags stay and it is not counted twice. The bank's version wins.
+  // Only the resolved account, an unlinked row, or a row still on a statement (file) account may
+  // be adopted; a statement row already linked to another bank account belongs to that account.
   const fileTwinStmt = db.prepare(
-    `SELECT id FROM transactions
-     WHERE workspace_id = ? AND provider = 'file' AND account_number = ? AND charged_amount = ?
-       AND abs(julianday(substr(date, 1, 10)) - julianday(substr(?, 1, 10))) <= 1
-     ORDER BY abs(julianday(substr(date, 1, 10)) - julianday(substr(?, 1, 10))) LIMIT 1`,
+    `SELECT t.id FROM transactions t
+     LEFT JOIN accounts a ON a.id = t.account_id
+     WHERE t.workspace_id = ? AND t.provider = 'file' AND t.account_number = ? AND t.charged_amount = ?
+       AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(?, 1, 10))) <= 1
+       AND (t.account_id IS NULL OR t.account_id = ? OR a.provider = 'file')
+     ORDER BY abs(julianday(substr(t.date, 1, 10)) - julianday(substr(?, 1, 10))) LIMIT 1`,
   );
   const exactFileTwin = db.prepare(
     `SELECT id FROM transactions
@@ -231,6 +235,7 @@ export function insertTransactions(
               txn.accountNumber,
               roundCents(txn.chargedAmount),
               params.date,
+              accountId,
               params.date,
             )
           : exactFileTwin.get(workspaceId, hash, sequence, accountId)
@@ -1561,7 +1566,7 @@ export function deleteFileImport(workspaceId: number, batchId: number): number {
 export function listFileImports(workspaceId: number, limit = 50) {
   return getDb()
     .prepare(
-      `SELECT r.id, r.created_at AS createdAt, r.file_name AS fileName,
+      `SELECT r.id, 'sync-' || r.id AS ref, 'sync-' || r.id AS undoRef, r.created_at AS createdAt, r.file_name AS fileName,
          MIN(t.account_number) AS account, COUNT(t.id) AS rows
        FROM sync_runs r JOIN transactions t ON t.sync_run_id = r.id AND t.provider = 'file' AND t.workspace_id = r.workspace_id
        WHERE r.workspace_id = ? AND r.provider = 'file'
@@ -1569,6 +1574,9 @@ export function listFileImports(workspaceId: number, limit = 50) {
     )
     .all(workspaceId, limit) as {
     id: number;
+    ref: string;
+    /** The pre-v2.1 name for the same namespaced reference; kept for compatibility. */
+    undoRef: string;
     createdAt: string;
     fileName: string | null;
     account: string;

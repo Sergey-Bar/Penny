@@ -101,6 +101,33 @@ describe("receipt cleanup on batch undo", () => {
   });
 });
 
+describe("receipt cleanup fairness", () => {
+  it("does not let permanently failing paths starve later cleanup entries", async () => {
+    const { getDb } = await import("@/server/db");
+    const { processFileCleanup } = await import("@/server/db/queries/receipts");
+    const { dataDir } = await import("@/server/lib/data-dir");
+    const db = getDb();
+    db.prepare("DELETE FROM pending_file_cleanup").run();
+    const root = path.join(dataDir(), "receipts");
+    fs.mkdirSync(root, { recursive: true });
+    for (let i = 0; i < 200; i++) {
+      const blocked = path.join(root, `blocked-${i}`);
+      fs.mkdirSync(blocked, { recursive: true });
+      fs.writeFileSync(path.join(blocked, "child.txt"), "x");
+      db.prepare("INSERT INTO pending_file_cleanup (path) VALUES (?)").run(blocked);
+    }
+    const removable = path.join(root, "removable.txt");
+    fs.writeFileSync(removable, "x");
+    db.prepare("INSERT INTO pending_file_cleanup (path) VALUES (?)").run(removable);
+
+    expect(processFileCleanup(200)).toBe(0);
+    expect(fs.existsSync(removable)).toBe(true);
+    // The failed paths now have an attempt; the untouched entry is tried first next sweep.
+    expect(processFileCleanup(200)).toBe(1);
+    expect(fs.existsSync(removable)).toBe(false);
+  });
+});
+
 describe("receipt cleanup path guard", () => {
   it("does not unlink files outside the receipts directory", async () => {
     const { getDb } = await import("@/server/db");

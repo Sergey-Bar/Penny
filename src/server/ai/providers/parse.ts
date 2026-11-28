@@ -2,6 +2,7 @@ import type { CategoryMapping } from "../types";
 
 /** Model confidence is a 1–7 integer; anything else is dropped rather than stored. */
 export function parseConfidence(raw: unknown): number | undefined {
+  if (typeof raw !== "number" && typeof raw !== "string") return undefined;
   const n = typeof raw === "number" ? raw : Number(raw);
   if (!Number.isFinite(n)) return undefined;
   const clamped = Math.round(n);

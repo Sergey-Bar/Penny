@@ -36,10 +36,12 @@ describe("import history and undo", () => {
       "march-again.csv",
     );
     expect(second.added).toBe(1); // the overlap is not counted twice
-    expect(q.listFileImports(ws).map((h) => [h.fileName, h.rows])).toEqual([
+    const history = q.listFileImports(ws);
+    expect(history.map((h) => [h.fileName, h.rows])).toEqual([
       ["march-again.csv", 1],
       ["march.csv", 2],
     ]);
+    expect(history.map((h) => h.ref)).toEqual([`sync-${second.batchId}`, `sync-${first.batchId}`]);
 
     expect(q.deleteFileImport(ws + 1, second.batchId)).toBe(0); // another workspace: nothing
     expect(q.deleteFileImport(ws, second.batchId)).toBe(1);
@@ -48,6 +50,37 @@ describe("import history and undo", () => {
       .all(ws);
     expect(left).toEqual([{ description: "שופרסל" }, { description: "פז" }]);
     expect(q.listFileImports(ws).map((h) => h.id)).toEqual([first.batchId]);
+  });
+
+  it("recognises a row a sync stored under the account identity hash", async () => {
+    const q = await import("@/server/db/queries/transactions");
+    const { createLegacySyncRun } = await import("@/server/db/queries/imports");
+    const txn = {
+      accountNumber: "5555",
+      date: "2026-04-01",
+      processedDate: "2026-04-01",
+      originalAmount: -75,
+      originalCurrency: "ILS",
+      chargedAmount: -75,
+      description: "Book shop",
+      type: "normal" as const,
+      status: "completed" as const,
+    };
+    const synced = q.insertTransactions(
+      ws,
+      [txn],
+      "leumi",
+      null as unknown as number,
+      createLegacySyncRun(ws, null),
+    );
+    expect(synced.added).toBe(1);
+    const file = q.insertFileImport(
+      ws,
+      "5555",
+      [{ date: "2026-04-01", description: "Book shop", amount: -75, seq: 0 }],
+      "bank",
+    );
+    expect(file.added).toBe(0);
   });
 
   it("reclassifies a card bill covered by purchases on the same card", async () => {

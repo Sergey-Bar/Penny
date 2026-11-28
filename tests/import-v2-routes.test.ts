@@ -143,6 +143,42 @@ describe("import v2 routes", () => {
     expect(duplicate.status).toBe(409);
     expect((await duplicate.json()).code).toBe("alreadyImported");
 
+    const resumeForm = new FormData();
+    resumeForm.append(
+      "file",
+      new File([new TextEncoder().encode(CSV)], "resume.csv", { type: "text/csv" }),
+    );
+    const resumeParsed = (await (
+      await parseRoute.POST(
+        new Request("http://127.0.0.1/api/import/parse", { method: "POST", body: resumeForm }),
+      )
+    ).json()) as { rows: { page: ImportDraftRow[] } };
+    const resumeRows = resumeParsed.rows.page.map((draft) => normalized(draft, account));
+    const resumeBody = {
+      accountId: account,
+      origin: "upload",
+      fileName: "resume.csv",
+      fileSha256: "resume-sha",
+      rows: resumeRows,
+    };
+    const firstSave = await saveRoute.POST(json("/api/import/save", resumeBody));
+    expect(firstSave.status).toBe(200);
+    const firstBatch = (await firstSave.json()) as { batchId: number };
+    const { getDb } = await import("@/server/db");
+    getDb()
+      .prepare("UPDATE import_batches SET post_commit_status = 'failed' WHERE id = ?")
+      .run(firstBatch.batchId);
+    const resume = await saveRoute.POST(json("/api/import/save", resumeBody));
+    expect(resume.status).toBe(200);
+    expect((await resume.json()).batchId).toBe(firstBatch.batchId);
+    expect(
+      (
+        getDb()
+          .prepare("SELECT post_commit_status AS status FROM import_batches WHERE id = ?")
+          .get(firstBatch.batchId) as { status: string }
+      ).status,
+    ).toBe("completed");
+
     const context = { params: Promise.resolve({ id: String(saved.batchId) }) };
     const read = await batchRoute.GET(
       new Request(`http://127.0.0.1/api/import/batch/${saved.batchId}`),

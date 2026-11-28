@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Loader2, Plus, RotateCcw, Undo2 } from "lucide-react";
 import { israelToday } from "@/lib/dates";
+import { clearDefaultAccountStamp, statementBalanceAccount } from "@/lib/import/draft";
 import { normalizeImportRow } from "@/lib/import/normalize";
 import { SourcePicker } from "@/components/import/source-picker";
 import { ImportGrid } from "@/components/import/import-grid";
@@ -278,7 +279,7 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
 
   const applyParse = useCallback(
     async (result: ParseDto, pending: number | null, isCurrent: () => boolean) => {
-      const allDrafts = await loadAll(result);
+      const allDrafts = clearDefaultAccountStamp(await loadAll(result), result.account?.id);
       if (!isCurrent()) return;
       setParse(result);
       setMapping(result.mapping);
@@ -574,6 +575,14 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
       // Keep the same token and group across a retry so already-committed chunks replay instead
       // of becoming a second batch.
       setPendingSave({ groupId, token, fingerprint });
+      // The balance belongs to the account of the row that carried the balance cell, never to
+      // whichever account happens to be saved first.
+      const balanceAccountId = statementBalanceAccount(
+        parse?.balance,
+        parse?.header.row ?? 0,
+        normalized,
+        account.id,
+      );
       let firstBatch = 0;
       let added = 0;
       let duplicates = 0;
@@ -581,7 +590,6 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
       for (const [targetAccountId, groupRows] of groups) {
         for (let offset = 0; offset < groupRows.length; offset += chunkSize) {
           const chunk = groupRows.slice(offset, offset + chunkSize);
-          const hasStatementBalance = offset === 0 && targetAccountId === parse?.account?.id;
           const result = await post<{ batchId: number; added: number; duplicates: number }>(
             "/api/import/save",
             {
@@ -592,7 +600,10 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
               fileSha256: offset === 0 ? (parse?.file.sha256 ?? null) : null,
               fileSize: parse?.file.size ?? file?.size ?? null,
               sourceFormat: parse?.format ?? null,
-              balance: hasStatementBalance ? parse?.balance : undefined,
+              balance:
+                offset === 0 && balanceAccountId != null && targetAccountId === balanceAccountId
+                  ? parse?.balance
+                  : null,
               mapping,
               header: parse?.header.cells,
               parseId: null,
@@ -612,7 +623,7 @@ export function ImportWorkbench({ defaultAccountLabel }: { defaultAccountLabel?:
       }
       // A fully successful save finishes the pending file once, after every account/chunk.
       if (pendingId != null) {
-        await post(`/api/import/pending/${pendingId}`, { action: "finish" }).catch(() => null);
+        await post(`/api/import/pending/${pendingId}`, { action: "finish" });
       }
       const result = { batchId: firstBatch, added, duplicates };
       for (const key of [

@@ -5,10 +5,12 @@ import path from "path";
 import type * as Accounts from "@/server/db/queries/accounts";
 
 let accounts: typeof Accounts;
+let getDb: typeof import("@/server/db/index").getDb;
 
 beforeAll(async () => {
   process.env.PENNY_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "penny-accounts-"));
   accounts = await import("@/server/db/queries/accounts");
+  getDb = (await import("@/server/db/index")).getDb;
 });
 
 function create(provider: string, number: string, currency = "ILS") {
@@ -63,6 +65,42 @@ describe("account resolution", () => {
     expect(resolved?.account.id).toBe(usd.id);
     expect(resolved?.ambiguous).toBe(false);
   });
+
+  it("flags an exact provider and number in two currencies as ambiguous", () => {
+    create("mizrahi", "9006", "ILS");
+    create("mizrahi", "9006", "USD");
+    const resolved = accounts.resolveAccount(1, { provider: "mizrahi", number: "9006" });
+    expect(resolved?.ambiguous).toBe(true);
+    expect(resolved?.candidates).toHaveLength(2);
+    const explicit = accounts.resolveAccount(1, {
+      provider: "mizrahi",
+      number: "9006",
+      currency: "USD",
+    });
+    expect(explicit?.ambiguous).toBe(false);
+    expect(explicit?.account.currency).toBe("USD");
+  });
+
+  it("resolves a bank account by label within the same provider", () => {
+    const account = accounts.createAccountResult(1, {
+      provider: "hapoalim",
+      kind: "bank",
+      number: "123",
+      label: "Household",
+      currency: "ILS",
+    }).account;
+    expect(
+      accounts.resolveAccount(1, { provider: "hapoalim", label: "Household", create: true })
+        ?.account.id,
+    ).toBe(account.id);
+    expect(
+      accounts.resolveAccount(1, { provider: "hapoalim", label: "Household", create: false })
+        ?.account.id,
+    ).toBe(account.id);
+    expect(
+      accounts.resolveAccount(1, { provider: "leumi", label: "Household", create: false }),
+    ).toBeNull();
+  });
 });
 
 describe("linked account balances", () => {
@@ -89,6 +127,23 @@ describe("linked account balances", () => {
     });
     expect(accounts.getAccountBalance(1, ils.id)?.balance).toBe(100);
     expect(accounts.getAccountBalance(1, usd.id)?.balance).toBe(25);
+  });
+
+  it("removes the unlinked balance once a linked balance is written", async () => {
+    const { saveAccountBalances } = await import("@/server/db/queries/assets");
+    const account = create("discount", "7200", "ILS");
+    const db = getDb();
+    db.prepare(
+      "INSERT INTO account_balances (workspace_id, provider, account_number, balance, updated_at) VALUES (1, 'discount', '7200', 50, datetime('now'))",
+    ).run();
+    saveAccountBalances(1, "discount", [{ accountNumber: "7200", balance: 75 }], "2026-01-01");
+    const rows = db
+      .prepare(
+        `SELECT account_id AS accountId, balance FROM account_balances
+         WHERE workspace_id = 1 AND provider = 'discount' AND account_number = '7200'`,
+      )
+      .all();
+    expect(rows).toEqual([{ accountId: account.id, balance: 75 }]);
   });
 });
 

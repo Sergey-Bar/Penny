@@ -20,12 +20,15 @@ export function forgetMerchant(
     const ids = transactionIds.filter((id) => Number.isInteger(id) && id > 0);
     if (ids.length === 0) return { forgotten, cleared: 0 };
     const placeholders = ids.map(() => "?").join(",");
+    // A hand-picked category wins: it is kept whatever its origin was when it was picked.
+    // Rule-applied categories are still cleared when their origin says a rule set them.
     const cleared = db
       .prepare(
         `UPDATE transactions SET category_id = NULL, category_source = NULL, category_origin = 'none',
            needs_review = 1, updated_at = datetime('now')
          WHERE workspace_id = ? AND id IN (${placeholders})
-           AND category_origin IN ('memory','dictionary','pattern','rule','ai','none')`,
+           AND category_origin IN ('memory','dictionary','pattern','rule','ai','none')
+           AND (category_source IS NOT 'user' OR category_origin = 'rule')`,
       )
       .run(workspaceId, ...ids).changes;
     db.prepare(

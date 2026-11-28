@@ -27,7 +27,7 @@ const DATE_PATTERNS: readonly RegExp[] = [
 ];
 
 const AMOUNT_PATTERN =
-  /(?:\(|-)?(?:\d{1,3}(?:[,\s]\d{3})+|\d+)(?:\.\d{1,2})?(?:\)|-)?(?:\s*(?:₪|ש"ח|ILS|CR|DR))?/g;
+  /(?:\(|-)?(?:\d{1,3}(?:[,\s]\d{3})+|\d+)(?:\.\d{1,2})?(?:\)|-)?(?:\s*(?:₪|ש"ח|ILS))?(?:\s*(?:CR|DR))?/g;
 
 /** The last money-looking token on a line, with its sign and CR/DR marker. */
 function findAmounts(line: string): {

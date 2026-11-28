@@ -63,14 +63,16 @@ export function categorizeImportRows(
     candidates.map((c) => c.description),
   );
   // Memory may point at a parent category a person chose; resolve it against the full tree
-  // instead of dropping the merchant memory because the categorizer only offers leaves.
+  // instead of dropping the merchant memory because the categorizer only offers leaves. The
+  // parents stay in a memory-only list so suggestion lookups remain leaf-only.
   const allCategories = getAllCategories(workspaceId);
+  const memoryCategories: ImportCategory[] = [...categories];
   const known = new Set(categories.map((category) => category.id));
   for (const remembered of memory.values()) {
     if (known.has(remembered.categoryId)) continue;
     const parent = allCategories.find((category) => category.id === remembered.categoryId);
     if (!parent || parent.kind !== remembered.kind) continue;
-    categories.push({
+    memoryCategories.push({
       id: parent.id,
       name: parent.name,
       kind: parent.kind,
@@ -109,7 +111,7 @@ export function categorizeImportRows(
           options.aiCategories?.get(candidate.rowIndex) ?? candidate.aiCategoryId ?? null,
         userGenericPatterns,
       },
-      { categories },
+      { categories, memoryCategories },
     );
     out.set(candidate.rowIndex, {
       rowIndex: candidate.rowIndex,

@@ -21,32 +21,64 @@ interface ReclassifyRow {
 
 const SAFE_SOURCES = new Set(["default", "sign", "pattern", "sync"]);
 
-function hasCardCoverage(workspaceId: number, id: number, date: string, amount: number): boolean {
+function hasCardCoverage(
+  workspaceId: number,
+  id: number,
+  description: string,
+  date: string,
+  amount: number,
+): boolean {
+  // Only a card bill can be explained by card purchases; other rows never use coverage.
+  if (!isCardBill(description)) return false;
   const tolerance = Math.max(0.05, Math.abs(amount) * 0.005);
-  return (
-    getDb()
-      .prepare(
-        `SELECT 1 FROM transactions t JOIN accounts a ON a.id = t.account_id
-         WHERE t.workspace_id = @workspaceId AND t.id != @id AND a.kind = 'card'
-           AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(@date, 1, 10))) <= 45
-           AND (
-             t.linked_txn_id = @id OR t.transfer_pair_id = @id
-             OR abs(abs(t.charged_amount) - @amount) <= @tolerance
-           )
-         UNION ALL
-         SELECT 1 FROM transactions t JOIN accounts a ON a.id = t.account_id
-         JOIN transactions bill ON bill.id = @id
-         WHERE t.workspace_id = @workspaceId AND t.id != @id AND a.kind = 'card'
-           AND t.status = 'completed' AND t.charged_amount < 0 AND t.is_excluded = 0
-           AND COALESCE(t.charged_currency, t.original_currency)
-             = COALESCE(bill.charged_currency, bill.original_currency)
-           AND substr(t.date, 1, 10) BETWEEN date(@date, '-45 days') AND date(@date)
-         GROUP BY t.account_id
-         HAVING COUNT(*) > 1 AND abs(-sum(t.charged_amount) - @amount) <= @tolerance
-         LIMIT 1`,
-      )
-      .get({ workspaceId, id, date, amount: Math.abs(amount), tolerance }) !== undefined
-  );
+  const db = getDb();
+  const single = db
+    .prepare(
+      `SELECT 1 FROM transactions t JOIN accounts a ON a.id = t.account_id
+       WHERE t.workspace_id = ? AND t.id != ? AND a.kind = 'card'
+         AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(?, 1, 10))) <= 45
+         AND (
+           t.linked_txn_id = ? OR t.transfer_pair_id = ?
+           OR abs(abs(t.charged_amount) - ?) <= ?
+         )
+       LIMIT 1`,
+    )
+    .get(workspaceId, id, date, id, id, Math.abs(amount), tolerance);
+  if (single !== undefined) return true;
+  // A bill can be covered by several completed purchases in the same period (400 + 600 = 1000).
+  // Look for a contiguous run on one card account whose sum matches within tolerance.
+  const charges = db
+    .prepare(
+      `SELECT t.account_id AS accountId, abs(t.charged_amount) AS amount
+       FROM transactions t
+       JOIN accounts a ON a.id = t.account_id
+       JOIN transactions bill ON bill.id = ?
+       WHERE t.workspace_id = ? AND t.id != ? AND a.kind = 'card'
+         AND t.status = 'completed' AND t.charged_amount < 0 AND t.is_excluded = 0
+         AND COALESCE(t.charged_currency, t.original_currency)
+           = COALESCE(bill.charged_currency, bill.original_currency)
+         AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(?, 1, 10))) <= 45
+       ORDER BY t.account_id, t.date, t.id`,
+    )
+    .all(id, workspaceId, id, date) as { accountId: number; amount: number }[];
+  const target = Math.abs(amount);
+  let accountId: number | null = null;
+  let left = 0;
+  let sum = 0;
+  for (let right = 0; right < charges.length; right++) {
+    if (charges[right].accountId !== accountId) {
+      accountId = charges[right].accountId;
+      left = right;
+      sum = 0;
+    }
+    sum += charges[right].amount;
+    while (sum > target + tolerance && left <= right) {
+      sum -= charges[left].amount;
+      left++;
+    }
+    if (Math.abs(sum - target) <= tolerance) return true;
+  }
+  return false;
 }
 
 function hasTransferPair(
@@ -62,8 +94,10 @@ function hasTransferPair(
       .prepare(
         `SELECT 1 FROM transactions
          WHERE workspace_id = ? AND id != ? AND charged_amount = ?
-           AND (? IS NULL OR account_id IS NULL OR account_id != ?)
-           AND (? IS NOT NULL OR account_number != ?)
+           AND (
+             (? IS NOT NULL AND account_id IS NOT NULL AND account_id != ?)
+             OR ((? IS NULL OR account_id IS NULL) AND account_number != ?)
+           )
            AND abs(julianday(substr(date, 1, 10)) - julianday(substr(?, 1, 10))) <= 2
          LIMIT 1`,
       )
@@ -134,9 +168,13 @@ function reclassifyTransactions(
         explicitKind: "auto",
         accountKind,
         signConvention,
-        hasCardCoverage:
-          isCardBill(row.description) &&
-          hasCardCoverage(workspaceId, row.id, row.date, row.charged_amount),
+        hasCardCoverage: hasCardCoverage(
+          workspaceId,
+          row.id,
+          row.description,
+          row.date,
+          row.charged_amount,
+        ),
         hasTransferPair: hasTransferPair(
           workspaceId,
           row.id,

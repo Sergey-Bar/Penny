@@ -52,7 +52,8 @@ export const POST = handle("import/save", async (request: Request) => {
       body.clientToken != null ? getBatchByClientToken(workspaceId, body.clientToken) : null;
     if (body.fileSha256 && body.force !== true && !tokenBatch) {
       const existing = findBatchBySha(workspaceId, body.fileSha256, body.accountId);
-      if (existing)
+      // An unfinished post-commit pass is resumed by saveImport, not reported as imported.
+      if (existing && existing.postCommitStatus === "completed")
         return NextResponse.json(
           {
             error: "This file was already imported",

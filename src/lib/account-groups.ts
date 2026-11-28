@@ -30,6 +30,22 @@ export function accountGroupOf(a: Pick<Asset, "type" | "isLiability" | "source">
   return "other";
 }
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Removes a provider-group house prefix (both languages, plus the short "אקסלנס" label). */
+export function stripInvestmentHousePrefix(
+  name: string,
+  house: { he: string; en: string } | null | undefined,
+): string {
+  const prefixes = [house?.he, house?.en, "אקסלנס"].filter((value): value is string =>
+    Boolean(value),
+  );
+  return prefixes.reduce(
+    (value, prefix) => value.replace(new RegExp(`^${escapeRegExp(prefix)}\\s*-\\s*`), ""),
+    name,
+  );
+}
+
 export function assetProviderKey(
   a: Pick<Asset, "note" | "name"> & { provider?: string | null },
 ): string | null {

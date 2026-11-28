@@ -111,24 +111,23 @@ export const POST = handle("import", async (request: Request) => {
 
 /** Import history: past statement imports with their account and row count. */
 export const GET = handle("import", async (request: Request) => {
-  const imports = listFileImports(getWorkspaceIdFromRequest(request));
-  return NextResponse.json({
-    imports: imports.map((row) => ({ ...row, undoRef: `sync-${row.id}` })),
-  });
+  return NextResponse.json({ imports: listFileImports(getWorkspaceIdFromRequest(request)) });
 });
 
 /** Undo one import: ?batch=. Imports always identify their own kind of batch. */
 export const DELETE = handle("import", async (request: Request) => {
   const workspaceId = getWorkspaceIdFromRequest(request);
-  const raw = new URL(request.url).searchParams.get("batch") ?? "";
-  const syncRef = /^sync-(\d+)$/.exec(raw.trim());
+  const ref = (new URL(request.url).searchParams.get("batch") ?? "").trim();
   if (importV2Enabled(workspaceId)) {
-    const id = resolveBatchId(workspaceId, raw);
+    const id = resolveBatchId(workspaceId, ref);
     if (id != null) return NextResponse.json(deleteImportBatch(workspaceId, id));
-    // A legacy import made with v2 disabled may have no corresponding v2 batch.
-    if (!syncRef) return bad("invalid batch");
+    // A v2 batch that does not exist is a bad explicit reference. A bare number or `sync-<id>`
+    // may name a legacy import made before v2, so it falls through to the legacy path.
+    if (/^(?:batch-|sheet-)/.test(ref)) return bad("invalid batch");
   }
-  const batch = Number(syncRef?.[1] ?? raw);
+  // History rows identify their sync run as `sync-<id>`; a bare number is still accepted.
+  const legacy = /^(?:sync-)?(\d+)$/.exec(ref);
+  const batch = legacy ? Number(legacy[1]) : NaN;
   if (!Number.isInteger(batch) || batch <= 0) return bad("invalid batch");
   return NextResponse.json({ removed: deleteFileImport(workspaceId, batch) });
 });

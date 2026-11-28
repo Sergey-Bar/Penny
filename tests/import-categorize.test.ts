@@ -117,6 +117,26 @@ describe("categorizeRow", () => {
     });
   });
 
+  it("keeps a remembered parent out of the suggestion lookups", () => {
+    const parent: ImportCategory = {
+      id: 9,
+      name: "הוצאות",
+      kind: "expense",
+      key: "groceries",
+    };
+    const leafOnly = categories.filter((category) => category.key !== "groceries");
+    const suggested = categorizeRow(input({ description: "שופרסל" }), {
+      categories: leafOnly,
+      memoryCategories: [...leafOnly, parent],
+    });
+    expect(suggested.categoryId).not.toBe(parent.id);
+    const remembered = categorizeRow(
+      input({ description: "unknown merchant", memory: { categoryId: 9, kind: "expense" } }),
+      { categories: leafOnly, memoryCategories: [...leafOnly, parent] },
+    );
+    expect(remembered).toMatchObject({ categoryId: 9, source: "memory" });
+  });
+
   it("gives income descriptions income categories", () => {
     expect(
       categorizeRow(input({ kind: "income", description: "משכורת" }), { categories }),

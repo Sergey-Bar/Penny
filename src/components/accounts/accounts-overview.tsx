@@ -5,7 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, Landmark, Link2, Plus } from "lucide-react";
 import { getAssets, getHome } from "@/lib/api";
-import { groupAccounts, groupItemsByProvider } from "@/lib/account-groups";
+import {
+  groupAccounts,
+  groupItemsByProvider,
+  stripInvestmentHousePrefix,
+} from "@/lib/account-groups";
 import { INVESTMENT_HOUSES } from "@/lib/investment-houses";
 import { accountLabel, translateProviderName } from "@/lib/i18n-data";
 import { useSidebarAccountsPref } from "@/components/layout/sidebar-accounts";
@@ -13,8 +17,6 @@ import { shekels } from "@/lib/money";
 import { CardError, CardSkeleton } from "@/components/home/card-shell";
 
 import { GROUP_ICON, TYPE_ICON } from "./account-icons";
-
-const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** All accounts on one page: net total, the bank connections, then every group with its accounts. */
 export function AccountsOverview() {
@@ -171,14 +173,7 @@ export function AccountsOverview() {
                     const house = INVESTMENT_HOUSES.find((h) => h.id === entry.providerKey);
                     const houseName =
                       house?.name[locale === "he" ? "he" : "en"] ?? entry.providerKey;
-                    const stripPrefix = (n: string) =>
-                      [house?.name.he, house?.name.en]
-                        .filter((name): name is string => Boolean(name))
-                        .reduce(
-                          (value, name) =>
-                            value.replace(new RegExp(`^${escapeRegExp(name)}\\s*-\\s*`), ""),
-                          n,
-                        );
+                    const stripPrefix = (n: string) => stripInvestmentHousePrefix(n, house?.name);
                     return (
                       <li key={`provider:${entry.providerKey}`}>
                         <details className="group/prov">

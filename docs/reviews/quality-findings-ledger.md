@@ -37,7 +37,7 @@ follow-up import PR. IDs below are assigned per finding for this ledger, not Cod
 
 | ID | Sev | File | Finding | State | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| QH-093-M01 | must | `draft.ts` | `debit || credit` treats `"0"` as truthy and hides a credit | Fixed | Chooses the non-zero parsed side; `tests/import-engine.test.ts` |
+| QH-093-M01 | must | `draft.ts` | `debit \|\| credit` treats `"0"` as truthy and hides a credit | Fixed | Chooses the non-zero parsed side; `tests/import-engine.test.ts` |
 | QH-093-M02 | must | `draft.ts`, `normalize.ts`, `types.ts` | Debit/credit direction lost when kind is absent | Fixed | Draft carries raw debit/credit; normalizer accepts both; test |
 | QH-093-M03 | must | `detect.ts` | Short aliases (`in`, `out`, ...) matched inside longer words | Fixed | Exact/whole-token match for aliases of 3 characters or fewer; regression test |
 | QH-093-M04 | must | `classify.ts` | Mixed-sign card file with a negative refund row became an expense charge | Fixed | Card classification uses refund wording plus sign; `tests/import-classify.test.ts` |
@@ -145,11 +145,56 @@ follow-up import PR. IDs below are assigned per finding for this ledger, not Cod
 | QH-093-N05 | optional | legacy import route | `legacyRow` kept in the route | Fixed | Moved to `src/server/lib/import/legacy-row.ts`; route imports the pure mapper |
 | QH-093-N06 | optional | route tests | Workspace isolation test intent unclear | Verified | Existing route tests create separate workspaces and assert foreign ids fail; no behavior gap |
 
+## PR #110 review findings
+
+CodeRabbit review of `release/v0.7.0` (PR #110), 2026-11-28. The review posted 12 inline major
+comments, 1 outside-diff major comment, 18 minor findings and 1 nitpick (trivial) — 32 findings in
+total. Each was verified against the final code; all were still valid and are fixed, none rejected.
+
+| ID        | Sev    | File:line                                     | Finding                                                                 | Status | Evidence                                                                                       |
+| --------- | ------ | --------------------------------------------- | ----------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
+| CR110-01  | major  | `src/app/api/import/route.ts:122-129`          | History undo sent a sync-run id that v2 read as a batch id              | Fixed  | `listFileImports` returns `sync-<id>` as `ref`/`undoRef`; the route resolves namespaced refs and falls back to the legacy parser for bare ids; `tests/import-undo-ref.test.ts`, `tests/import-route.test.ts` |
+| CR110-02  | major  | `import-workbench.tsx:425`                     | Reparse stamp overrode a changed account selector                       | Fixed  | `clearDefaultAccountStamp` treats the server stamp as a default; `tests/import-engine.test.ts`, `tests/import-workbench-helpers.test.ts`  |
+| CR110-03  | major  | `import-workbench.tsx:595`                     | Statement balance attached to the first chunk regardless of account     | Fixed  | `statementBalanceAccount` picks the balance row's account; only that group's first chunk sends it; `tests/import-workbench-helpers.test.ts` |
+| CR110-04  | major  | `src/lib/import/draft.ts:142-144`              | Mapped amount overridden by debit/credit values                         | Fixed  | Amount-mapped drafts no longer copy debit/credit; normalizer keeps the amount; regression test  |
+| CR110-05  | major  | `src/server/db/queries/accounts.ts:223-250`    | Exact same-number match across currencies not flagged ambiguous         | Fixed  | Exact lookup returns every currency match and flags multiple; `tests/accounts-resolve.test.ts`  |
+| CR110-06  | major  | `src/server/db/queries/assets.ts:252-262`      | Unlinked balance left behind when a linked balance is written           | Fixed  | Linked branch deletes the same provider/number unlinked row in the transaction; balance test     |
+| CR110-07  | major  | `src/server/db/queries/imports.ts:652-657`     | Unlinked rows from other providers counted as duplicates                | Fixed  | Unlinked candidates require the resolved account's number and provider and a unique owner; callers pass the resolved account; `tests/sync-adopts-file-rows.test.ts`    |
+| CR110-08  | major  | `src/server/db/queries/transactions.ts:148-151`| COALESCE kept the file account when adopting a row                      | Fixed  | Adoption prefers the resolved account id; `tests/sync-adopts-file-rows.test.ts`                  |
+| CR110-09  | major  | `src/server/db/queries/transactions.ts:1410-1440` | `insertFileImport` incompatible with the identity hash               | Fixed  | Checks the legacy and resolved-account identity hash with the sequence; `tests/import-history.test.ts` |
+| CR110-10  | major  | `src/server/lib/import/forget.ts:23-30`        | Forget cleared human-selected categories                                | Fixed  | Writers keep `category_origin` consistent (`user`/`rule`); clear predicate preserves user picks; `tests/import-forget.test.ts` |
+| CR110-11  | major  | `src/server/lib/import/reclassify.ts:23-39`    | Card bill covered by several purchases reclassified as expense          | Fixed  | Contiguous same-card charge sums within tolerance count as coverage; `tests/import-reclassify.test.ts` |
+| CR110-12  | major  | `src/server/db/queries/assets.ts:563-579`      | Empty account discovery left prior credential holdings unreconciled     | Fixed  | Empty completed scope reconciles credential-keyed rows; legacy keys explicitly untouched; securities test |
+| CR110-13  | major  | `src/server/db/queries/transactions.ts:132-137`| File-twin adoption could consume another account's row                  | Fixed  | Candidates are the resolved account, unlinked rows, or file-account rows; adoption test          |
+| CR110-14  | minor  | `src/lib/import/text.ts:29-30`                 | `DR` after a currency suffix lost                                 | Fixed  | Amount token accepts a currency and then a direction suffix; `tests/import-engine.test.ts`       |
+| CR110-15  | minor  | `src/lib/import/normalize.ts:236`              | Amount fallback used for nonblank unparsable debit/credit               | Fixed  | Fallback requires both raw cells blank; invalid row test                                        |
+| CR110-16  | minor  | `src/server/lib/import/reclassify.ts:49-59`    | Transfer pairing accepted an opposite row on the same account           | Fixed  | Missing account ids require different numbers; same-number pair test                             |
+| CR110-17  | minor  | `src/server/db/queries/receipts.ts:105-107`    | Failing cleanup entries could starve later files                        | Fixed  | Sweep orders by `attempts, id`; fairness test                                                   |
+| CR110-18  | minor  | `import-workbench.tsx:615`                     | Pending-file finish failure was swallowed                               | Fixed  | The finish error reaches the save handler, keeping the pending id/token for a retry             |
+| CR110-19  | minor  | `src/server/db/queries/accounts.ts:255-268`    | Label resolution disabled for bank/card providers                       | Fixed  | Labels resolve within the requested provider; same-provider label test                          |
+| CR110-20  | minor  | `src/lib/import/extract.ts:20-23`              | Named-group guard rejected safe patterns                                | Fixed  | Group prefix is stripped and the pipe character is removed from the outer set; regex cases in `tests/import-engine.test.ts` |
+| CR110-21  | minor  | `src/server/lib/import/categorize.ts:67-80`    | Remembered parents could be returned as suggestions                     | Fixed  | Separate `memoryCategories` is used only for memory; `tests/import-categorize.test.ts`          |
+| CR110-22  | minor  | `src/server/db/queries/transaction-edits.ts:4` | Remember wrote merchant keys with the V1 normalizer                     | Fixed  | Imports `@/lib/merchant-normalize` (V2); `tests/import-forget.test.ts`                          |
+| CR110-23  | minor  | `src/server/ai/providers/parse.ts:4-10`        | Structured confidence threw during numeric conversion                   | Fixed  | Only numbers and strings are converted; structured-confidence test                              |
+| CR110-24  | minor  | `src/components/accounts/accounts-overview.tsx:174-181` | Short Excellence prefix no longer stripped                    | Fixed  | `stripInvestmentHousePrefix` removes both house names and `אקסלנס`; `tests/account-groups.test.ts` |
+| CR110-25  | minor  | `src/components/transactions/review-inbox.tsx:118-137` | Pending memo compared with the saved memo                      | Fixed  | Compares with the latest queued memo; `tests/review-memo.test.ts`                               |
+| CR110-26  | minor  | `.github/release-notes.md:111`                 | 088 implied code-only rollback                                          | Fixed  | Documents hash-format compatibility only and the required backup restore                        |
+| CR110-27  | minor  | `SECURITY.md:210-211`                          | Image scan was described as a tag-release gate                          | Fixed  | States that `trivy-image` gates pushes to `main`, not tag releases                              |
+| CR110-28  | minor  | `docs/reviews/quality-findings-ledger.md:40`   | Unescaped table pipes broke the QH-093-M01 row                          | Fixed  | Both pipes escaped                                                                              |
+| CR110-29  | minor  | `src/server/lib/import/parse.ts:219-226`       | A short read parsed a truncated prefix                                  | Fixed  | Reads until EOF or the buffer is full, then applies the size cap                                |
+| CR110-30  | minor  | `src/server/lib/import/save.ts:86-92`          | Tokenless retry of unfinished post-commit returned `alreadyImported`    | Fixed  | Both gates resume an unfinished batch and keep 409 for completed ones; service and route tests  |
+| CR110-31  | minor  | `src/lib/xlsx.ts:94-111`                       | `workbook.xml` bytes counted twice                                      | Fixed  | Entry loads are cached and counted once; size-boundary test in `tests/xlsx.test.ts`             |
+| CR110-32  | trivial| `tests/sync-dedup-identity.test.ts:43-44`      | Test asserted only `added` counts                                       | Fixed  | Asserts persisted providers, account ids, distinct hashes and replay count                      |
+
+All 32 findings were verified as real; none were rejected. Verification run after rebasing the
+fixes onto `cce7fc7`: `npx vitest run` (1,926 passed, 1 skipped across 295 passed and 1 skipped
+test files), `npx tsc --noEmit`, `npm run lint`, `npm run format:check` and `npm run knip` all pass.
+
 ## Release gate
 
 - No row is open. Every `Fixed` row points at a regression/route/migration test or a config/doc
   change; `Verified` rows cite the merged behavior that made the finding obsolete.
-- Full suite: `npx vitest run` (1,887 passing, 1 skipped).
+- Full suite: `npx vitest run` (1,926 passing, 1 skipped).
 - Coverage: `npx vitest run --coverage` passes the ratcheted floors (76/67/74/78).
 - Static gates: `npm run lint`, `npm run format:check`, `npm run knip`, `npx tsc --noEmit`.
 

@@ -4,6 +4,7 @@ import {
   assetProviderKey,
   groupAccounts,
   groupItemsByProvider,
+  stripInvestmentHousePrefix,
 } from "@/lib/account-groups";
 import type { Asset } from "@/lib/types";
 
@@ -42,6 +43,13 @@ describe("account groups", () => {
       ["investments", [1]],
       ["liabilities", [3]],
     ]);
+  });
+
+  it("strips the short Excellence prefix as well as the house names", () => {
+    const house = { he: "אקסלנס טרייד", en: "Excellence Trade" };
+    expect(stripInvestmentHousePrefix("אקסלנס - קרן כספית", house)).toBe("קרן כספית");
+    expect(stripInvestmentHousePrefix("אקסלנס טרייד - יתרה לפעילות", house)).toBe("יתרה לפעילות");
+    expect(stripInvestmentHousePrefix("Excellence Trade - Fund", house)).toBe("Fund");
   });
 
   it("extracts provider key and groups multi-holding providers", () => {

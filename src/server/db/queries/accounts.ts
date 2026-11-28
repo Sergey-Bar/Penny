@@ -229,6 +229,8 @@ export function resolveAccount(
   const crossProviderLookup =
     !provider || provider === "file" || provider === "cash" || provider === "manual";
   if (provider && number) {
+    // Without a currency every provider+number match is a candidate, so two currencies with the
+    // same digits are reported as ambiguous instead of silently picking one.
     const exact = accountsByNumber(workspaceId, provider, number, currency);
     if (exact.length > 0)
       return { account: exact[0], created: false, ambiguous: exact.length > 1, candidates: exact };
@@ -262,16 +264,25 @@ export function resolveAccount(
       return { account: byAlias, created: false, ambiguous: false, candidates: [byAlias] };
   }
   const label = (input.label ?? "").trim();
-  if (label && crossProviderLookup) {
+  if (label) {
+    // A real bank/card provider resolves labels within its own accounts; "file"/"cash"/no
+    // provider may still match a bank account by label, as before.
+    const providerMatches = (account: Account) =>
+      crossProviderLookup || !provider || account.provider === provider;
     const byAlias = getAccountByAlias(workspaceId, label);
-    if (byAlias && (!currency || byAlias.currency === currency) && (!kind || byAlias.kind === kind))
+    if (
+      byAlias &&
+      providerMatches(byAlias) &&
+      (!currency || byAlias.currency === currency) &&
+      (!kind || byAlias.kind === kind)
+    )
       return { account: byAlias, created: false, ambiguous: false, candidates: [byAlias] };
     const byLabel = getAccountByLabel(workspaceId, label);
     if (
       byLabel &&
+      providerMatches(byLabel) &&
       (!currency || byLabel.currency === currency) &&
-      (!kind || byLabel.kind === kind) &&
-      (!provider || byLabel.provider === provider)
+      (!kind || byLabel.kind === kind)
     )
       return { account: byLabel, created: false, ambiguous: false, candidates: [byLabel] };
   }

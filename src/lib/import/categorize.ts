@@ -28,6 +28,8 @@ export interface CategorizeRowInput {
 
 export interface CategorizeContext {
   categories: readonly ImportCategory[];
+  /** Merchant-memory resolution may use parent categories; defaults to `categories`. */
+  memoryCategories?: readonly ImportCategory[];
 }
 
 const EXPENSE_SOURCES: Record<Exclude<CategorySource, "none">, number> = {
@@ -135,7 +137,9 @@ export function categorizeRow(
 
   const memory = input.memory;
   if (memory) {
-    const same = context.categories.find((c) => c.id === memory.categoryId);
+    const same = (context.memoryCategories ?? context.categories).find(
+      (c) => c.id === memory.categoryId,
+    );
     if (same && wantedKind(same)) {
       return decision(same, "memory", [{ code: "merchantMemoryApplied" }]);
     }

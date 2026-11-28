@@ -216,11 +216,16 @@ export async function parseImportFile(
     const stat = await handle.stat();
     if (stat.size > max) throw new ApiError("File is too large", 413, "tooLarge");
     const bytes = Buffer.alloc(Math.min(stat.size, max + 1));
-    const { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
-    if (bytesRead > max) throw new ApiError("File is too large", 413, "tooLarge");
+    let total = 0;
+    while (total < bytes.length) {
+      const { bytesRead } = await handle.read(bytes, total, bytes.length - total, total);
+      if (bytesRead === 0) break;
+      total += bytesRead;
+    }
+    if (total > max) throw new ApiError("File is too large", 413, "tooLarge");
     return parseImportBytes(
       workspaceId,
-      { bytes: bytes.subarray(0, bytesRead), name: file.fileName },
+      { bytes: bytes.subarray(0, total), name: file.fileName },
       options,
     );
   } finally {

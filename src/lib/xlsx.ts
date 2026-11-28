@@ -89,16 +89,21 @@ async function unzip(bytes: Uint8Array, limits: XlsxLimits = {}): Promise<Map<st
     const local = view.getUint32(p + 42, true);
     const name = new TextDecoder().decode(bytes.subarray(p + 46, p + 46 + nameLen));
     p += 46 + nameLen + view.getUint16(p + 30, true) + view.getUint16(p + 32, true);
+    // workbook.xml is loaded by both sheetIndex and readXlsxWorkbook; cache the text so a
+    // repeated load neither inflates twice nor counts the same bytes again.
+    let cached: string | null = null;
     files.set(name, {
       compressed,
       load: async () => {
+        if (cached !== null) return cached;
         const start =
           local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
         const data = bytes.slice(start, start + compressed);
         if (method === 0) {
           if (loaded + data.length > maxUncompressed) throw new Error("zipBomb");
           loaded += data.length;
-          return new TextDecoder().decode(data);
+          cached = new TextDecoder().decode(data);
+          return cached;
         }
         if (method !== 8) throw new Error(`unsupported zip method ${method}`);
         const stream = new Blob([data])
@@ -106,7 +111,8 @@ async function unzip(bytes: Uint8Array, limits: XlsxLimits = {}): Promise<Map<st
           .pipeThrough(new DecompressionStream("deflate-raw"));
         const result = await readBoundedStream(stream, maxUncompressed - loaded);
         loaded += result.bytes;
-        return result.text;
+        cached = result.text;
+        return cached;
       },
     });
   }

@@ -85,10 +85,15 @@ export function saveImport(input: SaveImportInput): SaveImportResult {
 
   if (input.fileSha256 && input.force !== true && input.allowAlreadyImported !== true) {
     const existing = findBatchBySha(input.workspaceId, input.fileSha256, input.accountId);
-    if (existing)
+    if (existing) {
+      // The batch already committed its rows; only its post-commit pass is unfinished. A
+      // tokenless retry resumes that pass instead of being told the file was already imported.
+      if (existing.postCommitStatus !== "completed")
+        return finishExistingBatch(existing, input.workspaceId);
       throw new ApiError("This file was already imported", 409, "alreadyImported", {
         batchId: existing.id,
       });
+    }
   }
 
   const members = getAppSettings(input.workspaceId).household.members.map((m) => m.id);

@@ -7,7 +7,12 @@ import {
   guessImportMapping,
   mappingComplete,
 } from "@/lib/import/detect";
-import { tableToDrafts } from "@/lib/import/draft";
+import {
+  clearDefaultAccountStamp,
+  debitCreditFor,
+  statementBalanceAccount,
+  tableToDrafts,
+} from "@/lib/import/draft";
 import { normalizeImportRow } from "@/lib/import/normalize";
 import { extractFromCell, isSafeRegex, namedGroups } from "@/lib/import/extract";
 import { migrateProfileV1, importProfileKey, parseImportProfile } from "@/lib/import/profile";
@@ -174,7 +179,11 @@ describe("readImportSource", () => {
 describe("extract", () => {
   it("rejects an unsafe regex and extracts named groups", () => {
     expect(isSafeRegex("(?<date>\\d{2}/\\d{2})")).toBe(true);
+    expect(isSafeRegex("(?<sign>-)?")).toBe(true);
+    expect(isSafeRegex("(?<memo>cash)|(?<amount>12)")).toBe(true);
+    expect(isSafeRegex("(?<x>a)*")).toBe(true);
     expect(isSafeRegex("(a+)+$")).toBe(false);
+    expect(isSafeRegex("(a|a)*")).toBe(false);
     expect(namedGroups("(?<date>\\d{2}/\\d{2}) (?<amount>[\\d.]+)")).toEqual(["date", "amount"]);
     expect(
       extractFromCell(
@@ -315,6 +324,11 @@ describe("regressions", () => {
     const parsed = parseStatementText("01/02/2024 Shop 50.00 DR");
     expect(parsed.rows[0]).toMatchObject({ amount: 50, kind: "expense" });
   });
+
+  it("keeps a DR marker that follows a currency suffix", () => {
+    const parsed = parseStatementText("01/02/2024 Shop 50.00 ILS DR");
+    expect(parsed.rows[0]).toMatchObject({ amount: 50, kind: "expense" });
+  });
 });
 
 describe("debit/credit editing", () => {
@@ -356,5 +370,123 @@ describe("debit/credit editing", () => {
       },
     );
     expect(result.row).toMatchObject({ amount: 42, signedAmount: 42, kind: "income" });
+  });
+
+  it("rejects a nonblank debit that cannot be parsed instead of using the amount", () => {
+    const result = normalizeImportRow(
+      {
+        rowIndex: 1,
+        include: true,
+        date: "2024-02-01",
+        processedDate: null,
+        description: "Coffee",
+        amount: "42",
+        kind: "auto",
+        accountId: 1,
+        accountRaw: "",
+        categoryId: null,
+        categoryName: null,
+        categoryRaw: null,
+        tags: [],
+        owner: null,
+        businessSharePct: 0,
+        memo: null,
+        originalAmount: null,
+        originalCurrency: null,
+        installmentNumber: null,
+        installmentTotal: null,
+        identifier: null,
+        balance: null,
+        debit: "invalid",
+        credit: null,
+        sourceRef: "test#1",
+      },
+      {
+        dateOrder: "dmy",
+        signConvention: "explicit",
+        accountKind: "bank",
+        accountId: 1,
+        accountCurrency: "ILS",
+      },
+    );
+    expect(result.row).toBeNull();
+    expect(result.reasons.map((reason) => reason.code)).toContain("amountInvalid");
+  });
+
+  it("keeps a mapped amount authoritative when debit and credit are also mapped", () => {
+    const mapping = guessImportMapping(["תאריך", "תיאור", "סכום", "חובה", "זכות"]);
+    expect(mapping).toMatchObject({ amount: 2, debit: 3, credit: 4 });
+    const { drafts } = tableToDrafts([["01/02/2024", "Shop", "100", "20", "0"]], mapping);
+    expect(drafts[0].amount).toBe("100");
+    expect(drafts[0].debit).toBeUndefined();
+    expect(drafts[0].credit).toBeUndefined();
+    const result = normalizeImportRow(drafts[0], {
+      dateOrder: "dmy",
+      signConvention: "bankSigned",
+      accountKind: "bank",
+      accountId: 1,
+      accountCurrency: "ILS",
+    });
+    expect(result.row).toMatchObject({ amount: 100 });
+  });
+
+  it("falls back to debit/credit when the mapped amount cell is blank", () => {
+    const mapping = guessImportMapping(["תאריך", "תיאור", "סכום", "חובה", "זכות"]);
+    const { drafts } = tableToDrafts(
+      [
+        ["01/02/2024", "Shop", "", "20", ""],
+        ["02/02/2024", "Refund", "", "0", "125"],
+      ],
+      mapping,
+    );
+    expect(drafts[0]).toMatchObject({ amount: "", debit: "20", credit: "" });
+    expect(debitCreditFor([["d", "x", "100", "20", "0"]], 1, mapping)).toEqual({});
+    expect(debitCreditFor([["d", "x", "", "20", "0"]], 1, mapping)).toEqual({
+      debit: "20",
+      credit: "0",
+    });
+    const context = {
+      dateOrder: "dmy" as const,
+      signConvention: "explicit" as const,
+      accountKind: "bank" as const,
+      accountId: 1,
+      accountCurrency: "ILS",
+    };
+    expect(normalizeImportRow(drafts[0], context).row).toMatchObject({
+      amount: 20,
+      signedAmount: -20,
+      kind: "expense",
+    });
+    expect(normalizeImportRow(drafts[1], context).row).toMatchObject({
+      amount: 125,
+      signedAmount: 125,
+      kind: "income",
+    });
+  });
+});
+
+describe("workbench account and balance helpers", () => {
+  it("clears only the server-stamped default account", () => {
+    const { drafts } = tableToDrafts(
+      [
+        ["01/02/2024", "A", "-10"],
+        ["02/02/2024", "B", "-20"],
+      ],
+      guessImportMapping(["תאריך", "תיאור", "סכום"]),
+      { defaultAccountId: 7 },
+    );
+    drafts[1].accountId = 8;
+    const cleared = clearDefaultAccountStamp(drafts, 7);
+    expect(cleared.map((row) => row.accountId)).toEqual([null, 8]);
+  });
+
+  it("attaches the statement balance to the account of the balance row", () => {
+    const rows = [
+      { rowIndex: 4, accountId: 8 },
+      { rowIndex: 5, accountId: 7 },
+    ];
+    expect(statementBalanceAccount({ rowIndex: 0 }, 2, rows, 9)).toBe(8);
+    expect(statementBalanceAccount({ rowIndex: 9 }, 2, rows, 9)).toBe(9);
+    expect(statementBalanceAccount(null, 2, rows, 9)).toBeNull();
   });
 });

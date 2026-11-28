@@ -88,6 +88,43 @@ describe("sync and imported files", () => {
     ]);
   });
 
+  it("does not adopt a file row linked to a different bank account", () => {
+    const { db, ws, run } = fixture();
+    const max = createAccountResult(ws, {
+      provider: "max",
+      kind: "bank",
+      number: "1234",
+      label: "Max 1234",
+      currency: "ILS",
+    }).account;
+    const leumi = createAccountResult(ws, {
+      provider: "leumi",
+      kind: "bank",
+      number: "1234",
+      label: "Leumi 1234",
+      currency: "ILS",
+    }).account;
+    expect(max.id).not.toBe(leumi.id);
+    db.prepare("UPDATE transactions SET account_id = ? WHERE dedup_hash = 'f1'").run(leumi.id);
+
+    const result = insertTransactions(
+      ws,
+      [synced("2026-11-01T22:00:00.000Z", -80) as never],
+      "max",
+      1,
+      run,
+    );
+
+    expect(result).toEqual({ added: 1, updated: 0 });
+    expect(
+      db
+        .prepare(
+          "SELECT provider, account_id AS accountId FROM transactions WHERE dedup_hash = 'f1'",
+        )
+        .get(),
+    ).toEqual({ provider: "file", accountId: leumi.id });
+  });
+
   it("reuses either hash owned by the resolved account and leaves unrelated legacy rows out", () => {
     const { db, ws, run } = fixture();
     const date = "2026-12-03";

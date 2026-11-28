@@ -55,6 +55,13 @@ describe("parseCategoryResponse", () => {
     ]);
   });
 
+  it("keeps the mapping when confidence is a structured value", () => {
+    const text = '[{"index":0,"categoryName":"Food","confidence":{"toString":null}}]';
+    expect(parseCategoryResponse(text, categories, false)).toEqual([
+      { index: 0, categoryName: "Food", isNew: false, confidence: undefined },
+    ]);
+  });
+
   it("handles very long bracket-heavy text in linear time", () => {
     const text = `${"[".repeat(1_000_000)} no closer`;
     const started = performance.now();

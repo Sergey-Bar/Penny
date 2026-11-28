@@ -103,7 +103,9 @@ export function processFileCleanup(limit = 200): number {
   const db = getDb();
   const receiptsRoot = path.resolve(dataDir(), "receipts");
   const rows = db
-    .prepare("SELECT id, path FROM pending_file_cleanup ORDER BY id LIMIT ?")
+    // Fair retry order: paths that failed often go to the back, so a stuck entry cannot starve
+    // newer ones out of every sweep.
+    .prepare("SELECT id, path FROM pending_file_cleanup ORDER BY attempts, id LIMIT ?")
     .all(limit) as { id: number; path: string }[];
   if (rows.length === 0) return 0;
   let removed = 0;

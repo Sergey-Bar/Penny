@@ -37,15 +37,21 @@ export function categorizeLocally(workspaceId: number): number {
       workspaceId,
       txns.map((t) => t.description),
     );
-    // A remembered parent category is still a human decision: include it so it is not lost just
-    // because this pass only offers leaf categories for new suggestions.
+    // A remembered parent category is still a human decision: keep it for memory resolution
+    // without offering parents to the leaf-only suggestion sources.
     const allCategories = getAllCategories(workspaceId);
+    const memoryCategories = [...categories];
     const known = new Set(categories.map((category) => category.id));
     for (const remembered of memory.values()) {
       if (known.has(remembered.categoryId)) continue;
       const parent = allCategories.find((category) => category.id === remembered.categoryId);
       if (!parent || parent.kind !== kind) continue;
-      categories.push({ id: parent.id, name: parent.name, kind: parent.kind, key: parent.key });
+      memoryCategories.push({
+        id: parent.id,
+        name: parent.name,
+        kind: parent.kind,
+        key: parent.key,
+      });
       known.add(parent.id);
     }
     const updates: {
@@ -65,7 +71,7 @@ export function categorizeLocally(workspaceId: number): number {
           refund: false,
           memory: remembered && remembered.kind === kind ? remembered : null,
         },
-        { categories },
+        { categories, memoryCategories },
       );
       if (decision.categoryId == null) continue;
       // Every deterministic source categorizeRow applies here is at or above the 0.7 threshold;

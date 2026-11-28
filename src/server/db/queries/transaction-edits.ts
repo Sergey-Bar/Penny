@@ -1,7 +1,7 @@
 import "server-only";
 import type Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
-import { normalizeMerchant } from "@/server/rules/normalize";
+import { normalizeMerchant } from "@/lib/merchant-normalize";
 
 type Row = {
   id: number;
@@ -200,11 +200,11 @@ export function editTransactions(
             .run(r.id, i, a.categoryId, Math.round(a.amount * 100)),
         );
         db.prepare(
-          "UPDATE transactions SET category_source='user',needs_review=0,updated_at=datetime('now') WHERE workspace_id=? AND id=?",
+          "UPDATE transactions SET category_source='user',category_origin='user',needs_review=0,updated_at=datetime('now') WHERE workspace_id=? AND id=?",
         ).run(ws, r.id);
       } else
         db.prepare(
-          "UPDATE transactions SET category_id=?,category_source='user',needs_review=0,updated_at=datetime('now') WHERE workspace_id=? AND id=?",
+          "UPDATE transactions SET category_id=?,category_source='user',category_origin='user',needs_review=0,updated_at=datetime('now') WHERE workspace_id=? AND id=?",
         ).run(input.categoryId as number, ws, r.id);
       if (keys.length) {
         const key = normalizeMerchant(r.description);

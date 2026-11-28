@@ -108,7 +108,10 @@ Upgrading from 0.5.0 applies eight migrations:
 **`089` is one-way.** An older image cannot write against its partial unique indexes, so rolling
 back the image requires restoring the pre-migration database backup. The app and the Docker updater
 keep a backup before applying pending migrations; restore that copy rather than reverse-migrating.
-`088` keeps the old hash in `dedup_hash_legacy`, so a code rollback can still read existing rows.
+`088` keeps the old hash in `dedup_hash_legacy` for hash-format compatibility only. It does not
+make a code-only rollback safe: the previous build's migration runner rejects unknown applied
+migrations, so a rollback after `088` also requires restoring the pre-upgrade database backup,
+including when `089` has not run yet.
 
 ## Validation
 

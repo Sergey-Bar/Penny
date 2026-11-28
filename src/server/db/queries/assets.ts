@@ -579,6 +579,8 @@ function rowOwnedByScope(
   }
   const rest = note.slice(prefix.length).split(":");
   if (rest.length >= 3 && credentialId != null && rest[0] === String(credentialId)) {
+    // A complete discovery with no accounts means every holding this credential owns is stale.
+    // Legacy keys carry no credential, so an empty scope cannot identify them and they stay.
     return !hasAccountScope || accountsInScope.size === 0 || accountsInScope.has(rest[1]);
   }
   return rest.length === 2 && accountsInScope.has(rest[0]);

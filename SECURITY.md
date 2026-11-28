@@ -207,8 +207,10 @@ on any new **critical** advisory through `npm run security:audit:gate`.
 
 ### Container image findings
 
-`trivy-image` fails the release on every fixable HIGH or CRITICAL finding in the built
-image. A failed base-image package is fixed in the Dockerfile, never suppressed in
+`trivy-image` fails CI on every fixable HIGH or CRITICAL finding in the built image. The scan runs
+on pushes to `main`; the tag release workflow does not depend on it, so a tag release must confirm
+the image scan passed for the commit being tagged. A failed base-image package is fixed in the
+Dockerfile, never suppressed in
 `.trivyignore`: the runtime stage runs `apt-get upgrade -y` before installing Chromium so
 Debian security updates (for example `CVE-2025-6020` in `libpam`) replace the versions
 shipped by the pinned base tag. `.trivyignore` stays reserved for dependency paths that the

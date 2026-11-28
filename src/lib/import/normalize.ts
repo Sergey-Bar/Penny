@@ -233,7 +233,9 @@ export function normalizeImportRow(
   }
   // A row with debit/credit columns can still be edited in the amount cell; when both raw cells
   // are blank, use the edited amount instead of declaring the row invalid.
-  if (rawSigned == null) {
+  const debitBlank = debitRaw == null || debitRaw.trim() === "";
+  const creditBlank = creditRaw == null || creditRaw.trim() === "";
+  if (rawSigned == null && debitBlank && creditBlank) {
     const parsed = parseAmount(draft.amount);
     if (parsed != null) {
       const explicit = draft.kind;
