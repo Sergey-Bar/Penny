@@ -4,7 +4,56 @@ All notable changes to Penny. Versions follow [Semantic Versioning](https://semv
 
 ## [Unreleased]
 
-One additive database migration (`082_backend_jobs`): durable jobs/attempts, runtime locks, provider health, daily metrics, audit log, insight snapshots, idempotency keys, sync post-processing status, merchant keys and category confidence/reasons. See [docs/backend-operations.md](docs/backend-operations.md).
+## [0.7.0] - 2026-11-27
+
+Eight database migrations since 0.5.0: `081_import_v2` (accounts, import batches/rows, pending
+folder files and mapping profiles), `082_backend_jobs` (durable jobs, locks, audit, metrics,
+idempotency and sync post-processing status), `083_pip` (threads, memory, consent, briefings and
+approvals), `084_pension_sync_logs` (pension sync history), `085_pension_multi_connections`
+(multiple labelled connections per investment house), `087_asset_snapshots_details` (native value,
+currency and ILS cost basis on snapshots), `088_import_dedup_account_identity` (account-identity
+dedupe, replay status, post-commit file cleanup) and `089_account_balance_identity` (one linked
+balance per account; one-way, roll back by restoring the pre-migration database backup). See
+[docs/backend-operations.md](docs/backend-operations.md) and
+[docs/importing.md](docs/importing.md).
+
+### Security
+
+- The container image upgrades Debian security packages before installing Chromium, clearing the
+  fixable `libpam` HIGH finding (`CVE-2025-6020`) instead of suppressing it, and pins the base
+  manifest it was built from.
+- The AI setup endpoint validates its body with a strict schema; empty keys, unknown providers and
+  extra fields are rejected before any setting is written.
+- Both AI providers share one defensive response parser: linear first/last-bracket slicing,
+  malformed JSON returns no suggestions, and confidence is range-checked.
+
+### Correctness
+
+- **Import directions:** a zero debit no longer hides a credit, debit/credit columns keep their
+  direction through normalization, mixed-sign card files keep refunds positive, and short header
+  aliases no longer match inside unrelated words.
+- **Import safety:** request bodies are read under an actual byte cap, duplicate row indexes,
+  non-finite/contradictory signs and mismatched row accounts are rejected, and the batch marker,
+  rows and counts commit together.
+- **Replay and undo:** a client token is resolved before the file-hash gate; interrupted
+  post-processing is persisted and rerun; receipt records are removed in the undo transaction and
+  files only after commit, with a retry queue.
+- **Account identity:** dedupe hashes include the account provider/id while keeping the legacy hash
+  readable; account resolution respects currency and never borrows another provider's number;
+  linked balances key on the account.
+- **Hapoalim securities:** stale holdings reconcile only within the synced credential/account scope,
+  stale history gets a zero snapshot, fallback capture shares the deadline, and an incomplete
+  capture returns no result instead of an empty portfolio.
+- **Classification and UI:** preset exact headers win over loose ones, header-only bank presets are
+  not trusted for all-positive files, foreign purchases are not bank fees, mortgage insurance is
+  property insurance, sidebar provider groups are investment-only, and the import grid keeps
+  per-row accounts, tags and dropped-row errors.
+
+### Testing
+
+- Ledger in [docs/reviews/quality-findings-ledger.md](docs/reviews/quality-findings-ledger.md);
+  regression tests for each workstream, a migration-upgrade fixture, and coverage floors kept at
+  their ratcheted values (the full suite is 1,887 tests).
 
 ### New
 
@@ -35,6 +84,8 @@ One additive migration (`083_pip`): threads, messages, tool calls, explicit memo
 - **Docs and guardrails**: strategy docs, ADRs, Pip and remote-access runbooks, an anonymity check (`npm run check:anonymity`) and a bilingual test suite (`npm run test:pip`).
 
 ## [0.6.0] - 2026-11-26
+
+> **Release note:** 0.6.0 was not tagged or released separately; its changes and `081_import_v2` ship in 0.7.0.
 
 One database migration (`081_import_v2`): accounts, import batches and rows, pending folder files, workspace mapping profiles, and the account/origin/source columns on transactions, categories and balances. Existing `sync_runs` and sheet imports are preserved and backfilled idempotently.
 
