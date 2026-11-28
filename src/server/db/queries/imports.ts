@@ -1,7 +1,15 @@
 import "server-only";
 
 import { getDb } from "@/server/db";
-import { deleteReceipt, listReceipts } from "@/server/db/queries/receipts";
+import {
+  deleteReceiptRecord,
+  listReceipts,
+  processFileCleanup,
+  queueFileCleanup,
+  receiptPath,
+} from "@/server/db/queries/receipts";
+import { incrementMerchantHits, recordMerchantCategory } from "@/server/lib/merchant-memory";
+import { normalizeMerchant } from "@/lib/merchant-normalize";
 import type { ImportReasonCode } from "@/lib/import/types";
 
 export type ImportOrigin = "upload" | "paste" | "folder" | "text" | "document" | "sheet";
@@ -31,6 +39,8 @@ export interface ImportBatch {
   balanceAsOf: string | null;
   balanceValue: number | null;
   clientToken: string | null;
+  postCommitStatus: "pending" | "running" | "completed" | "failed";
+  postCommitError: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,11 +62,8 @@ const BATCH_COLUMNS = `id, workspace_id as workspaceId, account_id as accountId,
   file_name as fileName, file_sha256 as fileSha256, file_size as fileSize, source_format as sourceFormat,
   profile_fingerprint as profileFingerprint, mapping_json as mappingJson, header_json as headerJson,
   status, added, duplicates, skipped, errors, balance_as_of as balanceAsOf, balance_value as balanceValue,
-  client_token as clientToken, created_at as createdAt, updated_at as updatedAt`;
-
-const ROW_COLUMNS = `id, batch_id as batchId, transaction_id as transactionId, row_index as rowIndex,
-  status, reason_code as reasonCode, reason_detail as reasonDetail, raw_json as rawJson,
-  created_at as createdAt`;
+  client_token as clientToken, post_commit_status as postCommitStatus, post_commit_error as postCommitError,
+  created_at as createdAt, updated_at as updatedAt`;
 
 /** A matching legacy sync_runs row, so transactions.sync_run_id (NOT NULL) keeps working. */
 export function createLegacySyncRun(
@@ -90,6 +97,7 @@ export interface CreateBatchInput {
   chunkIndex?: number | null;
   clientToken?: string | null;
   status?: BatchStatus;
+  postCommitStatus?: ImportBatch["postCommitStatus"];
 }
 
 export function createImportBatch(input: CreateBatchInput): number {
@@ -98,8 +106,9 @@ export function createImportBatch(input: CreateBatchInput): number {
       .prepare(
         `INSERT INTO import_batches
            (workspace_id, account_id, sync_run_id, origin, file_name, file_sha256, file_size, source_format,
-            profile_fingerprint, mapping_json, header_json, group_id, chunk_index, client_token, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            profile_fingerprint, mapping_json, header_json, group_id, chunk_index, client_token, status,
+            post_commit_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         input.workspaceId,
@@ -117,6 +126,7 @@ export function createImportBatch(input: CreateBatchInput): number {
         input.chunkIndex ?? null,
         input.clientToken ?? null,
         input.status ?? "saved",
+        input.postCommitStatus ?? "completed",
       ).lastInsertRowid,
   );
 }
@@ -148,6 +158,7 @@ export function insertBatchRow(input: {
 }
 
 export function finalizeBatch(
+  workspaceId: number,
   id: number,
   counts: { added: number; duplicates: number; skipped: number; errors: number },
   status: BatchStatus = counts.errors > 0 && counts.added === 0 ? "failed" : "saved",
@@ -155,9 +166,58 @@ export function finalizeBatch(
   getDb()
     .prepare(
       `UPDATE import_batches SET added = ?, duplicates = ?, skipped = ?, errors = ?, status = ?, updated_at = datetime('now')
-       WHERE id = ?`,
+       WHERE workspace_id = ? AND id = ?`,
     )
-    .run(counts.added, counts.duplicates, counts.skipped, counts.errors, status, id);
+    .run(counts.added, counts.duplicates, counts.skipped, counts.errors, status, workspaceId, id);
+}
+
+export function setBatchPostCommitStatus(
+  workspaceId: number,
+  id: number,
+  status: ImportBatch["postCommitStatus"],
+  error: string | null = null,
+): void {
+  getDb()
+    .prepare(
+      `UPDATE import_batches SET post_commit_status = ?, post_commit_error = ?, updated_at = datetime('now')
+       WHERE workspace_id = ? AND id = ?`,
+    )
+    .run(status, error, workspaceId, id);
+}
+
+/**
+ * Relearn the merchant memory a batch represents. Idempotent: the mapping upsert and hit
+ * recount can run again after a crash or a client-token replay without double-writing rows.
+ */
+export function learnMerchantMemoryForBatch(
+  workspaceId: number,
+  batchId: number,
+  options: { incrementHits?: boolean } = {},
+): number {
+  const rows = getDb()
+    .prepare(
+      `SELECT description, category_id as categoryId, kind, category_origin as categoryOrigin
+       FROM transactions
+       WHERE workspace_id = ? AND import_batch_id = ? AND category_id IS NOT NULL
+         AND kind IN ('expense','income')
+         AND category_origin IN ('user','rule','memory','file','dictionary','pattern')`,
+    )
+    .all(workspaceId, batchId) as {
+    description: string;
+    categoryId: number;
+    kind: "expense" | "income";
+    categoryOrigin: string;
+  }[];
+  const memoryKeys: string[] = [];
+  for (const row of rows) {
+    recordMerchantCategory(workspaceId, row.description, row.categoryId, row.kind, "user");
+    if (row.categoryOrigin === "memory") {
+      const key = normalizeMerchant(row.description);
+      if (key) memoryKeys.push(key);
+    }
+  }
+  if (options.incrementHits !== false) incrementMerchantHits(workspaceId, memoryKeys);
+  return rows.length;
 }
 
 export function getImportBatch(workspaceId: number, id: number): ImportBatch | null {
@@ -213,10 +273,17 @@ export function findBatchBySha(
   return row ?? null;
 }
 
-export function listImportBatchRows(batchId: number): ImportBatchRow[] {
+export function listImportBatchRows(workspaceId: number, batchId: number): ImportBatchRow[] {
   return getDb()
-    .prepare(`SELECT ${ROW_COLUMNS} FROM import_batch_rows WHERE batch_id = ? ORDER BY row_index`)
-    .all(batchId) as ImportBatchRow[];
+    .prepare(
+      `SELECT r.id, r.batch_id as batchId, r.transaction_id as transactionId, r.row_index as rowIndex,
+              r.status, r.reason_code as reasonCode, r.reason_detail as reasonDetail,
+              r.raw_json as rawJson, r.created_at as createdAt
+       FROM import_batch_rows r
+       JOIN import_batches b ON b.id = r.batch_id AND b.workspace_id = ?
+       WHERE r.batch_id = ? ORDER BY r.row_index`,
+    )
+    .all(workspaceId, batchId) as ImportBatchRow[];
 }
 
 export function listImportBatches(
@@ -240,21 +307,47 @@ export function listImportBatches(
   })[];
 }
 
-/** Old URLs carry a sync_run id or a sheet_import id; resolve all three shapes. */
-export function resolveBatchId(workspaceId: number, id: number): number | null {
+export type BatchRef = number | string;
+
+/**
+ * Resolve a batch reference. A plain number or `batch-<id>` is a v2 batch ID only.
+ * Legacy ids must say so: `sync-<id>` for a sync_run and `sheet-<id>` for a sheet import.
+ * The namespace is what stops a legacy sync-run id from resolving to the same-numbered batch.
+ */
+export function resolveBatchId(workspaceId: number, ref: BatchRef): number | null {
   const db = getDb();
-  const byId = db
-    .prepare("SELECT id FROM import_batches WHERE workspace_id = ? AND id = ?")
-    .get(workspaceId, id) as { id: number } | undefined;
-  if (byId) return byId.id;
-  const byRun = db
-    .prepare("SELECT id FROM import_batches WHERE workspace_id = ? AND sync_run_id = ?")
-    .get(workspaceId, id) as { id: number } | undefined;
-  if (byRun) return byRun.id;
-  const bySheet = db
+  let kind: "batch" | "sync" | "sheet" = "batch";
+  let id: number;
+  if (typeof ref === "number") {
+    if (!Number.isInteger(ref) || ref <= 0) return null;
+    id = ref;
+  } else {
+    const value = ref.trim();
+    const match = /^(batch-|sync-|sheet-)?(\d+)$/.exec(value);
+    if (!match) return null;
+    if (match[1] === "sync-") kind = "sync";
+    else if (match[1] === "sheet-") kind = "sheet";
+    id = Number(match[2]);
+    if (!Number.isInteger(id) || id <= 0) return null;
+  }
+  if (kind === "batch") {
+    const row = db
+      .prepare("SELECT id FROM import_batches WHERE workspace_id = ? AND id = ?")
+      .get(workspaceId, id) as { id: number } | undefined;
+    return row?.id ?? null;
+  }
+  if (kind === "sync") {
+    const row = db
+      .prepare(
+        "SELECT id FROM import_batches WHERE workspace_id = ? AND sync_run_id = ? ORDER BY id DESC LIMIT 1",
+      )
+      .get(workspaceId, id) as { id: number } | undefined;
+    return row?.id ?? null;
+  }
+  const row = db
     .prepare("SELECT id FROM import_batches WHERE workspace_id = ? AND legacy_sheet_import_id = ?")
     .get(workspaceId, id) as { id: number } | undefined;
-  return bySheet?.id ?? null;
+  return row?.id ?? null;
 }
 
 interface DeletableRow {
@@ -280,17 +373,30 @@ function deletableTransactions(workspaceId: number, batchIds: number[]): Deletab
 function cleanDependencies(workspaceId: number, ids: number[]): void {
   if (ids.length === 0) return;
   const db = getDb();
-  const placeholders = ids.map(() => "?").join(",");
   for (const id of ids) {
-    for (const receipt of listReceipts(workspaceId, id)) deleteReceipt(workspaceId, receipt.id);
+    for (const receipt of listReceipts(workspaceId, id)) {
+      const deleted = deleteReceiptRecord(workspaceId, receipt.id);
+      if (!deleted) continue;
+      const file = receiptPath(workspaceId, deleted);
+      if (file) queueFileCleanup(file);
+    }
   }
-  db.prepare(
-    `DELETE FROM expense_shares WHERE workspace_id = ? AND transaction_id IN (${placeholders})`,
-  ).run(workspaceId, ...ids);
-  db.prepare(
-    `DELETE FROM flow_matches WHERE workspace_id = ? AND (primary_txn_id IN (${placeholders}) OR other_txn_id IN (${placeholders}))`,
-  ).run(workspaceId, ...ids, ...ids);
-  db.prepare(`DELETE FROM sheet_import_rows WHERE transaction_id IN (${placeholders})`).run(...ids);
+  // Large group undos must stay under SQLite's bind-variable limit; every chunk is still
+  // inside the caller's transaction, so the undo remains one unit.
+  const CHUNK = 5000;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const placeholders = chunk.map(() => "?").join(",");
+    db.prepare(
+      `DELETE FROM expense_shares WHERE workspace_id = ? AND transaction_id IN (${placeholders})`,
+    ).run(workspaceId, ...chunk);
+    db.prepare(
+      `DELETE FROM flow_matches WHERE workspace_id = ? AND (primary_txn_id IN (${placeholders}) OR other_txn_id IN (${placeholders}))`,
+    ).run(workspaceId, ...chunk, ...chunk);
+    db.prepare(`DELETE FROM sheet_import_rows WHERE transaction_id IN (${placeholders})`).run(
+      ...chunk,
+    );
+  }
 }
 
 export interface DeleteBatchResult {
@@ -307,7 +413,7 @@ export function deleteImportBatch(
   options: { group?: boolean } = {},
 ): DeleteBatchResult {
   const db = getDb();
-  return db.transaction(() => {
+  const result = db.transaction(() => {
     const batch = getImportBatch(workspaceId, batchId);
     if (!batch) return { removed: 0, keptAdopted: 0, batches: [], groupId: null };
     const batches =
@@ -348,6 +454,8 @@ export function deleteImportBatch(
     ).run(workspaceId, ...batches);
     return { removed: ids.length, keptAdopted: adopted, batches, groupId: batch.groupId ?? null };
   })();
+  processFileCleanup();
+  return result;
 }
 
 /** Per-row delete from the transactions list. Synced rows are hidden, not deleted. */
@@ -367,11 +475,13 @@ export function deleteImportedTransaction(
     return "hidden";
   }
   if (row.adopted_at) return "hidden";
-  return db.transaction(() => {
+  const result = db.transaction(() => {
     cleanDependencies(workspaceId, [id]);
     db.prepare("DELETE FROM transactions WHERE workspace_id = ? AND id = ?").run(workspaceId, id);
     return "deleted" as const;
   })();
+  processFileCleanup();
+  return result;
 }
 
 export type PendingStatus = "pending" | "imported" | "ignored" | "failed";
@@ -539,13 +649,20 @@ export function storedImportCandidates(
 ): StoredImportCandidate[] {
   return getDb()
     .prepare(
-      `SELECT id, COALESCE(account_id, 0) AS accountId, substr(date, 1, 10) AS date, description,
-              charged_amount AS signedAmount, identifier, installment_number AS installmentNumber,
-              installment_total AS installmentTotal
-       FROM transactions
-       WHERE workspace_id = ?
-         AND (account_id = ? OR (account_id IS NULL AND account_number = ?))
-         AND substr(date, 1, 10) BETWEEN date(?, '-1 day') AND date(?, '+1 day')`,
+      `SELECT t.id, a.id AS accountId, substr(t.date, 1, 10) AS date, t.description,
+              t.charged_amount AS signedAmount, t.identifier,
+              t.installment_number AS installmentNumber, t.installment_total AS installmentTotal
+       FROM accounts a JOIN transactions t ON t.workspace_id = a.workspace_id
+       WHERE a.workspace_id = ? AND a.id = ?
+         AND (t.account_id = a.id OR (
+           t.account_id IS NULL AND t.account_number = ? AND t.account_number = a.number
+           AND t.provider = a.provider AND NOT EXISTS (
+             SELECT 1 FROM accounts other
+             WHERE other.workspace_id = a.workspace_id AND other.number = a.number
+               AND other.provider = a.provider AND other.id != a.id
+           )
+         ))
+         AND substr(t.date, 1, 10) BETWEEN date(?, '-1 day') AND date(?, '+1 day')`,
     )
     .all(workspaceId, accountId, accountNumber, from, to) as StoredImportCandidate[];
 }

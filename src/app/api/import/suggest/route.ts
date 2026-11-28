@@ -8,6 +8,25 @@ import { categorizeImportRows } from "@/server/lib/import/categorize";
 import { requireImportEditor, readBody } from "@/server/lib/import/request";
 import type { CategoryKind } from "@/lib/types";
 import type { ImportKind } from "@/lib/import/types";
+import { z } from "zod";
+
+const suggestRowSchema = z
+  .object({
+    rowIndex: z.number().int().positive(),
+    accountId: z.number().int().positive(),
+    description: z.string().min(1).max(500),
+    kind: z.enum(["expense", "income", "transfer"]),
+    refund: z.boolean().optional(),
+    signedAmount: z.number().finite().optional(),
+    categoryId: z.number().int().positive().nullable().optional(),
+  })
+  .strict();
+const suggestSchema = z
+  .object({
+    mode: z.enum(["memory", "ai"]).optional(),
+    rows: z.array(suggestRowSchema).min(1).max(500),
+  })
+  .strict();
 
 interface SuggestRow {
   rowIndex: number;
@@ -26,10 +45,13 @@ interface SuggestRow {
 export const POST = handle("import/suggest", async (request: Request) => {
   const workspaceId = getWorkspaceIdFromRequest(request);
   requireImportEditor(request, workspaceId);
-  const body = await readBody<{ mode?: "memory" | "ai"; rows?: SuggestRow[] }>(request);
-  const rows = Array.isArray(body.rows) ? body.rows : [];
-  if (rows.length === 0) throw new ApiError("rows are required", 400, "bad_json");
-  if (rows.length > 500) throw new ApiError("at most 500 rows", 413, "tooManyRows");
+  const raw = await readBody<{ mode?: "memory" | "ai"; rows?: SuggestRow[] }>(request);
+  const parsed = suggestSchema.safeParse(raw);
+  if (!parsed.success) throw new ApiError("invalid suggestion request", 400, "bad_json");
+  const body = parsed.data;
+  const rows = body.rows;
+  if (new Set(rows.map((row) => row.rowIndex)).size !== rows.length)
+    throw new ApiError("duplicate rowIndex", 400, "duplicateRowIndex");
 
   if ((body.mode ?? "memory") === "memory") {
     const decisions = categorizeImportRows(

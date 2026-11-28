@@ -19,8 +19,8 @@ export function isSafeRegex(pattern: string): boolean {
     else if (c === "(") open.push(i);
     else if (c === ")") {
       const from = open.pop() ?? 0;
-      if (/[+*{]/.test(pattern[i + 1] ?? "") && /[+*{|]/.test(pattern.slice(from + 1, i)))
-        return false;
+      const body = pattern.slice(from + 1, i).replace(/^\?(?:<[A-Za-z][A-Za-z0-9]*>|:)/, "");
+      if (/[+*{?]/.test(pattern[i + 1] ?? "") && /[+*{|?]/.test(body)) return false;
     }
   }
   return true;

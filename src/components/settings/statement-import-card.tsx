@@ -617,7 +617,7 @@ function ImportHistory() {
               variant="ghost"
               size="sm"
               disabled={undo.isPending}
-              onClick={() => undo.mutate(imp.id)}
+              onClick={() => undo.mutate(imp.ref)}
             >
               {t("historyUndo")}
             </Button>

@@ -25,7 +25,44 @@ interface ZipEntry {
   load: () => Promise<string>;
 }
 
-async function unzip(bytes: Uint8Array): Promise<Map<string, ZipEntry>> {
+/**
+ * Reads a decompression stream while counting the bytes actually produced. The central
+ * directory's uncompressed size is attacker-controlled, so the real limit is enforced here.
+ */
+async function readBoundedStream(
+  stream: ReadableStream<Uint8Array>,
+  limit: number,
+): Promise<{ text: string; bytes: number }> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let text = "";
+  let bytes = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > limit) {
+        await reader.cancel().catch(() => undefined);
+        throw new Error("zipBomb");
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    return { text, bytes };
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+export interface XlsxLimits {
+  maxUncompressed?: number;
+  maxRatio?: number;
+}
+
+async function unzip(bytes: Uint8Array, limits: XlsxLimits = {}): Promise<Map<string, ZipEntry>> {
+  const maxUncompressed = limits.maxUncompressed ?? MAX_UNCOMPRESSED;
+  const maxRatio = limits.maxRatio ?? MAX_RATIO;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let eocd = -1;
   for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65_557); i--) {
@@ -39,30 +76,43 @@ async function unzip(bytes: Uint8Array): Promise<Map<string, ZipEntry>> {
   let p = view.getUint32(eocd + 16, true);
   const files = new Map<string, ZipEntry>();
   let total = 0;
+  let loaded = 0;
   for (let n = 0; n < count; n++) {
     if (view.getUint32(p, true) !== 0x02014b50) throw new Error("bad zip directory");
     const method = view.getUint16(p + 10, true);
     const compressed = view.getUint32(p + 20, true);
     const uncompressed = view.getUint32(p + 24, true);
     total += uncompressed;
-    if (total > MAX_UNCOMPRESSED || (compressed > 0 && uncompressed / compressed > MAX_RATIO))
+    if (total > maxUncompressed || (compressed > 0 && uncompressed / compressed > maxRatio))
       throw new Error("zipBomb");
     const nameLen = view.getUint16(p + 28, true);
     const local = view.getUint32(p + 42, true);
     const name = new TextDecoder().decode(bytes.subarray(p + 46, p + 46 + nameLen));
     p += 46 + nameLen + view.getUint16(p + 30, true) + view.getUint16(p + 32, true);
+    // workbook.xml is loaded by both sheetIndex and readXlsxWorkbook; cache the text so a
+    // repeated load neither inflates twice nor counts the same bytes again.
+    let cached: string | null = null;
     files.set(name, {
       compressed,
       load: async () => {
+        if (cached !== null) return cached;
         const start =
           local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
         const data = bytes.slice(start, start + compressed);
-        if (method === 0) return new TextDecoder().decode(data);
+        if (method === 0) {
+          if (loaded + data.length > maxUncompressed) throw new Error("zipBomb");
+          loaded += data.length;
+          cached = new TextDecoder().decode(data);
+          return cached;
+        }
         if (method !== 8) throw new Error(`unsupported zip method ${method}`);
         const stream = new Blob([data])
           .stream()
           .pipeThrough(new DecompressionStream("deflate-raw"));
-        return new Response(stream).text();
+        const result = await readBoundedStream(stream, maxUncompressed - loaded);
+        loaded += result.bytes;
+        cached = result.text;
+        return cached;
       },
     });
   }
@@ -150,8 +200,11 @@ async function readSheet(xml: string, shared: string[]): Promise<string[][]> {
 }
 
 /** Every sheet of a workbook, with its real name, order and hidden flag. */
-export async function readXlsxWorkbook(input: ArrayBuffer | Uint8Array): Promise<XlsxWorkbook> {
-  const files = await unzip(input instanceof Uint8Array ? input : new Uint8Array(input));
+export async function readXlsxWorkbook(
+  input: ArrayBuffer | Uint8Array,
+  limits: XlsxLimits = {},
+): Promise<XlsxWorkbook> {
+  const files = await unzip(input instanceof Uint8Array ? input : new Uint8Array(input), limits);
   const workbookXml = await files.get("xl/workbook.xml")?.load();
   const date1904 = /<workbookPr\b[^>]*\bdate1904="(?:1|true)"/i.test(workbookXml ?? "");
   const shared: string[] = [];
@@ -174,7 +227,10 @@ export async function readXlsxWorkbook(input: ArrayBuffer | Uint8Array): Promise
 }
 
 /** All sheets flattened, in workbook order (the legacy reader). */
-export async function readXlsx(input: ArrayBuffer | Uint8Array): Promise<string[][]> {
-  const workbook = await readXlsxWorkbook(input);
+export async function readXlsx(
+  input: ArrayBuffer | Uint8Array,
+  limits: XlsxLimits = {},
+): Promise<string[][]> {
+  const workbook = await readXlsxWorkbook(input, limits);
   return workbook.sheets.flatMap((sheet) => sheet.rows);
 }

@@ -40,6 +40,8 @@ export interface ScrapeResult {
   success: boolean;
   accounts: ScrapedAccount[];
   securities?: ScrapedSecurity[];
+  /** Accounts covered by a complete securities capture, including accounts with no holdings. */
+  securitiesAccounts?: string[];
   errorMessage?: string;
   /** A transient failure worth one more attempt. */
   retryable?: boolean;

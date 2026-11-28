@@ -1,5 +1,6 @@
 import { parseAmount } from "@/lib/csv";
 import { parseImportDate, type DateOrder } from "@/lib/file-import";
+import { isRefundLike } from "@/lib/import/patterns";
 import type {
   DateOrder as ImportDateOrder,
   ImportMapping,
@@ -83,13 +84,22 @@ const norm = (value: string) =>
     .trim()
     .toLowerCase();
 
+/**
+ * A known header word matches a cell exactly, as a whole token (for short aliases such as "in" or
+ * "סוג"), or as a substring of a reasonably short long-form header. Without the short-word rule,
+ * "in" matches "income" and a data row containing "LinkedIn" scores as a header.
+ */
+function headerWordMatches(cell: string, word: string): boolean {
+  if (!cell || !word) return false;
+  if (cell === word) return true;
+  if (word.length <= 3) return cell.split(" ").includes(word);
+  return cell.length <= 40 && cell.includes(word);
+}
+
 function headerHits(row: string[]): number {
   return row.filter((cell) => {
     const n = norm(cell);
-    return (
-      n.length > 0 &&
-      HEADER_WORDS.some((word) => n === norm(word) || (n.length <= 40 && n.includes(norm(word))))
-    );
+    return n.length > 0 && HEADER_WORDS.some((word) => headerWordMatches(n, norm(word)));
   }).length;
 }
 
@@ -121,7 +131,7 @@ function pick(
   for (const word of words) {
     const key = norm(word);
     const loose = cols.findIndex(
-      (c, i) => !used.has(i) && c.includes(key) && !exclude.some((re) => re.test(c)),
+      (c, i) => !used.has(i) && headerWordMatches(c, key) && !exclude.some((re) => re.test(c)),
     );
     if (loose >= 0) {
       used.add(loose);
@@ -240,18 +250,38 @@ export interface SignDetectionInput {
   accountKind: "bank" | "card" | "other";
   /** Kind values seen in a mapped type column. */
   kindValues?: readonly string[];
+  /** Row-level amounts and descriptions, used to tell charges from refunds in mixed card files. */
+  rows?: readonly { amount: number; description: string }[];
 }
 
 /**
  * How the file expresses direction. A card lists charges as positive; a bank lists them as
  * negative. A file with a type column or debit/credit columns is explicit and wins.
+ *
+ * Mixed-sign card files are the ambiguous case: the documented layout has positive charges and
+ * negative refunds, but a card export with negative charges and positive refunds also exists.
+ * Refund-worded rows decide; otherwise positives are treated as charges (the documented layout).
  */
 export function detectSignConvention(input: SignDetectionInput): SignConvention {
-  const { amounts, mapping, accountKind, kindValues } = input;
+  const { amounts, mapping, accountKind, kindValues, rows } = input;
   if (mapping.kind != null && (kindValues?.length ?? 0) > 0) return "explicit";
-  if (mapping.debit != null || mapping.credit != null) return "explicit";
+  if (mapping.amount == null && (mapping.debit != null || mapping.credit != null))
+    return "explicit";
   const hasNegative = amounts.some((n) => n < 0);
-  if (accountKind === "card") return hasNegative ? "cardNegative" : "cardPositive";
+  if (accountKind === "card") {
+    if (!hasNegative) return "cardPositive";
+    const rowData = rows ?? [];
+    const negativeRefunds = rowData.filter(
+      (row) => row.amount < 0 && isRefundLike(row.description),
+    ).length;
+    const positiveRefunds = rowData.filter(
+      (row) => row.amount > 0 && isRefundLike(row.description),
+    ).length;
+    if (negativeRefunds > positiveRefunds) return "cardPositive";
+    if (positiveRefunds > negativeRefunds) return "cardNegative";
+    if (!amounts.some((n) => n > 0)) return "cardNegative";
+    return "cardPositive";
+  }
   if (hasNegative) return "bankSigned";
   return "unknown";
 }

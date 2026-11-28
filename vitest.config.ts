@@ -21,10 +21,10 @@ export default defineConfig({
       // Floors that lock in the current suite. They sit just under the measured numbers:
       // raise them when coverage rises, never lower them to green a build.
       thresholds: {
-        statements: 74,
-        branches: 66,
-        functions: 71,
-        lines: 75,
+        statements: 76,
+        branches: 67,
+        functions: 74,
+        lines: 78,
         // The core that must not lose money or data gets its own floor per file, set to the
         // measured value rounded down (a ratchet). The target is 90 lines / 85 branches.
         "src/lib/money.ts": { statements: 100, branches: 100, functions: 100, lines: 100 },

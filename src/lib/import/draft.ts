@@ -99,10 +99,19 @@ export function tableToDrafts(
     }
     const date = cell(row, mapping.date);
     const description = cell(row, mapping.description);
+    const debitCell = mapping.debit == null ? null : cell(row, mapping.debit);
+    const creditCell = mapping.credit == null ? null : cell(row, mapping.credit);
+    const debitN = debitCell == null ? null : parseAmount(debitCell);
+    const creditN = creditCell == null ? null : parseAmount(creditCell);
+    const mappedAmount = mapping.amount != null ? cell(row, mapping.amount) : null;
     const amountSource =
-      mapping.amount != null
-        ? cell(row, mapping.amount)
-        : cell(row, mapping.debit) || cell(row, mapping.credit);
+      mappedAmount != null
+        ? mappedAmount
+        : debitN != null && debitN !== 0
+          ? debitCell!
+          : creditN != null && creditN !== 0
+            ? creditCell!
+            : (debitCell ?? "") || (creditCell ?? "");
     if (!date && !description && !amountSource) {
       skipped++;
       return;
@@ -131,6 +140,14 @@ export function tableToDrafts(
       installmentTotal: numberOrNull(cell(row, mapping.installmentTotal)),
       identifier: cell(row, mapping.identifier) || null,
       balance: cell(row, mapping.balance) || null,
+      // A mapped amount is authoritative; debit/credit only fill in when that cell is blank.
+      ...(mapping.debit == null && mapping.credit == null
+        ? {}
+        : mappedAmount == null ||
+            (mappedAmount.trim() === "" &&
+              ((debitCell ?? "").trim() !== "" || (creditCell ?? "").trim() !== ""))
+          ? { debit: debitCell, credit: creditCell }
+          : {}),
       sourceRef: `${options.sheetName ?? ""}#${index + 1}`,
     };
     if (drafts.length >= maxRows) {
@@ -158,8 +175,39 @@ export function debitCreditFor(
 ): { debit?: string | null; credit?: string | null } {
   if (mapping.debit == null && mapping.credit == null) return {};
   const row = table[rowIndex - 1] ?? [];
+  // A mapped, nonblank amount is authoritative; only blank amount cells fall back to the columns.
+  if (mapping.amount != null && cell(row, mapping.amount).trim() !== "") return {};
   return {
     debit: mapping.debit == null ? undefined : cell(row, mapping.debit),
     credit: mapping.credit == null ? undefined : cell(row, mapping.credit),
   };
+}
+
+/**
+ * A server parse stamp is a default account, not a per-row override: clear it so rows follow the
+ * workbench selector unless a person sets an account on the row itself.
+ */
+export function clearDefaultAccountStamp(
+  drafts: readonly ImportDraftRow[],
+  accountId: number | null | undefined,
+): ImportDraftRow[] {
+  if (accountId == null) return [...drafts];
+  return drafts.map((draft) =>
+    draft.accountId === accountId ? { ...draft, accountId: null } : draft,
+  );
+}
+
+/**
+ * The account of the row that carried the statement balance cell. `balanceRowIndex` is the body
+ * index from detectBalance; drafts are numbered from the sheet, one past the header.
+ */
+export function statementBalanceAccount(
+  balance: { rowIndex: number } | null | undefined,
+  headerRow: number,
+  rows: readonly { rowIndex: number; accountId: number }[],
+  fallbackAccountId: number,
+): number | null {
+  if (!balance) return null;
+  const rowIndex = balance.rowIndex + headerRow + 2;
+  return rows.find((row) => row.rowIndex === rowIndex)?.accountId ?? fallbackAccountId;
 }

@@ -114,7 +114,42 @@ export function importProfileKey(profile: {
 function isImportProfileV2(value: unknown): value is ImportProfileV2 {
   if (!value || typeof value !== "object") return false;
   const p = value as Partial<ImportProfileV2>;
-  return p.version === 2 && typeof p.headerFingerprint === "string" && p.mapping != null;
+  const formats: readonly string[] = ["csv", "xlsx", "html", "text", "paste"];
+  const signs: readonly string[] = [
+    "bankSigned",
+    "cardPositive",
+    "cardNegative",
+    "explicit",
+    "unknown",
+  ];
+  const orders: readonly string[] = ["dmy", "mdy", "ymd"];
+  const validIndex = (v: unknown) =>
+    v === null || (typeof v === "number" && Number.isInteger(v) && v >= 0);
+  const validMapping =
+    p.mapping != null &&
+    typeof p.mapping === "object" &&
+    Object.values(p.mapping as unknown as Record<string, unknown>).every(validIndex);
+  return (
+    p.version === 2 &&
+    typeof p.headerFingerprint === "string" &&
+    p.headerFingerprint.length <= 1_000 &&
+    formats.includes(p.format as string) &&
+    signs.includes(p.signConvention as string) &&
+    orders.includes(p.dateOrder as string) &&
+    typeof p.headerRow === "number" &&
+    Number.isInteger(p.headerRow) &&
+    p.headerRow >= 0 &&
+    validMapping &&
+    (p.accountId === null || (typeof p.accountId === "number" && p.accountId > 0)) &&
+    (p.presetId === null || typeof p.presetId === "string") &&
+    (p.sheetName === null || typeof p.sheetName === "string") &&
+    (p.sheetMappings === null ||
+      (typeof p.sheetMappings === "object" && !Array.isArray(p.sheetMappings))) &&
+    (p.sectionMap === null || (typeof p.sectionMap === "object" && !Array.isArray(p.sectionMap))) &&
+    Array.isArray(p.skipPatterns) &&
+    p.skipPatterns.every((pattern) => typeof pattern === "string") &&
+    (p.extractPattern === null || typeof p.extractPattern === "string")
+  );
 }
 
 export function parseImportProfile(raw: string | null | undefined): ImportProfileV2 | null {

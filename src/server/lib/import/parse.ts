@@ -111,6 +111,15 @@ export async function parseImportBytes(
     mapping.amount == null
       ? []
       : body.map((row) => parseAmount(row[mapping.amount!])).filter((n): n is number => n != null);
+  const signRows =
+    mapping.amount == null
+      ? []
+      : body
+          .map((row) => ({
+            amount: parseAmount(row[mapping.amount!] ?? ""),
+            description: mapping.description == null ? "" : (row[mapping.description] ?? ""),
+          }))
+          .filter((row): row is { amount: number; description: string } => row.amount != null);
   const kindValues =
     mapping.kind == null
       ? []
@@ -119,15 +128,24 @@ export async function parseImportBytes(
   if (options.accountId != null && !account)
     throw new ApiError("account is required", 400, "accountMissing");
   const accountKind = account?.kind ?? preset?.preset.kind ?? "bank";
+  const headerOnlyBankPreset =
+    preset != null &&
+    preset.preset.kind === "bank" &&
+    !preset.preset.fileHints.some((re) => re.test(input.name)) &&
+    mapping.kind == null &&
+    mapping.debit == null &&
+    mapping.credit == null &&
+    amounts.length > 0 &&
+    amounts.every((amount) => amount > 0);
+  const signPreset = headerOnlyBankPreset ? null : preset;
   const signConvention: SignConvention =
     options.signConvention ??
-    (preset && accountKind !== "other"
-      ? preset.preset.signConvention
-      : detectSignConvention({ amounts, mapping, accountKind, kindValues }));
+    (signPreset && accountKind !== "other"
+      ? signPreset.preset.signConvention
+      : detectSignConvention({ amounts, mapping, accountKind, kindValues, rows: signRows }));
 
   const { drafts, pending, skipped } = tableToDrafts(body, mapping, {
     sheetName: sheet.name,
-    defaultAccountId: account?.id ?? null,
     skipSectionHeaders: true,
     rowOffset: headerRow + 1,
   });
@@ -189,10 +207,30 @@ export async function parseImportFile(
   file: { path: string; fileName: string; size: number },
   options: ParseOptions = {},
 ): Promise<ParseResult> {
-  if (file.size > IMPORT_LIMITS.maxFileBytes)
-    throw new ApiError("File is too large", 413, "tooLarge");
-  const bytes = await fs.readFile(file.path);
-  return parseImportBytes(workspaceId, { bytes, name: file.fileName }, options);
+  const max = IMPORT_LIMITS.maxFileBytes;
+  if (file.size > max) throw new ApiError("File is too large", 413, "tooLarge");
+  const handle = await fs.open(file.path, "r");
+  try {
+    // The recorded size can be stale or spoofed; read at most one byte over the cap and check
+    // the actual file instead of buffering whatever is on disk.
+    const stat = await handle.stat();
+    if (stat.size > max) throw new ApiError("File is too large", 413, "tooLarge");
+    const bytes = Buffer.alloc(Math.min(stat.size, max + 1));
+    let total = 0;
+    while (total < bytes.length) {
+      const { bytesRead } = await handle.read(bytes, total, bytes.length - total, total);
+      if (bytesRead === 0) break;
+      total += bytesRead;
+    }
+    if (total > max) throw new ApiError("File is too large", 413, "tooLarge");
+    return parseImportBytes(
+      workspaceId,
+      { bytes: bytes.subarray(0, total), name: file.fileName },
+      options,
+    );
+  } finally {
+    await handle.close();
+  }
 }
 
 export interface ParsePage {

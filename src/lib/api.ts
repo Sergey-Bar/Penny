@@ -1620,6 +1620,8 @@ export function listStatementImports() {
   return fetchJSON<{
     imports: {
       id: number;
+      /** `sync-<id>`: the history row identifies its sync run, not a batch id. */
+      ref: string;
       createdAt: string;
       fileName: string | null;
       account: string;
@@ -1628,8 +1630,10 @@ export function listStatementImports() {
   }>(`/api/import`);
 }
 
-export function undoStatementImport(batchId: number) {
-  return fetchJSON<{ removed: number }>(`/api/import?batch=${batchId}`, { method: "DELETE" });
+export function undoStatementImport(batch: string | number) {
+  return fetchJSON<{ removed: number }>(`/api/import?batch=${encodeURIComponent(String(batch))}`, {
+    method: "DELETE",
+  });
 }
 
 export interface SheetRowInput {

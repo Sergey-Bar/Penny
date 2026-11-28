@@ -57,3 +57,89 @@ describe("transaction receipts", () => {
     expect((await one.GET(new Request("http://127.0.0.1/"), ctx(created.id))).status).toBe(404);
   });
 });
+describe("receipt cleanup on batch undo", () => {
+  it("removes receipt records in the undo transaction and deletes files after commit", async () => {
+    const { getDb } = await import("@/server/db");
+    const { getWorkspaceIdFromRequest } = await import("@/server/lib/workspace-context");
+    const { createImportBatch, createLegacySyncRun, deleteImportBatch } =
+      await import("@/server/db/queries/imports");
+    const { addReceipt, receiptFile } = await import("@/server/db/queries/receipts");
+    const db = getDb();
+    const ws = getWorkspaceIdFromRequest(new Request("http://127.0.0.1/"));
+    const sync = createLegacySyncRun(ws, "undo.csv");
+    const batchId = createImportBatch({
+      workspaceId: ws,
+      accountId: null,
+      syncRunId: sync,
+      origin: "upload",
+      fileName: "undo.csv",
+    });
+    const txn = Number(
+      db
+        .prepare(
+          "INSERT INTO transactions (workspace_id,account_number,date,processed_date,original_amount,original_currency,charged_amount,description,type,status,provider,sync_run_id,dedup_hash,kind,origin,import_batch_id) VALUES (?,'123','2026-11-01','2026-11-01',-100,'ILS',-100,'Shop','normal','completed','file',?,'undo-r1','expense','file',?)",
+        )
+        .run(ws, sync, batchId).lastInsertRowid,
+    );
+    const receipt = addReceipt(ws, txn, {
+      name: "receipt.pdf",
+      mime: "application/pdf",
+      data: Buffer.from("%PDF-1.4"),
+    })!;
+    const file = receiptFile(ws, receipt);
+    expect(file && fs.existsSync(file)).toBe(true);
+
+    const undone = deleteImportBatch(ws, batchId);
+    expect(undone.removed).toBe(1);
+    expect(
+      db
+        .prepare("SELECT COUNT(*) AS n FROM transaction_receipts WHERE transaction_id = ?")
+        .get(txn),
+    ).toEqual({ n: 0 });
+    expect(file && fs.existsSync(file)).toBe(false);
+    expect(db.prepare("SELECT COUNT(*) AS n FROM pending_file_cleanup").get()).toEqual({ n: 0 });
+  });
+});
+
+describe("receipt cleanup fairness", () => {
+  it("does not let permanently failing paths starve later cleanup entries", async () => {
+    const { getDb } = await import("@/server/db");
+    const { processFileCleanup } = await import("@/server/db/queries/receipts");
+    const { dataDir } = await import("@/server/lib/data-dir");
+    const db = getDb();
+    db.prepare("DELETE FROM pending_file_cleanup").run();
+    const root = path.join(dataDir(), "receipts");
+    fs.mkdirSync(root, { recursive: true });
+    for (let i = 0; i < 200; i++) {
+      const blocked = path.join(root, `blocked-${i}`);
+      fs.mkdirSync(blocked, { recursive: true });
+      fs.writeFileSync(path.join(blocked, "child.txt"), "x");
+      db.prepare("INSERT INTO pending_file_cleanup (path) VALUES (?)").run(blocked);
+    }
+    const removable = path.join(root, "removable.txt");
+    fs.writeFileSync(removable, "x");
+    db.prepare("INSERT INTO pending_file_cleanup (path) VALUES (?)").run(removable);
+
+    expect(processFileCleanup(200)).toBe(0);
+    expect(fs.existsSync(removable)).toBe(true);
+    // The failed paths now have an attempt; the untouched entry is tried first next sweep.
+    expect(processFileCleanup(200)).toBe(1);
+    expect(fs.existsSync(removable)).toBe(false);
+  });
+});
+
+describe("receipt cleanup path guard", () => {
+  it("does not unlink files outside the receipts directory", async () => {
+    const { getDb } = await import("@/server/db");
+    const { processFileCleanup } = await import("@/server/db/queries/receipts");
+    const victim = path.join(os.tmpdir(), `penny-cleanup-victim-${Date.now()}.txt`);
+    fs.writeFileSync(victim, "keep me");
+    getDb().prepare("INSERT INTO pending_file_cleanup (path) VALUES (?)").run(victim);
+    processFileCleanup();
+    expect(fs.existsSync(victim)).toBe(true);
+    expect(
+      getDb().prepare("SELECT COUNT(*) AS n FROM pending_file_cleanup WHERE path = ?").get(victim),
+    ).toEqual({ n: 0 });
+    fs.rmSync(victim, { force: true });
+  });
+});

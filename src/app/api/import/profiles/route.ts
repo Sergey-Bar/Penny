@@ -19,10 +19,10 @@ export const GET = handle("import/profiles", async (request: Request) => {
 export const PUT = handle("import/profiles", async (request: Request) => {
   const workspaceId = getWorkspaceIdFromRequest(request);
   requireImportEditor(request, workspaceId);
-  const body = await readBody<{ profile?: ImportProfileV2 }>(request);
-  const profile = body.profile;
-  if (!profile || profile.version !== 2) throw new ApiError("profile is required", 400, "bad_json");
-  const key = importProfileKey(profile);
-  putImportProfileRow(workspaceId, key, JSON.stringify(profile));
+  const body = await readBody<{ profile?: unknown }>(request);
+  const parsed = body.profile == null ? null : parseImportProfile(JSON.stringify(body.profile));
+  if (!parsed || parsed.version !== 2) throw new ApiError("profile is required", 400, "bad_json");
+  const key = importProfileKey(parsed);
+  putImportProfileRow(workspaceId, key, JSON.stringify(parsed));
   return NextResponse.json({ ok: true, key });
 });

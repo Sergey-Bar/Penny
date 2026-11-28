@@ -85,6 +85,7 @@ export function applyRulesToSyncRun(workspaceId: number, syncRunId: number): num
     `UPDATE transactions
      SET category_id = COALESCE(?, category_id),
          category_source = CASE WHEN ? IS NULL THEN category_source ELSE 'user' END,
+         category_origin = CASE WHEN ? IS NULL THEN category_origin ELSE 'rule' END,
          kind = COALESCE(?, kind),
          updated_at = datetime('now')
      WHERE id = ? AND workspace_id = ?`,
@@ -96,6 +97,7 @@ export function applyRulesToSyncRun(workspaceId: number, syncRunId: number): num
       const hit = applyRules(row, rules);
       if (!hit) continue;
       update.run(
+        hit.categoryId ?? null,
         hit.categoryId ?? null,
         hit.categoryId ?? null,
         hit.kind ?? null,
@@ -140,6 +142,7 @@ export function applyRuleToPast(workspaceId: number, rule: NewRule): number {
     `UPDATE transactions
      SET category_id = COALESCE(?, category_id),
          category_source = CASE WHEN ? IS NULL THEN category_source ELSE 'user' END,
+         category_origin = CASE WHEN ? IS NULL THEN category_origin ELSE 'rule' END,
          kind = COALESCE(?, kind),
          needs_review = CASE WHEN ? IS NULL THEN needs_review ELSE 0 END,
          updated_at = datetime('now')
@@ -147,7 +150,7 @@ export function applyRuleToPast(workspaceId: number, rule: NewRule): number {
   );
   const cat = rule.categoryId ?? null;
   db.transaction(() => {
-    for (const row of hits) update.run(cat, cat, rule.kind ?? null, cat, row.id, workspaceId);
+    for (const row of hits) update.run(cat, cat, cat, rule.kind ?? null, cat, row.id, workspaceId);
   })();
   return hits.length;
 }

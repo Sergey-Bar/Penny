@@ -10,8 +10,9 @@ import {
   type StoredCandidate,
 } from "@/lib/import/dedupe";
 import { isFatal, validateNormalizedRow } from "@/lib/import/validate";
+import { ruleKindSigned } from "@/lib/import/rule-kind";
 import type { ImportReason, ImportSummary, NormalizedRow, PreviewRow } from "@/lib/import/types";
-import { categorizeImportRows } from "@/server/lib/import/categorize";
+import { categorizeImportRows, importRuleMatches } from "@/server/lib/import/categorize";
 
 export interface PreviewResult {
   rows: PreviewRow[];
@@ -61,6 +62,8 @@ export function previewImport(
 ): PreviewResult {
   const account = accountId == null ? null : getAccount(workspaceId, accountId);
   if (!account) {
+    const summary = emptySummary();
+    summary.errors = rows.length;
     return {
       rows: rows.map((row) => ({
         rowIndex: row.rowIndex,
@@ -73,13 +76,33 @@ export function previewImport(
         confidence: 0,
         reasons: [{ code: "accountMissing", field: "account" }],
       })),
-      summary: emptySummary(),
+      summary,
     };
   }
 
+  // Preview must apply the same rule-kind overrides as save, otherwise a saved row can have a
+  // different kind (and therefore category) than the grid promised.
+  const effectiveRows = rows.map((row) => ({ ...row }));
+  const ruleMatches = importRuleMatches(
+    workspaceId,
+    effectiveRows.map((row) => ({
+      description: row.description,
+      signedAmount: row.signedAmount,
+      accountId: account.id,
+    })),
+  );
+  effectiveRows.forEach((row, index) => {
+    const rule = ruleMatches.get(index);
+    if (!rule?.kind || row.kindSource === "user") return;
+    row.kind = rule.kind;
+    row.kindSource = "rule";
+    row.signedAmount = ruleKindSigned(row, rule.kind);
+  });
+  const rowsToUse = effectiveRows;
+
   const allCategories = getAllCategories(workspaceId);
   const categories = new Map(allCategories.map((c) => [c.id, c.kind] as const));
-  const validation = rows.map((row) =>
+  const validation = rowsToUse.map((row) =>
     validateNormalizedRow(row, {
       memberIds: options.members,
       categoryKind: (id) => categories.get(id) ?? null,
@@ -87,7 +110,7 @@ export function previewImport(
     }),
   );
 
-  const dedupeRows: DedupeRow[] = rows.map((row) => ({
+  const dedupeRows: DedupeRow[] = rowsToUse.map((row) => ({
     accountId: account.id,
     date: row.date,
     description: row.description,
@@ -97,7 +120,7 @@ export function previewImport(
     installmentTotal: row.installmentTotal,
   }));
   const repeated = findRepeated(dedupeRows);
-  const dates = rows.map((r) => r.date).sort((a, b) => a.localeCompare(b));
+  const dates = rowsToUse.map((r) => r.date).sort((a, b) => a.localeCompare(b));
   const stored: StoredCandidate[] = dates.length
     ? (storedImportCandidates(
         workspaceId,
@@ -111,7 +134,7 @@ export function previewImport(
 
   const decisions = categorizeImportRows(
     workspaceId,
-    rows.map((row, index) => ({
+    rowsToUse.map((row, index) => ({
       rowIndex: index,
       accountId: account.id,
       description: row.description,
@@ -120,9 +143,10 @@ export function previewImport(
       signedAmount: row.signedAmount,
       categoryId: row.categoryId,
     })),
+    { ruleMatches },
   );
 
-  const previewRows: PreviewRow[] = rows.map((row, index) => {
+  const previewRows: PreviewRow[] = rowsToUse.map((row, index) => {
     const reasons = validation[index];
     const extra: ImportReason[] = [...reasons];
     if (repeated[index]) extra.push({ code: "repeated" });
@@ -150,7 +174,7 @@ export function previewImport(
   });
 
   const included = previewRows
-    .map((row, index) => ({ row, source: rows[index] }))
+    .map((row, index) => ({ row, source: rowsToUse[index] }))
     .filter(({ row }) => row.status === "valid" || row.status === "possibleDuplicate");
 
   let expenses = 0;
@@ -159,7 +183,7 @@ export function previewImport(
   const byAccount = new Map<number, { count: number; net: number }>();
   for (const { row, source } of included) {
     if (row.status !== "valid") continue;
-    if (row.kind === "expense") expenses += source.amount;
+    if (row.kind === "expense") expenses += source.refund ? -source.amount : source.amount;
     else if (row.kind === "income") income += source.amount;
     else transfers += source.amount;
     const entry = byAccount.get(account.id) ?? { count: 0, net: 0 };

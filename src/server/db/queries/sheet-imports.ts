@@ -61,10 +61,10 @@ export function insertSheetRows(
         .run(workspaceId).lastInsertRowid,
     );
     const insert = db.prepare(
-      `INSERT INTO transactions (workspace_id, account_number, date, processed_date, original_amount, original_currency,
+      `INSERT INTO transactions (workspace_id, account_number, account_id, date, processed_date, original_amount, original_currency,
          charged_amount, charged_currency, description, memo, type, status, provider, credential_id, sync_run_id, dedup_hash, dedup_sequence,
          kind, category_id, category_source, needs_review, owner, business_share_pct, merchant_key)
-       VALUES (@workspaceId, @account, @date, @date, @amount, 'ILS', @amount, 'ILS', @description, @memo, 'normal', 'completed', 'file',
+       VALUES (@workspaceId, @account, @accountId, @date, @date, @amount, 'ILS', @amount, 'ILS', @description, @memo, 'normal', 'completed', 'file',
          @credentialId, @batchId, @hash, @seq, @kind, @categoryId, @categorySource, @needsReview, @owner, @businessSharePct, @merchantKey)
        ON CONFLICT(workspace_id, dedup_hash, dedup_sequence) DO NOTHING`,
     );
@@ -80,23 +80,57 @@ export function insertSheetRows(
     const tagInsert = db.prepare(
       "INSERT OR IGNORE INTO transaction_tags (workspace_id, transaction_id, tag) VALUES (?, ?, ?)",
     );
+    const accountMatches = db
+      .prepare(
+        "SELECT id, provider FROM accounts WHERE workspace_id = ? AND number = ? ORDER BY CASE WHEN provider = 'file' THEN 1 ELSE 0 END",
+      )
+      .all(workspaceId, account) as { id: number; provider: string }[];
+    const accountId = accountMatches.length === 1 ? accountMatches[0].id : null;
+    const identity = accountId == null ? null : `${accountId}:${accountMatches[0].provider}`;
+    const legacyCountStmt = db.prepare(
+      "SELECT COUNT(*) as count FROM transactions WHERE workspace_id = ? AND dedup_hash = ? AND account_number = ?",
+    );
+    const identityCountStmt = db.prepare(
+      "SELECT COUNT(*) as count FROM transactions WHERE workspace_id = ? AND dedup_hash = ? AND account_id IS ?",
+    );
     const hashCounts = new Map<string, number>();
     const ids: number[] = [];
     const flags: boolean[] = [];
     for (const r of rows) {
       const signed = roundCents(r.kind === "expense" ? -r.amount : r.amount);
-      const hash = computeDedupHash({
+      const legacyHash = computeDedupHash({
         accountNumber: account,
         date: r.date,
         originalAmount: signed,
         originalCurrency: "ILS",
         description: r.description,
       });
+      const identityHash =
+        identity == null
+          ? legacyHash
+          : computeDedupHash({
+              accountNumber: account,
+              date: r.date,
+              originalAmount: signed,
+              originalCurrency: "ILS",
+              description: r.description,
+              accountIdentity: identity,
+            });
+      const legacyCount = (
+        legacyCountStmt.get(workspaceId, legacyHash, account) as { count: number }
+      ).count;
+      const identityCount =
+        identityHash === legacyHash
+          ? legacyCount
+          : (identityCountStmt.get(workspaceId, identityHash, accountId) as { count: number })
+              .count;
+      const hash = identityCount > 0 || legacyCount === 0 ? identityHash : legacyHash;
       const seq = hashCounts.get(hash) ?? 0;
       hashCounts.set(hash, seq + 1);
       const res = insert.run({
         workspaceId,
         account,
+        accountId,
         date: r.date,
         amount: signed,
         description: r.description,

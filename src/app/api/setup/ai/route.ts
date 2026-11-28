@@ -4,24 +4,41 @@ import { getGlobalSetting, setGlobalSetting } from "@/server/db/queries/settings
 import { encrypt } from "@/server/lib/encryption";
 import { normalizeOllamaUrl, OLLAMA_URL_ERROR } from "@/lib/url-guard";
 import { CLI_AGENTS } from "@/server/ai/cli-agent";
-import type { AppSettings } from "@/lib/types";
 import { demoBlockedResponse } from "@/server/demo/guard";
+import { z } from "zod";
+
+const AI_PROVIDERS = ["claude", "openai", "ollama", "none", ...Object.keys(CLI_AGENTS)] as const;
+
+const aiConfigSchema = z
+  .object({
+    provider: z.enum(AI_PROVIDERS),
+    apiKey: z.string().min(1, "apiKey must not be empty").optional(),
+    ollamaUrl: z.string().min(1, "ollamaUrl must not be empty").optional(),
+    ollamaModel: z.string().min(1, "ollamaModel must not be empty").optional(),
+  })
+  .strict();
 
 export const POST = handle("setup/ai", async (request: Request) => {
   // No AI provider in the demo: the first call would otherwise reach a model host.
   const blocked = demoBlockedResponse();
   if (blocked) return blocked;
 
-  const body = ((await request.json().catch(() => null)) ?? {}) as {
-    provider: AppSettings["aiProvider"];
-    apiKey?: string;
-    ollamaUrl?: string;
-    ollamaModel?: string;
-  };
-
-  if (!["claude", "openai", "ollama", "none", ...Object.keys(CLI_AGENTS)].includes(body.provider)) {
-    return NextResponse.json({ error: "invalid provider" }, { status: 400 });
+  const raw = (await request.json().catch(() => null)) as unknown;
+  const parsed = aiConfigSchema.safeParse(raw);
+  if (!parsed.success) {
+    const invalidProvider =
+      !raw ||
+      typeof raw !== "object" ||
+      !("provider" in raw) ||
+      typeof raw.provider !== "string" ||
+      !(AI_PROVIDERS as readonly string[]).includes(raw.provider);
+    return NextResponse.json(
+      { error: invalidProvider ? "invalid provider" : "invalid request" },
+      { status: 400 },
+    );
   }
+  const body = parsed.data;
+
   if (body.provider === "ollama" && body.ollamaUrl && !normalizeOllamaUrl(body.ollamaUrl)) {
     return NextResponse.json({ error: OLLAMA_URL_ERROR }, { status: 400 });
   }

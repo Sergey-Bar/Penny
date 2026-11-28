@@ -130,3 +130,104 @@ describe("classifyKind", () => {
     });
   });
 });
+
+describe("classifyKind card sign conventions", () => {
+  const card = (overrides: Partial<ClassifyInput> = {}) =>
+    input({ accountKind: "card", ...overrides });
+
+  it("treats a negative charge as a refund under cardPositive", () => {
+    expect(
+      classifyKind(card({ signConvention: "cardPositive", rawSigned: -12, amount: 12 })),
+    ).toMatchObject({ kind: "expense", refund: true });
+  });
+
+  it("treats a positive credit as a refund under cardNegative", () => {
+    expect(
+      classifyKind(card({ signConvention: "cardNegative", rawSigned: 12, amount: 12 })),
+    ).toMatchObject({ kind: "expense", refund: true });
+    expect(
+      classifyKind(
+        card({
+          signConvention: "cardNegative",
+          rawSigned: -12,
+          amount: 12,
+          description: "store refund",
+        }),
+      ),
+    ).toMatchObject({ kind: "expense", refund: true });
+    expect(
+      classifyKind(card({ signConvention: "cardNegative", rawSigned: -12, amount: 12 })),
+    ).toMatchObject({ kind: "expense", refund: false });
+  });
+
+  it("falls back to the sign when the card convention is explicit or unknown", () => {
+    expect(
+      classifyKind(card({ signConvention: "explicit", rawSigned: -12, amount: 12 })),
+    ).toMatchObject({ kind: "expense", refund: true });
+    expect(
+      classifyKind(
+        card({
+          signConvention: "explicit",
+          rawSigned: 12,
+          amount: 12,
+          description: "store refund",
+        }),
+      ),
+    ).toMatchObject({ kind: "expense", refund: true });
+    expect(
+      classifyKind(card({ signConvention: "explicit", rawSigned: 12, amount: 12 })),
+    ).toMatchObject({ kind: "expense", refund: false });
+  });
+});
+
+describe("classifyKind bank edge branches", () => {
+  it("turns a positive card bill into a transfer only with coverage", () => {
+    expect(
+      classifyKind(
+        input({
+          description: "חיוב כרטיס ויזה 1234",
+          rawSigned: 400,
+          amount: 400,
+          hasCardCoverage: true,
+        }),
+      ),
+    ).toMatchObject({ kind: "transfer" });
+    expect(
+      classifyKind(input({ description: "חיוב כרטיס ויזה 1234", rawSigned: 400, amount: 400 })),
+    ).toMatchObject({ kind: "expense", needsReview: true, transferSuggested: true });
+  });
+
+  it("leaves a positive transfer-like row for review without a pair", () => {
+    expect(
+      classifyKind(input({ description: "העברה לחשבון", rawSigned: 80, amount: 80 })),
+    ).toMatchObject({ kind: "expense", needsReview: true, transferSuggested: true });
+  });
+
+  it("treats a positive unknown row as income when the sign is known", () => {
+    expect(
+      classifyKind(
+        input({
+          description: "unknown merchant",
+          rawSigned: 80,
+          amount: 80,
+          signConvention: "bankSigned",
+        }),
+      ),
+    ).toMatchObject({ kind: "income" });
+  });
+});
+
+describe("card debit/credit columns", () => {
+  it("treats a credit column as a refund, not income", () => {
+    expect(
+      classifyKind(
+        input({
+          accountKind: "card",
+          debitCreditKind: "income",
+          rawSigned: 50,
+          amount: 50,
+        }),
+      ),
+    ).toMatchObject({ kind: "expense", refund: true, kindSource: "column" });
+  });
+});

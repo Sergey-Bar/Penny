@@ -15,6 +15,7 @@ import {
 } from "@/lib/import/generic";
 import { applyExtracted } from "@/lib/import/extract";
 import { guessImportMapping } from "@/lib/import/detect";
+import { normalizeImportRow } from "@/lib/import/normalize";
 import {
   feeCategoryKey,
   insuranceCategoryKey,
@@ -176,6 +177,22 @@ describe("drafts", () => {
       credit: "1",
     });
     expect(debitCreditFor([], 1, mapping)).toEqual({});
+  });
+
+  it("normalizes a mapped amount before considering debit or credit columns", () => {
+    const table = [["01/02/2024", "Purchase", "-12", "90", ""]];
+    const both = { ...mapping, debit: 3, credit: 4 };
+    const context = {
+      accountId: 1,
+      accountKind: "bank",
+      accountCurrency: "ILS",
+      dateOrder: "dmy",
+      signConvention: "bankSigned",
+    } as const;
+    const normalized = (m: typeof mapping) =>
+      normalizeImportRow(tableToDrafts(table, m).drafts[0], context).row;
+    expect(normalized(both)).toMatchObject({ signedAmount: -12 });
+    expect(normalized({ ...both, amount: null })).toMatchObject({ signedAmount: -90 });
   });
 
   it("skips summary and empty rows and enforces the row cap", () => {

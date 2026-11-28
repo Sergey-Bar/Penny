@@ -5,7 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, Landmark, Link2, Plus } from "lucide-react";
 import { getAssets, getHome } from "@/lib/api";
-import { groupAccounts, groupItemsByProvider } from "@/lib/account-groups";
+import {
+  groupAccounts,
+  groupItemsByProvider,
+  stripInvestmentHousePrefix,
+} from "@/lib/account-groups";
 import { INVESTMENT_HOUSES } from "@/lib/investment-houses";
 import { accountLabel, translateProviderName } from "@/lib/i18n-data";
 import { useSidebarAccountsPref } from "@/components/layout/sidebar-accounts";
@@ -123,7 +127,7 @@ export function AccountsOverview() {
                   </bdi>
                 </summary>
                 <ul className="border-t border-border/60 bg-background/30">
-                  {groupItemsByProvider(g.items).map((entry) => {
+                  {groupItemsByProvider(g.items, g.key === "investments").map((entry) => {
                     if (entry.kind === "item") {
                       const a = entry.item;
                       const full = assets.data!.assets.find((x) => x.id === a.id);
@@ -169,10 +173,7 @@ export function AccountsOverview() {
                     const house = INVESTMENT_HOUSES.find((h) => h.id === entry.providerKey);
                     const houseName =
                       house?.name[locale === "he" ? "he" : "en"] ?? entry.providerKey;
-                    const stripPrefix = (n: string) =>
-                      n
-                        .replace(/^אקסלנס\s*-\s*/, "")
-                        .replace(new RegExp(`^${houseName}\\s*-\\s*`), "");
+                    const stripPrefix = (n: string) => stripInvestmentHousePrefix(n, house?.name);
                     return (
                       <li key={`provider:${entry.providerKey}`}>
                         <details className="group/prov">

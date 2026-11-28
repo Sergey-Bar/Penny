@@ -95,3 +95,57 @@ describe("categorizeLocally", () => {
     expect(categorizeLocally(1)).toBe(0);
   });
 });
+
+describe("categorizeLocally parent memory", () => {
+  it("applies a remembered parent category instead of dropping it", () => {
+    const db = getDb();
+    const parent = db
+      .prepare(
+        `INSERT INTO categories (workspace_id, parent_id, name, color, icon, kind, budget_mode)
+         VALUES (1, NULL, 'Parent Test', '#000000', NULL, 'expense', 'budgeted')`,
+      )
+      .run().lastInsertRowid as number;
+    // A true parent is not a leaf; without a child the leaves-only list would include it.
+    db.prepare(
+      `INSERT INTO categories (workspace_id, parent_id, name, color, icon, kind, budget_mode)
+       VALUES (1, ?, 'Child Test', '#000000', NULL, 'expense', 'budgeted')`,
+    ).run(parent);
+    const merchant = "parent merchant test";
+    db.prepare(
+      `INSERT INTO merchant_categories (workspace_id, merchant_key, category_id, kind, source)
+       VALUES (1, ?, ?, 'expense', 'user')`,
+    ).run(normalizeMerchant(merchant), parent);
+    const txn = addTransaction(merchant);
+    categorizeLocally(1);
+    expect(
+      db.prepare("SELECT category_id AS categoryId FROM transactions WHERE id = ?").get(txn),
+    ).toEqual({ categoryId: parent });
+  });
+});
+
+describe("categorizeLocally foreign memory", () => {
+  it("ignores a remembered category that is not in this workspace", () => {
+    const db = getDb();
+    db.prepare(
+      "INSERT OR IGNORE INTO workspaces (id, name, slug) VALUES (2, 'Other', 'other')",
+    ).run();
+    const foreign = Number(
+      db
+        .prepare(
+          `INSERT INTO categories (workspace_id, parent_id, name, color, icon, kind, budget_mode)
+           VALUES (2, NULL, 'Foreign Category', '#000000', NULL, 'expense', 'budgeted')`,
+        )
+        .run().lastInsertRowid,
+    );
+    const merchant = "foreign memory merchant";
+    db.prepare(
+      `INSERT INTO merchant_categories (workspace_id, merchant_key, category_id, kind, source)
+       VALUES (1, ?, ?, 'expense', 'user')`,
+    ).run(normalizeMerchant(merchant), foreign);
+    const txn = addTransaction(merchant);
+    categorizeLocally(1);
+    expect(
+      db.prepare("SELECT category_id AS categoryId FROM transactions WHERE id = ?").get(txn),
+    ).toEqual({ categoryId: null });
+  });
+});

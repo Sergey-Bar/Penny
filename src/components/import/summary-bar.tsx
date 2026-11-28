@@ -29,7 +29,7 @@ interface Props {
 }
 
 const money = (n: number) =>
-  `₪${Math.abs(n).toLocaleString("he-IL", { maximumFractionDigits: 0 })}`;
+  `${n < 0 ? "-" : ""}₪${Math.abs(n).toLocaleString("he-IL", { maximumFractionDigits: 0 })}`;
 
 /** The one place that says what will happen if the user presses save. */
 export function SummaryBar({

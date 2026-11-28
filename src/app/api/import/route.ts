@@ -5,12 +5,13 @@ import { saveStatementImport } from "@/server/lib/folder-import";
 import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
 import { MAX_IMPORT_ROWS, parseImportDate, type ImportRow } from "@/lib/file-import";
 import { roundCents } from "@/lib/money";
-import { classifyKind } from "@/lib/import/classify";
-import type { NormalizedRow } from "@/lib/import/types";
 import { getAccount, resolveAccount } from "@/server/db/queries/accounts";
+import { deleteImportBatch, resolveBatchId } from "@/server/db/queries/imports";
 import { importV2Enabled } from "@/server/lib/import/flag";
+import { legacyRow } from "@/server/lib/import/legacy-row";
 import { previewImport } from "@/server/lib/import/preview";
 import { saveImport } from "@/server/lib/import/save";
+import { readBody } from "@/server/lib/import/request";
 import { getAppSettings } from "@/server/db/queries/settings";
 
 const bad = (error: string) => NextResponse.json({ error }, { status: 400 });
@@ -22,13 +23,13 @@ const bad = (error: string) => NextResponse.json({ error }, { status: 400 });
  */
 export const POST = handle("import", async (request: Request) => {
   const workspaceId = getWorkspaceIdFromRequest(request);
-  const body = ((await request.json().catch(() => null)) ?? {}) as {
+  const body = await readBody<{
     account?: unknown;
     rows?: unknown;
     dryRun?: unknown;
     source?: unknown;
     fileName?: unknown;
-  };
+  }>(request);
   const account = typeof body.account === "string" ? body.account.trim().slice(0, 40) : "";
   if (!account) return bad("account is required");
   if (!Array.isArray(body.rows) || body.rows.length === 0) return bad("rows are required");
@@ -60,7 +61,7 @@ export const POST = handle("import", async (request: Request) => {
     const resolved = resolveAccount(workspaceId, {
       label: account,
       provider: "file",
-      create: true,
+      create: body.dryRun !== true,
       kind: source === "card" ? "card" : "bank",
     });
     if (!resolved) return bad("account is required");
@@ -108,70 +109,25 @@ export const POST = handle("import", async (request: Request) => {
   );
 });
 
-function legacyRow(
-  row: ImportRow,
-  rowIndex: number,
-  accountId: number,
-  accountKind: "bank" | "card" | "other",
-  source: "bank" | "card",
-): NormalizedRow {
-  const rawSigned = row.amount;
-  const amount = Math.abs(row.amount);
-  const classified = classifyKind({
-    description: row.description,
-    rawSigned,
-    amount,
-    explicitKind: "auto",
-    accountKind: source === "card" ? "card" : accountKind,
-    signConvention: source === "card" ? "cardPositive" : "bankSigned",
-    hasCardCoverage: false,
-    hasTransferPair: false,
-  });
-  const signedAmount =
-    classified.kind === "expense"
-      ? classified.refund
-        ? amount
-        : -amount
-      : classified.kind === "income"
-        ? amount
-        : rawSigned;
-  return {
-    rowIndex,
-    date: row.date,
-    processedDate: row.date,
-    description: row.description,
-    amount,
-    kind: classified.kind,
-    signedAmount,
-    refund: classified.refund,
-    accountId,
-    categoryId: null,
-    categorySource: "none",
-    tags: [],
-    owner: null,
-    businessSharePct: 0,
-    memo: null,
-    originalAmount: amount,
-    originalCurrency: "ILS",
-    installmentNumber: null,
-    installmentTotal: null,
-    identifier: null,
-    balance: null,
-    kindSource: classified.kindSource,
-    confidence: classified.confidence,
-    reasons: classified.reasons,
-  };
-}
-
 /** Import history: past statement imports with their account and row count. */
 export const GET = handle("import", async (request: Request) => {
   return NextResponse.json({ imports: listFileImports(getWorkspaceIdFromRequest(request)) });
 });
 
-/** Undo one import: ?batch=. */
+/** Undo one import: ?batch=. Imports always identify their own kind of batch. */
 export const DELETE = handle("import", async (request: Request) => {
   const workspaceId = getWorkspaceIdFromRequest(request);
-  const batch = Number(new URL(request.url).searchParams.get("batch"));
+  const ref = (new URL(request.url).searchParams.get("batch") ?? "").trim();
+  if (importV2Enabled(workspaceId)) {
+    const id = resolveBatchId(workspaceId, ref);
+    if (id != null) return NextResponse.json(deleteImportBatch(workspaceId, id));
+    // A v2 batch that does not exist is a bad explicit reference. A bare number or `sync-<id>`
+    // may name a legacy import made before v2, so it falls through to the legacy path.
+    if (/^(?:batch-|sheet-)/.test(ref)) return bad("invalid batch");
+  }
+  // History rows identify their sync run as `sync-<id>`; a bare number is still accepted.
+  const legacy = /^(?:sync-)?(\d+)$/.exec(ref);
+  const batch = legacy ? Number(legacy[1]) : NaN;
   if (!Number.isInteger(batch) || batch <= 0) return bad("invalid batch");
   return NextResponse.json({ removed: deleteFileImport(workspaceId, batch) });
 });

@@ -11,7 +11,7 @@ const CARD_BILL_PATTERNS: readonly RegExp[] = [
   /ויזה/i,
   /ישראכרט/i,
   /ישרא[\s־-]?כארד/i,
-  /כ[\s.\-־]?א[\s.\-־]?ל/i,
+  he("כ[\\s.\\-־]?א[\\s.\\-־]?ל"),
   /מקסימום/i,
   /מקס[\s־-]*איט/i,
   /(^|\s)מקס(\s|$)/,
@@ -75,9 +75,9 @@ const POLICY_KINDS: readonly { key: string; re: RegExp }[] = [
 const BANK_FEE_PATTERN =
   /עמלת|עמלה|דמי\s*ניהול\s*חשבון|דמי\s*כרטיס|דמי\s*טיפול|commission|service\s*charge/i;
 const OVERDRAFT_PATTERN = /ריבית\s*חובה|ריבית\s*על\s*יתרת\s*חובה|ריבית\s*בגין|ריבית\s*משיכת\s*יתר/i;
-const FX_FEE_PATTERN = /עמלת\s*המרה|עמלת\s*מט"ח|עמלת\s*חו"ל|עסקה\s*בחו"ל|foreign\s*transaction/i;
+const FX_FEE_PATTERN = /עמלת\s*המרה|עמלת\s*מט"ח|עמלת\s*חו"ל|foreign\s*transaction/i;
 
-export const RENT_PATTERN = /שכר\s*דירה|שכירות|rent\b/i;
+export const RENT_PATTERN = /שכר\s*דירה|שכירות|\brent\b/i;
 export const MORTGAGE_PATTERN = /משכנתא|משכנתה|mortgage/i;
 
 const UTILITY_PATTERNS: readonly { key: string; re: RegExp }[] = [

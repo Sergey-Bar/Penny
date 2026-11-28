@@ -153,6 +153,7 @@ async function runScrape(
   // The fork is browserless and drives the bank APIs directly, so it has no browser
   // or installments options; it takes a whole-run deadline instead of a page timeout.
   let securities: ScrapedSecurity[] | undefined;
+  let securitiesAccounts: string[] | undefined;
   let result;
   if (forkCompany) {
     result = await createForkScraper({
@@ -181,7 +182,11 @@ async function runScrape(
       s.fetchData = async () => {
         const res = await origFetchData();
         if (res.success && s.page) {
-          securities = await scrapeHapoalimSecurities(s.page);
+          const capture = await scrapeHapoalimSecurities(s.page);
+          if (capture) {
+            securities = capture.securities;
+            securitiesAccounts = capture.accountNumbers;
+          }
         }
         return res;
       };
@@ -204,6 +209,7 @@ async function runScrape(
 
   const mapped = toScrapeResult(result);
   if (securities) mapped.securities = securities;
+  if (securitiesAccounts) mapped.securitiesAccounts = securitiesAccounts;
   const txnCount = mapped.accounts.reduce((sum, a) => sum + a.transactions.length, 0);
   console.log(
     `[scraper] ${mapped.success ? "success" : "rejected"}: ${mapped.accounts.length} account(s), ${txnCount} transaction(s)`,

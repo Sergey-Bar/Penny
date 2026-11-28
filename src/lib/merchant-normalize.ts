@@ -102,7 +102,7 @@ export function normalizeMerchantV2(description: string): string {
   s = s.replace(/[\s*\-_.#]+$/, "").trim();
 
   // Hebrew final letters are positional; folding them lets "חנות" and "חנותך" compare.
-  s = s.replace(/[ךםןףץ]/g, (ch) => FINAL_FORMS[ch] ?? ch);
+  s = s.replace(/[ךםןףץ]/g, (ch) => FINAL_FORMS[ch]!);
 
   for (const [pattern, replacement] of ALIASES) {
     if (pattern.test(s)) {

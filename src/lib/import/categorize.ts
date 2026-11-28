@@ -28,6 +28,8 @@ export interface CategorizeRowInput {
 
 export interface CategorizeContext {
   categories: readonly ImportCategory[];
+  /** Merchant-memory resolution may use parent categories; defaults to `categories`. */
+  memoryCategories?: readonly ImportCategory[];
 }
 
 const EXPENSE_SOURCES: Record<Exclude<CategorySource, "none">, number> = {
@@ -97,18 +99,6 @@ export function categorizeRow(
     return decision(direct, "user", reasons);
   }
 
-  if (input.requestedCategoryName) {
-    const named = context.categories.find(
-      (c) => c.name.toLowerCase() === input.requestedCategoryName!.trim().toLowerCase(),
-    );
-    if (named && wantedKind(named)) return decision(named, "file", reasons);
-    if (named && !wantedKind(named)) {
-      reasons.push({ code: "categoryKindMismatch", detail: named.name });
-    } else {
-      reasons.push({ code: "categoryUnknown", detail: input.requestedCategoryName });
-    }
-  }
-
   const rule =
     input.ruleCategoryId == null
       ? null
@@ -117,6 +107,19 @@ export function categorizeRow(
     if (!wantedKind(rule))
       return decision(null, "none", [{ code: "categoryKindMismatch", detail: rule.name }]);
     return decision(rule, "rule", [{ code: "ruleApplied" }]);
+  }
+
+  if (input.requestedCategoryName) {
+    const wantedName = input.requestedCategoryName.trim().toLowerCase();
+    const named =
+      context.categories.find((c) => c.name.toLowerCase() === wantedName && c.kind === kind) ??
+      context.categories.find((c) => c.name.toLowerCase() === wantedName);
+    if (named && wantedKind(named)) return decision(named, "file", reasons);
+    if (named && !wantedKind(named)) {
+      reasons.push({ code: "categoryKindMismatch", detail: named.name });
+    } else {
+      reasons.push({ code: "categoryUnknown", detail: input.requestedCategoryName });
+    }
   }
 
   const generic = isGeneric(input.description, input.userGenericPatterns ?? []);
@@ -134,8 +137,10 @@ export function categorizeRow(
 
   const memory = input.memory;
   if (memory) {
-    const same = context.categories.find((c) => c.id === memory.categoryId);
-    if (same && same.kind === kind) {
+    const same = (context.memoryCategories ?? context.categories).find(
+      (c) => c.id === memory.categoryId,
+    );
+    if (same && wantedKind(same)) {
       return decision(same, "memory", [{ code: "merchantMemoryApplied" }]);
     }
   }
@@ -160,6 +165,8 @@ export function categorizeRow(
     if (ai && wantedKind(ai)) return decision(ai, "ai", [{ code: "aiSuggested" }]);
   }
 
-  const suggestions = [dict, pattern].filter((c): c is ImportCategory => c != null);
+  const suggestions = [dict, pattern].filter(
+    (c): c is ImportCategory => c != null && wantedKind(c),
+  );
   return decision(null, "none", reasons, suggestions);
 }

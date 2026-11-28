@@ -96,7 +96,37 @@ describe("readXlsx", () => {
     expect(await readXlsx(bytes)).toEqual([["a"], ["b"], ["c"]]);
   });
 
+  it("counts a shared zip entry's bytes only once", async () => {
+    const workbook = `<workbook><sheets><sheet name="S" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+    const sheetXml = `<worksheet><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>x</t></is></c></row></sheetData></worksheet>`;
+    const files = { "xl/workbook.xml": workbook, "xl/worksheets/sheet1.xml": sheetXml };
+    const bytes = await zip(files, []);
+    const enc = new TextEncoder();
+    const total = Object.values(files).reduce((sum, text) => sum + enc.encode(text).length, 0);
+    // workbook.xml is loaded twice; at the exact distinct total it must not be counted twice.
+    expect(await readXlsx(bytes, { maxUncompressed: total })).toEqual([["x"]]);
+  });
+
   it("rejects non-zip input", async () => {
     await expect(readXlsx(new TextEncoder().encode("a,b\n1,2"))).rejects.toThrow();
+  });
+});
+
+describe("readXlsx decompression limits", () => {
+  it("enforces the actual decompressed size when the central directory lies", async () => {
+    const sheetXml =
+      '<worksheet><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>this is more than ten bytes</t></is></c></row></sheetData></worksheet>';
+    const bytes = await zip({ "xl/worksheets/sheet1.xml": sheetXml }, ["xl/worksheets/sheet1.xml"]);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let patched = false;
+    for (let i = 0; i < bytes.length - 46; i++) {
+      if (view.getUint32(i, true) === 0x02014b50) {
+        view.setUint32(i + 24, 1, true);
+        patched = true;
+        break;
+      }
+    }
+    expect(patched).toBe(true);
+    await expect(readXlsx(bytes, { maxUncompressed: 10 })).rejects.toThrow("zipBomb");
   });
 });

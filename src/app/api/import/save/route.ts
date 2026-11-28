@@ -1,7 +1,7 @@
 import { ApiError, handle } from "@/server/lib/api-error";
 import { NextResponse } from "next/server";
 import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
-import { findBatchBySha } from "@/server/db/queries/imports";
+import { findBatchBySha, getBatchByClientToken } from "@/server/db/queries/imports";
 import { saveImport } from "@/server/lib/import/save";
 import { deleteParse } from "@/server/lib/import/parse-store";
 import { finishPending } from "@/server/lib/import/pending";
@@ -48,9 +48,12 @@ export const POST = handle("import/save", async (request: Request) => {
     if (typeof body.accountId !== "number" || !Number.isInteger(body.accountId))
       throw new ApiError("account is required", 400, "accountMissing");
     const origin: ImportOrigin = body.origin && ORIGINS.has(body.origin) ? body.origin : "upload";
-    if (body.fileSha256 && body.force !== true) {
+    const tokenBatch =
+      body.clientToken != null ? getBatchByClientToken(workspaceId, body.clientToken) : null;
+    if (body.fileSha256 && body.force !== true && !tokenBatch) {
       const existing = findBatchBySha(workspaceId, body.fileSha256, body.accountId);
-      if (existing)
+      // An unfinished post-commit pass is resumed by saveImport, not reported as imported.
+      if (existing && existing.postCommitStatus === "completed")
         return NextResponse.json(
           {
             error: "This file was already imported",
@@ -60,7 +63,7 @@ export const POST = handle("import/save", async (request: Request) => {
           { status: 409 },
         );
     }
-    const rows = coerceNormalizedRows(body.rows);
+    const rows = coerceNormalizedRows(body.rows, { accountId: body.accountId });
     const result = saveImport({
       workspaceId,
       accountId: body.accountId,

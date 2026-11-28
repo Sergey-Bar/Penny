@@ -42,7 +42,11 @@ export interface RuleMatch {
 export function categorizeImportRows(
   workspaceId: number,
   candidates: readonly CategorizeCandidate[],
-  options: { aiCategories?: Map<number, number> } = {},
+  options: {
+    aiCategories?: Map<number, number>;
+    /** Rule results already computed by the caller (same array order); avoids a second pass. */
+    ruleMatches?: Map<number, RuleMatch>;
+  } = {},
 ): Map<number, ServerCategorizeResult> {
   const out = new Map<number, ServerCategorizeResult>();
   if (candidates.length === 0) return out;
@@ -58,21 +62,42 @@ export function categorizeImportRows(
     workspaceId,
     candidates.map((c) => c.description),
   );
-  const rules = listRules(workspaceId);
+  // Memory may point at a parent category a person chose; resolve it against the full tree
+  // instead of dropping the merchant memory because the categorizer only offers leaves. The
+  // parents stay in a memory-only list so suggestion lookups remain leaf-only.
+  const allCategories = getAllCategories(workspaceId);
+  const memoryCategories: ImportCategory[] = [...categories];
+  const known = new Set(categories.map((category) => category.id));
+  for (const remembered of memory.values()) {
+    if (known.has(remembered.categoryId)) continue;
+    const parent = allCategories.find((category) => category.id === remembered.categoryId);
+    if (!parent || parent.kind !== remembered.kind) continue;
+    memoryCategories.push({
+      id: parent.id,
+      name: parent.name,
+      kind: parent.kind,
+      key: parent.key,
+    });
+    known.add(parent.id);
+  }
+  const rules = options.ruleMatches ? [] : listRules(workspaceId);
   const userGenericPatterns = listGenericPatterns(workspaceId);
   const accountNumbers = new Map<number, string>();
   for (const accountId of new Set(candidates.map((c) => c.accountId))) {
     accountNumbers.set(accountId, getAccount(workspaceId, accountId)?.number ?? "");
   }
-  for (const candidate of candidates) {
-    const rule = applyRules(
-      {
-        description: candidate.description,
-        chargedAmount: candidate.signedAmount,
-        accountNumber: accountNumbers.get(candidate.accountId) ?? "",
-      },
-      rules,
-    );
+  candidates.forEach((candidate, index) => {
+    const rule =
+      options.ruleMatches != null
+        ? (options.ruleMatches.get(index) ?? null)
+        : applyRules(
+            {
+              description: candidate.description,
+              chargedAmount: candidate.signedAmount,
+              accountNumber: accountNumbers.get(candidate.accountId) ?? "",
+            },
+            rules,
+          );
     const decision: CategoryDecision = categorizeRow(
       {
         description: candidate.description,
@@ -86,7 +111,7 @@ export function categorizeImportRows(
           options.aiCategories?.get(candidate.rowIndex) ?? candidate.aiCategoryId ?? null,
         userGenericPatterns,
       },
-      { categories },
+      { categories, memoryCategories },
     );
     out.set(candidate.rowIndex, {
       rowIndex: candidate.rowIndex,
@@ -95,7 +120,7 @@ export function categorizeImportRows(
       confidence: decision.confidence,
       alternatives: decision.alternatives,
     });
-  }
+  });
   return out;
 }
 

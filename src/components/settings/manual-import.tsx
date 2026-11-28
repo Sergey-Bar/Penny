@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { FileUp } from "lucide-react";
+import { FileUp, Loader2 } from "lucide-react";
 import { SettingCard } from "@/components/settings/section-shell";
 import { StatementImportCard } from "@/components/settings/statement-import-card";
 import { ImportWorkbench } from "@/components/import/import-workbench";
@@ -36,6 +36,7 @@ interface Institution {
 export function ManualImport() {
   const t = useTranslations("settings.bank");
   const tBanks = useTranslations("banks");
+  const tHero = useTranslations("pageHero");
   const locale = useLocale();
   const [chosen, setChosen] = useState<string>("");
   const flag = useQuery({
@@ -125,7 +126,19 @@ export function ManualImport() {
       </SettingCard>
 
       <div id="import" className="scroll-mt-20 space-y-7">
-        {flag.data?.enabled ? (
+        {flag.isLoading ? (
+          <div className="flex items-center gap-2 rounded-xl bg-muted/30 px-3 py-3 text-footnote text-muted-foreground">
+            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            {t("manualImportCta")}
+          </div>
+        ) : flag.isError ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-muted/30 px-3 py-3 text-footnote">
+            <span className="flex-1">{tHero("error")}</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => void flag.refetch()}>
+              {tHero("retry")}
+            </Button>
+          </div>
+        ) : flag.data?.enabled ? (
           <ImportWorkbench defaultAccountLabel={account} />
         ) : (
           <StatementImportCard defaultAccount={account} />

@@ -2,6 +2,7 @@ import "server-only";
 
 import { getDb } from "@/server/db";
 import { classifyKind } from "@/lib/import/classify";
+import { isCardBill } from "@/lib/import/patterns";
 import type { ImportKind, SignConvention } from "@/lib/import/types";
 import { reconcileFlows } from "@/server/finance/pairing";
 
@@ -20,29 +21,88 @@ interface ReclassifyRow {
 
 const SAFE_SOURCES = new Set(["default", "sign", "pattern", "sync"]);
 
-function hasCardCoverage(workspaceId: number, date: string): boolean {
-  return (
-    getDb()
-      .prepare(
-        `SELECT 1 FROM transactions t JOIN accounts a ON a.id = t.account_id
-         WHERE t.workspace_id = ? AND a.kind = 'card'
-           AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(?, 1, 10))) <= 45
-         LIMIT 1`,
-      )
-      .get(workspaceId, date) !== undefined
-  );
+function hasCardCoverage(
+  workspaceId: number,
+  id: number,
+  description: string,
+  date: string,
+  amount: number,
+): boolean {
+  // Only a card bill can be explained by card purchases; other rows never use coverage.
+  if (!isCardBill(description)) return false;
+  const tolerance = Math.max(0.05, Math.abs(amount) * 0.005);
+  const db = getDb();
+  const single = db
+    .prepare(
+      `SELECT 1 FROM transactions t JOIN accounts a ON a.id = t.account_id
+       WHERE t.workspace_id = ? AND t.id != ? AND a.kind = 'card'
+         AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(?, 1, 10))) <= 45
+         AND (
+           t.linked_txn_id = ? OR t.transfer_pair_id = ?
+           OR abs(abs(t.charged_amount) - ?) <= ?
+         )
+       LIMIT 1`,
+    )
+    .get(workspaceId, id, date, id, id, Math.abs(amount), tolerance);
+  if (single !== undefined) return true;
+  // A bill can be covered by several completed purchases in the same period (400 + 600 = 1000).
+  // Look for a contiguous run on one card account whose sum matches within tolerance.
+  const charges = db
+    .prepare(
+      `SELECT t.account_id AS accountId, abs(t.charged_amount) AS amount
+       FROM transactions t
+       JOIN accounts a ON a.id = t.account_id
+       JOIN transactions bill ON bill.id = ?
+       WHERE t.workspace_id = ? AND t.id != ? AND a.kind = 'card'
+         AND t.status = 'completed' AND t.charged_amount < 0 AND t.is_excluded = 0
+         AND COALESCE(t.charged_currency, t.original_currency)
+           = COALESCE(bill.charged_currency, bill.original_currency)
+         AND abs(julianday(substr(t.date, 1, 10)) - julianday(substr(?, 1, 10))) <= 45
+       ORDER BY t.account_id, t.date, t.id`,
+    )
+    .all(id, workspaceId, id, date) as { accountId: number; amount: number }[];
+  const target = Math.abs(amount);
+  let accountId: number | null = null;
+  let left = 0;
+  let sum = 0;
+  for (let right = 0; right < charges.length; right++) {
+    if (charges[right].accountId !== accountId) {
+      accountId = charges[right].accountId;
+      left = right;
+      sum = 0;
+    }
+    sum += charges[right].amount;
+    while (sum > target + tolerance && left <= right) {
+      sum -= charges[left].amount;
+      left++;
+    }
+    if (Math.abs(sum - target) <= tolerance) return true;
+  }
+  return false;
 }
 
-function hasTransferPair(workspaceId: number, id: number, date: string, amount: number): boolean {
+function hasTransferPair(
+  workspaceId: number,
+  id: number,
+  accountId: number | null,
+  accountNumber: string,
+  date: string,
+  amount: number,
+): boolean {
   return (
     getDb()
       .prepare(
         `SELECT 1 FROM transactions
          WHERE workspace_id = ? AND id != ? AND charged_amount = ?
+           AND (
+             (? IS NOT NULL AND account_id IS NOT NULL AND account_id != ?)
+             OR ((? IS NULL OR account_id IS NULL) AND account_number != ?)
+           )
            AND abs(julianday(substr(date, 1, 10)) - julianday(substr(?, 1, 10))) <= 2
          LIMIT 1`,
       )
-      .get(workspaceId, id, -amount, date) !== undefined
+      .get(workspaceId, id, -amount, accountId, accountId, accountId, accountNumber, date) !==
+    undefined
   );
 }
 
@@ -99,7 +159,8 @@ function reclassifyTransactions(
               accountKindStmt.get(workspaceId, row.account_id) as
                 { kind: "bank" | "card" | "other" } | undefined
             )?.kind ?? "bank");
-      const signConvention: SignConvention = accountKind === "card" ? "cardPositive" : "bankSigned";
+      // Stored card rows are already normalized: charges are negative and refunds positive.
+      const signConvention: SignConvention = accountKind === "card" ? "cardNegative" : "bankSigned";
       const result = classifyKind({
         description: row.description,
         rawSigned: row.charged_amount,
@@ -107,8 +168,21 @@ function reclassifyTransactions(
         explicitKind: "auto",
         accountKind,
         signConvention,
-        hasCardCoverage: hasCardCoverage(workspaceId, row.date),
-        hasTransferPair: hasTransferPair(workspaceId, row.id, row.date, row.charged_amount),
+        hasCardCoverage: hasCardCoverage(
+          workspaceId,
+          row.id,
+          row.description,
+          row.date,
+          row.charged_amount,
+        ),
+        hasTransferPair: hasTransferPair(
+          workspaceId,
+          row.id,
+          row.account_id,
+          row.account_number,
+          row.date,
+          row.charged_amount,
+        ),
         allPositive: false,
       });
       const changedKind = result.kind !== row.kind;
@@ -132,10 +206,6 @@ function reclassifyTransactions(
   // Pairing writes flow_type and the transfer links; it must run after the kinds settle.
   reconcileFlows(workspaceId);
   return { checked, changed };
-}
-
-export function reclassifyAccount(workspaceId: number, accountId: number) {
-  return reclassifyTransactions(workspaceId, { accountId });
 }
 
 export function reclassifyBatch(workspaceId: number, batchId: number) {

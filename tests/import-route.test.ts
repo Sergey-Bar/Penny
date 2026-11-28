@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import os from "os";
 import path from "path";
 import fs from "fs";
 
 let POST: typeof import("@/app/api/import/route").POST;
+let GET: typeof import("@/app/api/import/route").GET;
 let DELETE: typeof import("@/app/api/import/route").DELETE;
 let getDb: typeof import("@/server/db/index").getDb;
 
@@ -17,7 +18,7 @@ const req = (body: unknown) =>
 beforeAll(async () => {
   process.env.PENNY_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "penny-import-"));
   getDb = (await import("@/server/db/index")).getDb;
-  ({ POST, DELETE } = await import("@/app/api/import/route"));
+  ({ POST, GET, DELETE } = await import("@/app/api/import/route"));
 });
 
 describe("/api/import", () => {
@@ -52,6 +53,36 @@ describe("/api/import", () => {
       new Request(`http://127.0.0.1/api/import?batch=${body.batchId}`, { method: "DELETE" }),
     );
     expect((await undo.json()).removed).toBe(2);
+  });
+
+  it.each([false, true])("undoes a history row with import v2 enabled: %s", async (v2) => {
+    vi.stubEnv("PENNY_IMPORT_V2", "1");
+    try {
+      const account = `History undo ${v2}`;
+      const fileName = `history-${v2}.csv`;
+      const res = await POST(
+        req({
+          account,
+          fileName,
+          rows: [{ date: "2025-06-01", description: "Test charge", amount: -42 }],
+        }),
+      );
+      const saved = await res.json();
+      expect(saved).toMatchObject({ added: 1 });
+      const history = await GET(new Request("http://127.0.0.1/api/import"));
+      const entry = (await history.json()).imports.find(
+        (row: { fileName: string }) => row.fileName === fileName,
+      );
+      expect(entry.undoRef).toBe(`sync-${entry.id}`);
+      expect(entry.id).not.toBe(saved.batchId);
+      vi.stubEnv("PENNY_IMPORT_V2", v2 ? "1" : "");
+      const undo = await DELETE(
+        new Request(`http://127.0.0.1/api/import?batch=${entry.undoRef}`, { method: "DELETE" }),
+      );
+      expect(await undo.json()).toMatchObject(v2 ? { removed: 1, keptAdopted: 0 } : { removed: 1 });
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("treats a positive bank row as income", async () => {

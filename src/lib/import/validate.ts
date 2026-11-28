@@ -1,3 +1,4 @@
+import { utcDay } from "@/lib/dates";
 import { IMPORT_LIMITS, type ImportReason, type NormalizedRow } from "@/lib/import/types";
 
 export interface ValidateContext {
@@ -36,7 +37,12 @@ export function validateNormalizedRow(
   context: ValidateContext = {},
 ): ImportReason[] {
   const reasons: ImportReason[] = [];
-  if (!ISO_DAY.test(row.date) || Number.isNaN(Date.parse(`${row.date}T00:00:00Z`)))
+  const parsedDate = Date.parse(`${row.date}T00:00:00Z`);
+  if (
+    !ISO_DAY.test(row.date) ||
+    Number.isNaN(parsedDate) ||
+    utcDay(new Date(parsedDate)) !== row.date
+  )
     reasons.push({ code: "dateInvalid", field: "date" });
   if (row.date < "1990-01-01" || row.date > "2100-12-31")
     reasons.push({ code: "dateInvalid", field: "date" });
@@ -46,6 +52,13 @@ export function validateNormalizedRow(
   if (!Number.isFinite(row.amount) || row.amount <= 0)
     reasons.push({ code: "amountZero", field: "amount" });
   if (row.amount > IMPORT_LIMITS.maxAmount) reasons.push({ code: "amountRange", field: "amount" });
+  if (!Number.isFinite(row.signedAmount) || Math.abs(row.signedAmount) > IMPORT_LIMITS.maxAmount)
+    reasons.push({ code: "amountRange", field: "amount" });
+  if (row.kind !== "transfer") {
+    const expectedPositive = row.kind === "income" || row.refund;
+    if (expectedPositive ? row.signedAmount <= 0 : row.signedAmount >= 0)
+      reasons.push({ code: "amountInvalid", field: "amount" });
+  }
   if (row.kind !== "expense" && row.kind !== "income" && row.kind !== "transfer")
     reasons.push({ code: "kindAmbiguous", field: "kind" });
   if (!Number.isInteger(row.accountId) || row.accountId <= 0)

@@ -101,3 +101,32 @@ describe("in-file repeats", () => {
     ]);
   });
 });
+
+describe("dedupe edge branches", () => {
+  it("adds a day-adjacent and installment bonus", () => {
+    expect(
+      scoreMatch(
+        row({ date: "2024-03-05", installmentNumber: 1, installmentTotal: 3 }),
+        stored(1, { date: "2024-03-06", installmentNumber: 1, installmentTotal: 3 }),
+      ),
+    ).toBeGreaterThanOrEqual(40);
+  });
+
+  it("rejects a same-day same-amount row with an unrelated description", () => {
+    const result = matchStored([row()], [stored(10, { description: "supermarket" })]);
+    expect(result[0].status).toBe("new");
+  });
+
+  it("finds possible repeats only within the same account, amount and date window", () => {
+    expect(findPossibleRepeats([row(), row({ accountId: 2 })])).toEqual([false, false]);
+    expect(findPossibleRepeats([row(), row({ signedAmount: -1 })])).toEqual([false, false]);
+    expect(findPossibleRepeats([row(), row({ date: "2024-03-09" })])).toEqual([false, false]);
+    expect(findPossibleRepeats([row(), row({ description: "unrelated" })])).toEqual([false, false]);
+  });
+
+  it("does not treat stop-word-only descriptions as similar", () => {
+    expect(
+      scoreMatch(row({ description: "the and" }), stored(1, { description: "של את" })),
+    ).toBeLessThan(30);
+  });
+});

@@ -67,20 +67,27 @@ describe("import v2 routes", () => {
       "file",
       new File([new TextEncoder().encode(CSV)], "leumi.csv", { type: "text/csv" }),
     );
-    form.append("options", JSON.stringify({ limit: 10 }));
+    const account = await accountId();
+    form.append("options", JSON.stringify({ limit: 10, accountId: account }));
     const response = await parseRoute.POST(
       new Request("http://127.0.0.1/api/import/parse", { method: "POST", body: form }),
     );
     expect(response.status).toBe(200);
     const body = (await response.json()) as {
       parseId: string;
+      account: { id: number };
       mapping: { date: number; description: number; amount: number };
       rows: { total: number; page: ImportDraftRow[] };
     };
     expect(body.parseId).toMatch(/^p_/);
     expect(body.mapping).toMatchObject({ date: 0, description: 1, amount: 2 });
+    expect(body.account.id).toBe(account);
     expect(body.rows.total).toBe(2);
-    expect(body.rows.page[0]).toMatchObject({ date: "01/02/2024", description: "שופרסל" });
+    expect(body.rows.page[0]).toMatchObject({
+      date: "01/02/2024",
+      description: "שופרסל",
+      accountId: null,
+    });
   });
 
   it("previews, saves, reads and undoes a batch", async () => {
@@ -135,6 +142,42 @@ describe("import v2 routes", () => {
     );
     expect(duplicate.status).toBe(409);
     expect((await duplicate.json()).code).toBe("alreadyImported");
+
+    const resumeForm = new FormData();
+    resumeForm.append(
+      "file",
+      new File([new TextEncoder().encode(CSV)], "resume.csv", { type: "text/csv" }),
+    );
+    const resumeParsed = (await (
+      await parseRoute.POST(
+        new Request("http://127.0.0.1/api/import/parse", { method: "POST", body: resumeForm }),
+      )
+    ).json()) as { rows: { page: ImportDraftRow[] } };
+    const resumeRows = resumeParsed.rows.page.map((draft) => normalized(draft, account));
+    const resumeBody = {
+      accountId: account,
+      origin: "upload",
+      fileName: "resume.csv",
+      fileSha256: "resume-sha",
+      rows: resumeRows,
+    };
+    const firstSave = await saveRoute.POST(json("/api/import/save", resumeBody));
+    expect(firstSave.status).toBe(200);
+    const firstBatch = (await firstSave.json()) as { batchId: number };
+    const { getDb } = await import("@/server/db");
+    getDb()
+      .prepare("UPDATE import_batches SET post_commit_status = 'failed' WHERE id = ?")
+      .run(firstBatch.batchId);
+    const resume = await saveRoute.POST(json("/api/import/save", resumeBody));
+    expect(resume.status).toBe(200);
+    expect((await resume.json()).batchId).toBe(firstBatch.batchId);
+    expect(
+      (
+        getDb()
+          .prepare("SELECT post_commit_status AS status FROM import_batches WHERE id = ?")
+          .get(firstBatch.batchId) as { status: string }
+      ).status,
+    ).toBe("completed");
 
     const context = { params: Promise.resolve({ id: String(saved.batchId) }) };
     const read = await batchRoute.GET(

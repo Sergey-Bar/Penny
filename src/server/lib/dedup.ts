@@ -11,6 +11,8 @@ interface DedupFields {
   identifier?: string | number | null;
   installmentNumber?: number | null;
   installmentTotal?: number | null;
+  /** Import v2 account identity; keeps equal rows on two providers from hashing alike. */
+  accountIdentity?: string | number | null;
 }
 
 export function computeDedupHash(fields: DedupFields): string {
@@ -24,6 +26,7 @@ export function computeDedupHash(fields: DedupFields): string {
     fields.installmentNumber != null ? String(fields.installmentNumber) : "",
     fields.installmentTotal != null ? String(fields.installmentTotal) : "",
   ];
+  if (fields.accountIdentity != null) parts.push(String(fields.accountIdentity));
 
   // "\" and "|" inside a field are escaped so a "|" in a description cannot pass for the boundary
   // between two fields. A field without either character is unchanged, so every hash already stored

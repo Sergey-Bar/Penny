@@ -57,14 +57,31 @@ export function getAccountByNumber(
   workspaceId: number,
   provider: string,
   number: string,
+  currency?: string | null,
 ): Account | null {
-  return (
-    (getDb()
-      .prepare(
-        `SELECT ${ACCOUNT_COLUMNS} FROM accounts WHERE workspace_id = ? AND provider = ? AND number = ?`,
-      )
-      .get(workspaceId, provider, number) as Account | undefined) ?? null
-  );
+  const matches = accountsByNumber(workspaceId, provider, number, currency);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function accountsByNumber(
+  workspaceId: number,
+  provider: string,
+  number: string,
+  currency?: string | null,
+): Account[] {
+  const normalizedCurrency = currency?.trim().toUpperCase();
+  return getDb()
+    .prepare(
+      `SELECT ${ACCOUNT_COLUMNS} FROM accounts
+       WHERE workspace_id = ? AND provider = ? AND number = ?${normalizedCurrency ? " AND currency = ?" : ""}
+       ORDER BY id`,
+    )
+    .all(
+      workspaceId,
+      provider,
+      number,
+      ...(normalizedCurrency ? [normalizedCurrency] : []),
+    ) as Account[];
 }
 
 export function getAccountByAlias(workspaceId: number, alias: string): Account | null {
@@ -103,24 +120,40 @@ export interface CreateAccountInput {
   isManual?: boolean;
 }
 
-export function createAccount(workspaceId: number, input: CreateAccountInput): Account {
+/** Same insert, with whether this call created the row (a repeated create reuses the account). */
+export function createAccountResult(
+  workspaceId: number,
+  input: CreateAccountInput,
+): { account: Account; created: boolean } {
   const provider = (input.provider ?? "file").trim() || "file";
   const kind = input.kind ?? accountKindForProvider(provider);
   const label = input.label.trim() || input.number || "חשבון";
   const number = (input.number ?? "").trim() || slugifyAccount(label);
   const currency = (input.currency ?? "ILS").trim().toUpperCase() || "ILS";
   const db = getDb();
+  const existing = getAccountByNumber(workspaceId, provider, number, currency);
+  if (existing) {
+    addAliases(workspaceId, existing.id, [
+      ...(input.aliases ?? []),
+      label,
+      number,
+      `${label} (${number})`,
+      `${provider} (${number})`,
+    ]);
+    return { account: existing, created: false };
+  }
   db.prepare(
     `INSERT OR IGNORE INTO accounts (workspace_id, provider, kind, number, label, currency, is_manual)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(workspaceId, provider, kind, number, label, currency, input.isManual ? 1 : 0);
   const account =
-    getAccountByNumber(workspaceId, provider, number) ??
+    getAccountByNumber(workspaceId, provider, number, currency) ??
     (getDb()
       .prepare(
-        `SELECT ${ACCOUNT_COLUMNS} FROM accounts WHERE workspace_id = ? AND number = ? ORDER BY id LIMIT 1`,
+        `SELECT ${ACCOUNT_COLUMNS} FROM accounts
+         WHERE workspace_id = ? AND number = ? AND currency = ? ORDER BY id LIMIT 1`,
       )
-      .get(workspaceId, number) as Account | undefined);
+      .get(workspaceId, number, currency) as Account | undefined);
   if (!account) throw new Error("failed to create account");
   addAliases(workspaceId, account.id, [
     ...(input.aliases ?? []),
@@ -129,7 +162,7 @@ export function createAccount(workspaceId: number, input: CreateAccountInput): A
     `${label} (${number})`,
     `${provider} (${number})`,
   ]);
-  return getAccount(workspaceId, account.id) ?? account;
+  return { account: getAccount(workspaceId, account.id) ?? account, created: true };
 }
 
 export function addAliases(workspaceId: number, accountId: number, aliases: string[]): void {
@@ -177,7 +210,9 @@ const similarity = (a: string, b: string): number => {
 
 /**
  * Account resolution in the plan's order: explicit id, provider+number, number/alias, label,
- * then a fuzzy suggestion. A fuzzy match is flagged ambiguous instead of merged silently.
+ * then a fuzzy suggestion. A fuzzy or multi-match result is flagged ambiguous instead of merged
+ * silently. A real provider (a bank/card sync) never falls back to another provider's account by
+ * number alone: that would attach a card's transactions to a bank account with the same digits.
  */
 export function resolveAccount(
   workspaceId: number,
@@ -189,33 +224,69 @@ export function resolveAccount(
   }
   const provider = (input.provider ?? "").trim();
   const number = (input.number ?? "").trim();
+  const currency = (input.currency ?? "").trim().toUpperCase();
+  const kind = input.kind ?? null;
+  const crossProviderLookup =
+    !provider || provider === "file" || provider === "cash" || provider === "manual";
   if (provider && number) {
-    const exact = getAccountByNumber(workspaceId, provider, number);
-    if (exact) return { account: exact, created: false, ambiguous: false, candidates: [exact] };
+    // Without a currency every provider+number match is a candidate, so two currencies with the
+    // same digits are reported as ambiguous instead of silently picking one.
+    const exact = accountsByNumber(workspaceId, provider, number, currency);
+    if (exact.length > 0)
+      return { account: exact[0], created: false, ambiguous: exact.length > 1, candidates: exact };
   }
-  if (number) {
-    const byNumber = getDb()
+  if (number && crossProviderLookup) {
+    const matches = getDb()
       .prepare(
-        `SELECT ${ACCOUNT_COLUMNS} FROM accounts WHERE workspace_id = ? AND number = ?
-         ORDER BY CASE WHEN provider = ? THEN 0 WHEN kind != 'other' THEN 1 ELSE 2 END LIMIT 1`,
+        `SELECT ${ACCOUNT_COLUMNS} FROM accounts
+         WHERE workspace_id = ? AND number = ?${currency ? " AND currency = ?" : ""}
+         ORDER BY CASE WHEN provider = ? THEN 0 WHEN kind != 'other' THEN 1 ELSE 2 END, id`,
       )
-      .get(workspaceId, number, provider) as Account | undefined;
-    if (byNumber)
-      return { account: byNumber, created: false, ambiguous: false, candidates: [byNumber] };
+      .all(
+        ...(currency ? [workspaceId, number, currency, provider] : [workspaceId, number, provider]),
+      ) as Account[];
+    const hinted = matches.filter(
+      (account) => (!kind || account.kind === kind) && (!provider || account.provider === provider),
+    );
+    if (hinted.length === 1)
+      return { account: hinted[0], created: false, ambiguous: false, candidates: hinted };
+    if (matches.length === 1)
+      return { account: matches[0], created: false, ambiguous: false, candidates: matches };
+    if (matches.length > 1)
+      return {
+        account: hinted[0] ?? matches[0],
+        created: false,
+        ambiguous: true,
+        candidates: hinted.length > 0 ? hinted : matches,
+      };
     const byAlias = getAccountByAlias(workspaceId, number);
-    if (byAlias)
+    if (byAlias && (!currency || byAlias.currency === currency))
       return { account: byAlias, created: false, ambiguous: false, candidates: [byAlias] };
   }
   const label = (input.label ?? "").trim();
   if (label) {
+    // A real bank/card provider resolves labels within its own accounts; "file"/"cash"/no
+    // provider may still match a bank account by label, as before.
+    const providerMatches = (account: Account) =>
+      crossProviderLookup || !provider || account.provider === provider;
     const byAlias = getAccountByAlias(workspaceId, label);
-    if (byAlias)
+    if (
+      byAlias &&
+      providerMatches(byAlias) &&
+      (!currency || byAlias.currency === currency) &&
+      (!kind || byAlias.kind === kind)
+    )
       return { account: byAlias, created: false, ambiguous: false, candidates: [byAlias] };
     const byLabel = getAccountByLabel(workspaceId, label);
-    if (byLabel)
+    if (
+      byLabel &&
+      providerMatches(byLabel) &&
+      (!currency || byLabel.currency === currency) &&
+      (!kind || byLabel.kind === kind)
+    )
       return { account: byLabel, created: false, ambiguous: false, candidates: [byLabel] };
   }
-  const reference = label || number;
+  const reference = crossProviderLookup ? label || number : "";
   if (reference) {
     const candidates = listAccounts(workspaceId)
       .map((account) => ({
@@ -225,23 +296,32 @@ export function resolveAccount(
           similarity(reference, account.number),
         ),
       }))
-      .filter((c) => c.score >= 0.85)
+      .filter(
+        (c) =>
+          c.score >= 0.85 &&
+          (!currency || c.account.currency === currency) &&
+          (!kind || c.account.kind === kind) &&
+          (!provider || c.account.provider === provider),
+      )
       .sort((a, b) => b.score - a.score)
       .map((c) => c.account);
-    if (candidates.length === 1)
-      return { account: candidates[0], created: false, ambiguous: true, candidates };
-    if (candidates.length > 1)
-      return { account: candidates[0], created: false, ambiguous: true, candidates };
+    if (candidates.length > 0)
+      return {
+        account: candidates[0],
+        created: false,
+        ambiguous: true,
+        candidates,
+      };
   }
   if (input.create === false) return null;
-  const account = createAccount(workspaceId, {
+  const result = createAccountResult(workspaceId, {
     provider: provider || "file",
     kind: input.kind ?? accountKindForProvider(provider || "file"),
     number: number || undefined,
     label: label || number || "חשבון חדש",
     currency: input.currency ?? "ILS",
   });
-  return { account, created: true, ambiguous: false, candidates: [account] };
+  return { account: result.account, created: result.created, ambiguous: false, candidates: [] };
 }
 
 export interface MergeResult {
@@ -269,6 +349,16 @@ export function mergeAccounts(
     db.prepare(
       `UPDATE OR IGNORE account_aliases SET account_id = ? WHERE workspace_id = ? AND account_id = ?`,
     ).run(targetId, workspaceId, sourceId);
+    // 089 allows one linked balance per account. If the target already has one, drop the source
+    // row before reassigning; otherwise the merge would violate the unique index.
+    db.prepare(
+      `DELETE FROM account_balances
+       WHERE workspace_id = ? AND account_id = ?
+         AND EXISTS (
+           SELECT 1 FROM account_balances target
+           WHERE target.workspace_id = ? AND target.account_id = ?
+         )`,
+    ).run(workspaceId, sourceId, workspaceId, targetId);
     db.prepare(
       "UPDATE account_balances SET account_id = ? WHERE workspace_id = ? AND account_id = ?",
     ).run(targetId, workspaceId, sourceId);
@@ -300,18 +390,20 @@ export interface UpsertBalanceInput {
 
 /** One balance per account. A manual balance newer than a sync is not overwritten by the sync. */
 export function upsertAccountBalance(input: UpsertBalanceInput): void {
-  getDb()
-    .prepare(
+  const db = getDb();
+  if (input.accountId != null) {
+    db.prepare(
       `INSERT INTO account_balances
          (workspace_id, provider, account_number, balance, account_id, source, as_of, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
-       ON CONFLICT(workspace_id, provider, account_number) DO UPDATE SET
+       ON CONFLICT(workspace_id, account_id) WHERE account_id IS NOT NULL DO UPDATE SET
+         provider = excluded.provider,
+         account_number = excluded.account_number,
          balance = CASE
            WHEN account_balances.source = 'manual' AND excluded.source = 'sync'
              AND account_balances.as_of IS NOT NULL AND account_balances.as_of >= excluded.as_of
              THEN account_balances.balance
            ELSE excluded.balance END,
-         account_id = excluded.account_id,
          source = CASE
            WHEN account_balances.source = 'manual' AND excluded.source = 'sync'
              AND account_balances.as_of IS NOT NULL AND account_balances.as_of >= excluded.as_of
@@ -323,8 +415,7 @@ export function upsertAccountBalance(input: UpsertBalanceInput): void {
              THEN account_balances.as_of
            ELSE excluded.as_of END,
          updated_at = datetime('now')`,
-    )
-    .run(
+    ).run(
       input.workspaceId,
       input.provider,
       input.accountNumber,
@@ -333,6 +424,37 @@ export function upsertAccountBalance(input: UpsertBalanceInput): void {
       input.source,
       input.asOf,
     );
+    return;
+  }
+  db.prepare(
+    `INSERT INTO account_balances
+       (workspace_id, provider, account_number, balance, account_id, source, as_of, updated_at)
+     VALUES (?, ?, ?, ?, NULL, ?, ?, datetime('now'))
+     ON CONFLICT(workspace_id, provider, account_number) WHERE account_id IS NULL DO UPDATE SET
+       balance = CASE
+         WHEN account_balances.source = 'manual' AND excluded.source = 'sync'
+           AND account_balances.as_of IS NOT NULL AND account_balances.as_of >= excluded.as_of
+           THEN account_balances.balance
+         ELSE excluded.balance END,
+       source = CASE
+         WHEN account_balances.source = 'manual' AND excluded.source = 'sync'
+           AND account_balances.as_of IS NOT NULL AND account_balances.as_of >= excluded.as_of
+           THEN account_balances.source
+         ELSE excluded.source END,
+       as_of = CASE
+         WHEN account_balances.source = 'manual' AND excluded.source = 'sync'
+           AND account_balances.as_of IS NOT NULL AND account_balances.as_of >= excluded.as_of
+           THEN account_balances.as_of
+         ELSE excluded.as_of END,
+       updated_at = datetime('now')`,
+  ).run(
+    input.workspaceId,
+    input.provider,
+    input.accountNumber,
+    input.balance,
+    input.source,
+    input.asOf,
+  );
 }
 
 export function getAccountBalance(

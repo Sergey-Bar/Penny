@@ -560,7 +560,7 @@ function seedAccounts(db: Database.Database, ws: number): void {
   const balance = db.prepare(
     `INSERT INTO account_balances (workspace_id, provider, account_number, balance, updated_at)
      VALUES (?, ?, ?, ?, datetime('now'))
-     ON CONFLICT(workspace_id, provider, account_number) DO UPDATE SET balance = excluded.balance, updated_at = excluded.updated_at`,
+     ON CONFLICT(workspace_id, provider, account_number) WHERE account_id IS NULL DO UPDATE SET balance = excluded.balance, updated_at = excluded.updated_at`,
   );
   balance.run(ws, DANA_BANK.provider, DANA_BANK.account, 18_450);
   balance.run(ws, YOAV_BANK.provider, YOAV_BANK.account, 6_230);

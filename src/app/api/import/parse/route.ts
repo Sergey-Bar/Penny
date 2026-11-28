@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 import { getWorkspaceIdFromRequest } from "@/server/lib/workspace-context";
 import { getPendingFile } from "@/server/db/queries/imports";
 import { parseImportBytes, type ParseOptions } from "@/server/lib/import/parse";
-import { assertBodySize, requireImportEditor, readBody } from "@/server/lib/import/request";
+import {
+  assertBodySize,
+  requireImportEditor,
+  readBody,
+  readBoundedFormData,
+} from "@/server/lib/import/request";
 import { parsePending } from "@/server/lib/import/pending";
 import type { ImportMapping, SignConvention } from "@/lib/import/types";
 import { ApiError } from "@/server/lib/api-error";
@@ -31,7 +36,7 @@ export const POST = handle("import/parse", async (request: Request) => {
   assertBodySize(request);
   const contentType = request.headers.get("content-type") ?? "";
   if (contentType.includes("multipart/form-data")) {
-    const form = await request.formData();
+    const form = await readBoundedFormData(request);
     const file = form.get("file");
     if (!(file instanceof File)) throw new ApiError("file is required", 400, "noRows");
     const options = parseOptions(form.get("options"));

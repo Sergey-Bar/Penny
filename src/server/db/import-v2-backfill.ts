@@ -28,7 +28,7 @@ function accountKindFor(provider: string): "bank" | "card" | "other" {
 const normalizeAlias = (value: string) =>
   value
     .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "")
-    .replace(/\s+/g, " ")
+    .replace(/[\s"'׳״:*()]+/g, " ")
     .trim()
     .toLowerCase();
 
